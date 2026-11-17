@@ -14,6 +14,7 @@ use Models\Resultado;
 use PDO;
 use Services\LikertCalculatorService;
 use Services\MatcherService;
+use Services\RetratoService;
 
 /**
  * Monta o "view model" do dashboard de perfil e da sinergia.
@@ -144,7 +145,7 @@ final class PerfilController
             'afinidade_media' => $afinidadeMedia,
             'raridade'        => $raridade,
             'base_total'      => Resultado::total($this->pdo),
-            'retrato_salvo'   => Retrato::porCodigo($this->pdo, $codigo),
+            'retrato_salvo'   => Retrato::porCodigo($this->pdo, $codigo, RetratoService::PROMPT_VERSAO),
             'insights'        => $insights,
         ];
     }

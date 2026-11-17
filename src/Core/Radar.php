@@ -16,9 +16,14 @@ final class Radar
      * @param list<string> $rotulos
      * @param list<array{nome: string, valores: list<float|int>, cor: string}> $series
      * @param list<string> $coresPorEixo cores dos pontos do primeiro conjunto
+     * @param string $idTitulo id único do <title> (a página pode ter mais de um radar)
      */
-    public static function render(array $rotulos, array $series, array $coresPorEixo = []): string
-    {
+    public static function render(
+        array $rotulos,
+        array $series,
+        array $coresPorEixo = [],
+        string $idTitulo = 'radar-titulo'
+    ): string {
         $total = count($rotulos);
 
         if ($total < 3) {
@@ -40,8 +45,9 @@ final class Radar
             ];
         };
 
-        $svg = '<svg class="pc-radar-svg" viewBox="0 0 400 400" role="img" aria-labelledby="radar-titulo">';
-        $svg .= '<title id="radar-titulo">Assinatura do perfil nos 8 eixos</title>';
+        $idTituloSeguro = htmlspecialchars($idTitulo, ENT_QUOTES, 'UTF-8');
+        $svg = '<svg class="pc-radar-svg" viewBox="0 0 400 400" role="img" aria-labelledby="' . $idTituloSeguro . '">';
+        $svg .= '<title id="' . $idTituloSeguro . '">Assinatura do perfil nos 8 eixos</title>';
 
         // Anéis
         foreach ([0.25, 0.5, 0.75, 1.0] as $fracao) {

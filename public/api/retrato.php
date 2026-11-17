@@ -34,7 +34,7 @@ if (!preg_match('/^[A-Z0-9]{8}$/', $codigo)) {
 
 try {
     $pdo = Database::pdo();
-    $existente = Retrato::porCodigo($pdo, $codigo);
+    $existente = Retrato::porCodigo($pdo, $codigo, RetratoService::PROMPT_VERSAO);
 
     if ($existente !== null) {
         header('Cache-Control: public, max-age=3600');

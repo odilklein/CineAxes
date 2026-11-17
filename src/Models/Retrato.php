@@ -8,8 +8,13 @@ use PDO;
 
 final class Retrato
 {
-    /** @return array<string, mixed>|null */
-    public static function porCodigo(PDO $pdo, string $codigo): ?array
+    /**
+     * Retrato salvo do código. Quando `$versao` é informada, um texto de outra
+     * versão do prompt é tratado como inexistente (para ser regerado).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function porCodigo(PDO $pdo, string $codigo, ?string $versao = null): ?array
     {
         $stmt = $pdo->prepare(
             'SELECT codigo_unico, idioma, texto, modelo, prompt_versao, tokens, created_at
@@ -20,7 +25,15 @@ final class Retrato
         $stmt->execute(['codigo' => strtoupper(trim($codigo))]);
         $linha = $stmt->fetch();
 
-        return $linha === false ? null : $linha;
+        if ($linha === false) {
+            return null;
+        }
+
+        if ($versao !== null && (string) $linha['prompt_versao'] !== $versao) {
+            return null;
+        }
+
+        return $linha;
     }
 
     /** @param array<string, mixed> $dados */
@@ -29,7 +42,13 @@ final class Retrato
         $stmt = $pdo->prepare(
             'INSERT INTO retratos (codigo_unico, idioma, texto, modelo, prompt_versao, tokens)
              VALUES (:codigo, :idioma, :texto, :modelo, :prompt_versao, :tokens)
-             ON DUPLICATE KEY UPDATE id = id'
+             ON DUPLICATE KEY UPDATE
+                idioma = VALUES(idioma),
+                texto = VALUES(texto),
+                modelo = VALUES(modelo),
+                prompt_versao = VALUES(prompt_versao),
+                tokens = VALUES(tokens),
+                created_at = CURRENT_TIMESTAMP'
         );
         $stmt->execute([
             'codigo' => $dados['codigo'],

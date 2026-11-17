@@ -12,7 +12,7 @@ namespace Services;
  */
 final class RetratoService
 {
-    public const PROMPT_VERSAO = 'retrato-v1';
+    public const PROMPT_VERSAO = 'retrato-v2';
 
     public function __construct(private readonly GroqService $groq)
     {
@@ -33,7 +33,7 @@ final class RetratoService
             return null;
         }
 
-        $resposta = $this->groq->chat($this->mensagens($perfil), 900, 0.75);
+        $resposta = $this->groq->chat($this->mensagens($perfil), 800, 0.7);
 
         if ($resposta === null) {
             return null;
@@ -118,17 +118,21 @@ final class RetratoService
     public function mensagens(array $perfil): array
     {
         $sistema = <<<'TXT'
-Você é um crítico de cinema brasileiro escrevendo o retrato de um espectador para o PersonaCut.
+Você escreve, em português do Brasil, um retrato curto do gosto de cinema de uma pessoa.
+
+Como escrever:
+- Fale como alguém que entende de cinema conversando com um amigo: claro, direto, sem pose.
+- Frases curtas. Evite jargão de crítica ("diegese", "catarse", "mise-en-scène", "imagem-tempo", "narrativa diegética") e adjetivos empilhados.
+- Explique com exemplos concretos do que a pessoa gosta de ver na tela.
+- Três parágrafos curtos, entre 120 e 170 palavras no total.
+- Nada de listas, títulos, markdown, emojis ou negrito.
 
 Regras invioláveis:
 - Use APENAS os dados do JSON fornecido. Não invente filmes, pessoas, prêmios, cenas, datas ou fatos.
 - Nunca cite um filme, diretor ou personagem que não esteja no JSON.
 - Não fale sobre inteligência artificial, prompt, modelo ou algoritmo.
-- Escreva em português do Brasil, em 3 parágrafos corridos, entre 170 e 240 palavras.
-- Nada de listas, títulos, markdown, emojis ou negrito.
-- Tom de crítica cultural: elegante, concreto, sem clichês de horóscopo.
 - Conecte os dois eixos dominantes aos personagens, ao diretor e ao estúdio fornecidos.
-- Termine com um ritual de cinema curto e específico, coerente com o arquétipo.
+- Termine com um ritual de cinema curto e simples, coerente com o arquétipo.
 TXT;
 
         return [
@@ -151,7 +155,7 @@ TXT;
         $tamanho = mb_strlen($texto);
         $minusculo = mb_strtolower($texto);
 
-        if ($tamanho < 400 || $tamanho > 5000) {
+        if ($tamanho < 450 || $tamanho > 3000) {
             return false;
         }
 

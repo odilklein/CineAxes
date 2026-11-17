@@ -134,7 +134,8 @@
       "eyebrow": "Exemplo real",
       "title": "É assim que o seu resultado se parece",
       "note": "Exemplo ilustrativo gerado com o catálogo do PersonaCut.",
-      "cta": "Quero ver o meu"
+      "cta": "Quero ver o meu",
+      "open": "Abrir este perfil"
     },
     "how": {
       "eyebrow": "Como funciona",
@@ -411,6 +412,106 @@
     "ficha_affinity": "Afinidade com os espelhos",
     "ficha_rarity": "Raridade do perfil",
     "ficha_decade": "Década do repertório"
+  },
+  "retro": {
+    "aria": "Retrospectiva do perfil",
+    "open": "Abrir retrospectiva",
+    "close": "Fechar retrospectiva",
+    "full": "Ver análise completa",
+    "prev": "Capítulo anterior",
+    "next": "Próximo capítulo",
+    "count": "{atual} de {total}",
+    "start": "Começar",
+    "hint": "Toque para avançar",
+    "swipe": "Deslize ou use as setas",
+    "cover": {
+      "eyebrow": "Retrospectiva cinéfila",
+      "title": "A sua vida no cinema, em capítulos",
+      "lead": "Oito eixos, seis espelhos e um retrato. Uma descoberta por vez.",
+      "code": "Seu código é",
+      "note": "Sem pressa. Você decide quando virar a página."
+    },
+    "archetype": {
+      "eyebrow": "O arquétipo",
+      "lead": "De todos os perfis do catálogo, o seu caiu aqui.",
+      "neutral": "O seu perfil é o de quem não escolhe lado."
+    },
+    "rarity": {
+      "eyebrow": "A sua raridade",
+      "title": "Você não é todo mundo",
+      "one_in_before": "Apenas 1 em cada",
+      "one_in_after": "perfis pensa como você.",
+      "percent": "São {pct}% da base de {n} perfis.",
+      "rare": "Poucos perfis pensam como você.",
+      "common": "Muita gente compartilha este perfil.",
+      "initial": "A base ainda está começando",
+      "initial_note": "Ainda não há gente suficiente para medir a sua raridade. Você é um dos primeiros."
+    },
+    "poles": {
+      "eyebrow": "As suas forças",
+      "title": "Dois polos puxam o seu perfil",
+      "lead": "Os eixos em que você não fica no meio.",
+      "fallback_title": "Você transita entre os lados",
+      "fallback_lead": "Mesmo sem um polo dominante, dois eixos se destacam."
+    },
+    "signature": {
+      "eyebrow": "A sua assinatura",
+      "title": "O desenho que só você tem",
+      "lead": "Cada ponta é um dos oito eixos. O anel tracejado é o neutro.",
+      "extreme": "O seu extremo"
+    },
+    "mirror": {
+      "eyebrow": "Espelho principal",
+      "title": "Tem alguém parecido com você",
+      "lead": "O personagem que mais se aproxima da sua assinatura.",
+      "open": "Abrir ficha",
+      "affinity": "{pct}% de afinidade"
+    },
+    "mirrors": {
+      "eyebrow": "Os outros espelhos",
+      "title": "Não é só um",
+      "lead": "Os outros cinco personagens que completam este reflexo.",
+      "swipe": "Deslize para ver todos",
+      "affinity": "{pct}%"
+    },
+    "anchors": {
+      "eyebrow": "Por trás das câmeras",
+      "title": "Quem filmaria a sua vida",
+      "lead": "O diretor e o estúdio mais próximos do seu vetor.",
+      "director": "Diretor gêmeo",
+      "studio": "Estúdio / escola"
+    },
+    "critic": {
+      "eyebrow": "A crítica",
+      "title": "Um retrato escrito para você",
+      "lead": "Gerado a partir dos seus eixos e dos seus espelhos.",
+      "note": "Texto redigido com auxílio de IA. O arquétipo, a afinidade e a raridade continuam determinísticos.",
+      "fallback_lead": "Duas frases a partir dos seus eixos mais extremos."
+    },
+    "insights": {
+      "eyebrow": "Além do espelho",
+      "title": "O que o seu vetor entrega",
+      "lead": "Algumas leituras que não cabem em um único arquétipo.",
+      "distincao_label": "O que te distingue",
+      "distincao_before": "Você está mais para",
+      "distincao_after": "do que {pct}% da base.",
+      "decada_label": "A sua década",
+      "oposto_label": "Seu oposto no catálogo",
+      "oposto_meta": "{tipo} de {obra}",
+      "oposto_affinity": "{pct}% de afinidade",
+      "secundario_label": "Arquétipo secundário"
+    },
+    "share": {
+      "eyebrow": "Leve com você",
+      "title": "Agora é sua",
+      "lead": "Baixe o card para os stories, copie o código ou chame alguém para comparar.",
+      "compare": "Comparar com alguém",
+      "compare_placeholder": "Código do outro perfil",
+      "compare_cta": "Comparar",
+      "retake": "Refazer o teste",
+      "code": "Seu código",
+      "downloaded": "Card salvo em PNG."
+    }
   },
   "sinergia": {
     "eyebrow": "Modo sinergia",

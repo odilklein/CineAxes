@@ -43,14 +43,97 @@ try {
 $paginaTitulo = t('meta.title');
 $paginaDescricao = t('meta.description');
 
+/*
+ * Card de exemplo da landing: usa um perfil real da base sintética, montado pelo
+ * mesmo PerfilController do resultado. Assim o exemplo nunca "envelhece" e mostra
+ * o arquétipo, os eixos e os espelhos de verdade. Sem banco, cai num exemplo fixo.
+ */
 $exemplo = [
-    'titulo' => 'O Alquimista da Imagem',
-    'barras' => [
-        ['rotulo' => 'Experimental', 'valor' => 84],
-        ['rotulo' => 'Épica', 'valor' => 72],
-        ['rotulo' => 'Fragmentada', 'valor' => 66],
-    ],
+    'codigo' => '',
+    'titulo' => 'O Espectador Neutro',
+    'descricao' => 'Um perfil equilibrado, que transita entre os dois polos de cada eixo.',
+    'afinidade' => 0.0,
+    'barras' => [],
+    'espelhos' => [],
+    'linhas' => [],
 ];
+
+try {
+    $pdoExemplo = Core\Database::pdo();
+    // Perfil curado do seed; em bases antigas, cai no primeiro resultado real.
+    $codigoExemplo = $pdoExemplo->query(
+        "SELECT codigo_unico
+           FROM resultados_usuarios
+          WHERE codigo_unico = 'EXEMPLO1' OR origem = 'real'
+          ORDER BY (codigo_unico = 'EXEMPLO1') DESC, id
+          LIMIT 1"
+    )->fetchColumn();
+
+    if (is_string($codigoExemplo) && $codigoExemplo !== '') {
+        $perfilExemplo = (new Controllers\PerfilController(
+            $pdoExemplo,
+            new Services\MatcherService(
+                (float) ($config['raridade']['limiar'] ?? 12.0),
+                (int) ($config['raridade']['min_base'] ?? 100)
+            ),
+            new Services\LikertCalculatorService(),
+            $config
+        ))->montar($codigoExemplo);
+
+        if ($perfilExemplo !== null) {
+            $arquetipoExemplo = $perfilExemplo['arquetipo'];
+            $linhasExemplo = $perfilExemplo['linhas'];
+
+            // Os três eixos que mais afastam este perfil do neutro.
+            usort($linhasExemplo, static function (array $a, array $b): int {
+                return abs((float) $b['pct_dir'] - 50) <=> abs((float) $a['pct_dir'] - 50);
+            });
+
+            $destacadas = array_slice($linhasExemplo, 0, 3);
+
+            $exemplo = [
+                'codigo' => (string) $codigoExemplo,
+                'titulo' => (string) ($arquetipoExemplo['titulo'] ?? 'O Espectador Neutro'),
+                'descricao' => (string) ($arquetipoExemplo['descricao'] ?? ''),
+                'afinidade' => (float) ($perfilExemplo['afinidade_media'] ?? 0),
+                'barras' => array_map(
+                    static fn (array $linha): array => [
+                        'rotulo' => eixo_nome($linha['eixo']),
+                        'polo'   => $linha['polo'] === 'D' ? $linha['rotulo_dir'] : $linha['rotulo_esq'],
+                        'valor'  => round($linha['pct_dir'], 0),
+                        'pct'    => (float) max($linha['pct_esq'], $linha['pct_dir']),
+                        'cor'    => $linha['cor'],
+                    ],
+                    $destacadas
+                ),
+                'espelhos' => array_map(
+                    static fn (array $p): array => [
+                        'nome'      => nome_curto((string) $p['nome']),
+                        'obra'      => (string) $p['obra_origem'],
+                        'foto'      => (string) ($p['ator_foto_url'] ?: $p['imagem_url']),
+                        'afinidade' => (float) $p['afinidade'],
+                    ],
+                    array_slice($perfilExemplo['personagens'], 0, 3)
+                ),
+                'linhas' => array_map(
+                    static fn (array $linha): array => [
+                        'nome'  => eixo_nome($linha['eixo']),
+                        'esq'   => $linha['rotulo_esq'],
+                        'dir'   => $linha['rotulo_dir'],
+                        'pct_e' => (float) $linha['pct_esq'],
+                        'pct_d' => (float) $linha['pct_dir'],
+                        'cor_e' => (string) $linha['cor_esq'],
+                        'cor_d' => (string) $linha['cor_dir'],
+                        'nivel' => $linha['intensidade'],
+                    ],
+                    $destacadas
+                ),
+            ];
+        }
+    }
+} catch (Throwable $erro) {
+    // Landing continua com o exemplo fixo.
+}
 
 require __DIR__ . '/partials/head.php';
 require __DIR__ . '/partials/header.php';
@@ -100,35 +183,62 @@ require __DIR__ . '/partials/header.php';
                         <?= icon('film', 14) ?>
                         <?= e(t('home.hero.example_label')) ?>
                     </span>
-                    <span class="pc-example-card__match"><b>92</b>% afinidade</span>
+                    <?php if ($exemplo['afinidade'] > 0): ?>
+                        <span class="pc-example-card__match"><b><?= numero($exemplo['afinidade'], 0) ?></b>% <?= e(t('resultado.affinity')) ?></span>
+                    <?php endif; ?>
                 </div>
 
                 <h2 class="pc-example-card__title"><?= e($exemplo['titulo']) ?></h2>
-                <p class="pc-example-card__quote"><?= e(t('home.hero.example_quote')) ?></p>
 
-                <div class="pc-mini-bars">
-                    <?php foreach ($exemplo['barras'] as $barra): ?>
-                        <div class="pc-mini-bar">
-                            <div class="pc-mini-bar__head">
-                                <span><?= e($barra['rotulo']) ?></span>
-                                <span><?= pct($barra['valor']) ?></span>
+                <?php if ($exemplo['descricao'] !== ''): ?>
+                    <p class="pc-example-card__quote"><?= e($exemplo['descricao']) ?></p>
+                <?php endif; ?>
+
+                <?php if ($exemplo['barras'] !== []): ?>
+                    <div class="pc-mini-bars">
+                        <?php foreach ($exemplo['barras'] as $barra): ?>
+                            <div class="pc-mini-bar">
+                                <div class="pc-mini-bar__head">
+                                    <span><?= e($barra['rotulo']) ?> · <?= e($barra['polo']) ?></span>
+                                    <span><?= pct($barra['pct']) ?></span>
+                                </div>
+                                <div class="pc-mini-bar__track">
+                                    <div class="pc-mini-bar__fill" style="width: <?= num_css($barra['pct']) ?>%; background: <?= e($barra['cor']) ?>"></div>
+                                </div>
                             </div>
-                            <div class="pc-mini-bar__track">
-                                <div class="pc-mini-bar__fill" style="width: <?= (int) $barra['valor'] ?>%"></div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($exemplo['espelhos'] !== []): ?>
+                    <div class="pc-example-card__espelhos">
+                        <?php foreach ($exemplo['espelhos'] as $espelho): ?>
+                            <span class="pc-example-card__espelho">
+                                <span class="pc-example-card__avatar">
+                                    <?php if ($espelho['foto'] !== ''): ?>
+                                        <img src="<?= e($espelho['foto']) ?>" alt="" loading="lazy" decoding="async">
+                                    <?php else: ?>
+                                        <?= e(iniciais($espelho['nome'])) ?>
+                                    <?php endif; ?>
+                                </span>
+                                <b><?= e($espelho['nome']) ?></b>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
                 <div class="pc-example-card__foot">
                     <span><?= e(t('home.hero.example_code')) ?></span>
-                    <span class="pc-example-card__code">7KQ2M9XA</span>
+                    <?php if ($exemplo['codigo'] !== ''): ?>
+                        <a class="pc-example-card__code" href="<?= url('resultado.php', ['codigo' => $exemplo['codigo']]) ?>">
+                            <?= e($exemplo['codigo']) ?>
+                            <?= icon('arrow-right', 13) ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="pc-example-card__code">7KQ2M9XA</span>
+                    <?php endif; ?>
                 </div>
 
-                <div class="pc-hero__float" aria-hidden="true">
-                    <strong><?= e(t('home.hero.example_label')) ?></strong>
-                    <span>Rick Deckard · 94%</span>
-                </div>
             </div>
         </div>
     </div>
@@ -178,32 +288,39 @@ require __DIR__ . '/partials/header.php';
                             <span class="pc-example__badge"><?= icon('star', 12) ?> <?= e(t('resultado.affinity')) ?></span>
                             <h3 class="pc-example__name"><?= e($exemplo['titulo']) ?></h3>
                         </div>
-                        <span class="pc-chip pc-chip--red">92%</span>
+                        <?php if ($exemplo['afinidade'] > 0): ?>
+                            <span class="pc-chip pc-chip--red"><?= pct($exemplo['afinidade']) ?></span>
+                        <?php endif; ?>
                     </div>
 
-                    <?php
-                    $linhasExemplo = [
-                        ['Estética', 'Clássico', 'Experimental', 84, '#8C5A2B', '#4F6480'],
-                        ['Atmosfera', 'Íntima', 'Épica', 72, '#8A5F6B', '#4A6B85'],
-                        ['Estrutura', 'Linear', 'Fragmentada', 66, '#3E6A66', '#9E5560'],
-                    ];
-                    foreach ($linhasExemplo as [$nome, $esq, $dir, $valor, $corEsq, $corDir]):
-                        ?>
+                    <?php if ($exemplo['linhas'] === []): ?>
+                        <p class="pc-text-muted" style="font-size:13px">
+                            Rode o seed para ver um perfil de exemplo montado com dados reais.
+                        </p>
+                    <?php endif; ?>
+
+                    <?php foreach ($exemplo['linhas'] as $linha): ?>
                         <div class="pc-axis-line">
                             <div class="pc-axis-line__top">
-                                <span class="pc-axis-line__name"><?= e($nome) ?></span>
-                                <span class="pc-axis-line__intensity" data-level="tendencia"><?= e(t('resultado.intensity.tendencia')) ?></span>
+                                <span class="pc-axis-line__name"><?= e($linha['nome']) ?></span>
+                                <span class="pc-axis-line__intensity" data-level="<?= e($linha['nivel']) ?>"><?= e(t('resultado.intensity.' . $linha['nivel'])) ?></span>
                             </div>
                             <div class="pc-dual">
-                                <span class="pc-dual__pole"><b><?= pct(100 - $valor) ?></b> <?= e($esq) ?></span>
+                                <span class="pc-dual__pole"><b><?= pct($linha['pct_e']) ?></b> <?= e($linha['esq']) ?></span>
                                 <span class="pc-dual__track">
-                                    <span class="pc-dual__esq" style="width: <?= 100 - $valor ?>%; background: <?= e($corEsq) ?>"></span>
-                                    <span class="pc-dual__dir" style="width: <?= $valor ?>%; background: <?= e($corDir) ?>"></span>
+                                    <span class="pc-dual__esq" style="width: <?= num_css($linha['pct_e']) ?>%; background: <?= e($linha['cor_e']) ?>"></span>
+                                    <span class="pc-dual__dir" style="width: <?= num_css($linha['pct_d']) ?>%; background: <?= e($linha['cor_d']) ?>"></span>
                                 </span>
-                                <span class="pc-dual__pole pc-dual__pole--dir"><?= e($dir) ?> <b><?= pct($valor) ?></b></span>
+                                <span class="pc-dual__pole pc-dual__pole--dir"><?= e($linha['dir']) ?> <b><?= pct($linha['pct_d']) ?></b></span>
                             </div>
                         </div>
                     <?php endforeach; ?>
+
+                    <?php if ($exemplo['codigo'] !== ''): ?>
+                        <a class="pc-link-arrow" style="margin-top:18px" href="<?= url('resultado.php', ['codigo' => $exemplo['codigo']]) ?>">
+                            <?= e(t('home.example.open')) ?> <?= icon('arrow-right', 15) ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

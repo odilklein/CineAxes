@@ -65,9 +65,13 @@ redige um retrato.
 | --- | --- |
 | ![Resultado](docs/prints/resultado.jpg) | ![Insights](docs/prints/insights.jpg) |
 
-| Card 9:16 exportado | No celular |
+| A crítica do perfil | Card 9:16 exportado |
 | --- | --- |
-| ![Card](docs/prints/story-card.jpg) | ![Card no mobile](docs/prints/story-mobile.jpg) |
+| ![Crítica](docs/prints/critica.jpg) | ![Card](docs/prints/story-card.jpg) |
+
+| Card no celular | Tema escuro |
+| --- | --- |
+| ![Card no mobile](docs/prints/story-mobile.jpg) | ![Tema escuro](docs/prints/insights-dark.jpg) |
 
 | Modo Sinergia | Ficha rápida (TMDB) |
 | --- | --- |
@@ -76,10 +80,6 @@ redige um retrato.
 | Painel admin | Perguntas (240 no pool) |
 | --- | --- |
 | ![Admin](docs/prints/admin.jpg) | ![Admin perguntas](docs/prints/admin-perguntas.jpg) |
-
-| Tema escuro | Início no celular |
-| --- | --- |
-| ![Tema escuro](docs/prints/insights-dark.jpg) | ![Mobile](docs/prints/home-mobile.jpg) |
 
 ## Stack
 
@@ -238,7 +238,8 @@ que o `html2canvas` não reproduz bem.
 ### Retrato por IA (Groq)
 
 O retrato é redigido a partir do vetor, dos espelhos, do diretor, do estúdio e da
-estante. A chamada é feita **só no servidor**:
+estante, em linguagem simples (120 a 170 palavras, sem jargão). A chamada é feita
+**só no servidor**:
 
 ```bash
 # .env
@@ -395,6 +396,7 @@ Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com 53 testes:
 | **v1** | Quiz com cenas, resultado com 6 espelhos e estante, sinergia e admin |
 | **v1.5** | Catálogo enriquecido pela TMDB (fotos, fichas, obras) |
 | **v2 (atual)** | Três modos (36/60/240), além do espelho, retrato por IA e card 9:16 |
+| **v2.1** | Card de exemplo real na landing, tema escuro revisado e imagens em alta |
 | v3 | GeoCinema (Overpass/OSM + CEP), inglês e espanhol |
 
 ## Créditos

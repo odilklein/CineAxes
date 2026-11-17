@@ -5,12 +5,14 @@ declare(strict_types=1);
 /**
  * Abertura do documento.
  *
- * Variáveis opcionais: $paginaTitulo, $paginaDescricao, $bodyClass, $ogImagem.
+ * Variáveis opcionais: $paginaTitulo, $paginaDescricao, $bodyClass, $ogImagem,
+ * $estilosExtras (list<string>) — caminhos extras em assets/css.
  */
 
 $paginaTitulo    = $paginaTitulo ?? t('meta.title');
 $paginaDescricao = $paginaDescricao ?? t('meta.description');
 $bodyClass       = $bodyClass ?? '';
+$estilosExtras   = $estilosExtras ?? [];
 ?>
 <!doctype html>
 <html lang="pt-BR" data-theme="light">
@@ -41,6 +43,9 @@ $bodyClass       = $bodyClass ?? '';
 
     <link rel="stylesheet" href="<?= asset('vendor/vuexy/core.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/personacut.css') ?>">
+    <?php foreach ($estilosExtras as $estilo): ?>
+    <link rel="stylesheet" href="<?= asset('css/' . $estilo) ?>">
+    <?php endforeach; ?>
 </head>
 <body class="<?= e($bodyClass) ?>">
 <a class="pc-skip" href="#conteudo"><?= e(t('ui.skip')) ?></a>
