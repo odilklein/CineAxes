@@ -5125,6 +5125,13 @@ body.pc-qv-open {
   opacity: 1;
 }
 
+/* ----------- 33.1. Card 9:16 da landing (mesmo do resultado) --------------- */
+.pc-hero__story {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* --------------------------- 34. Correções de tema ------------------------- */
 
 /* No escuro, o brilho de papel do fundo virava um véu branco atrás do texto. */

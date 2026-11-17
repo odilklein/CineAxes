@@ -57,6 +57,12 @@ $exemplo = [
     'marcas' => [],
     'espelhos' => [],
     'linhas' => [],
+    // Dados do card 9:16 (mesmo parcial usado no resultado do questionário).
+    'personagens' => [],
+    'leituras' => [],
+    'estante' => [],
+    'diretor' => null,
+    'estudio' => null,
 ];
 
 try {
@@ -97,6 +103,12 @@ try {
                 'titulo' => (string) ($arquetipoExemplo['titulo'] ?? 'O Espectador Neutro'),
                 'descricao' => (string) ($arquetipoExemplo['descricao'] ?? ''),
                 'afinidade' => (float) ($perfilExemplo['afinidade_media'] ?? 0),
+                // Repassa os dados brutos para o card 9:16 de compartilhamento.
+                'personagens' => $perfilExemplo['personagens'] ?? [],
+                'leituras' => $perfilExemplo['leituras'] ?? [],
+                'estante' => $perfilExemplo['estante'] ?? [],
+                'diretor' => $perfilExemplo['diretor'] ?? null,
+                'estudio' => $perfilExemplo['estudio'] ?? null,
                 'barras' => array_map(
                     static fn (array $linha): array => [
                         'rotulo' => eixo_nome($linha['eixo']),
@@ -184,70 +196,27 @@ require __DIR__ . '/partials/header.php';
             </div>
         </div>
 
-        <div class="reveal">
-            <div class="pc-example-card">
-                <div class="pc-example-card__top">
-                    <span class="pc-example-card__label">
-                        <?= icon('film', 14) ?>
-                        <?= e(t('home.hero.example_label')) ?>
-                    </span>
-                    <?php if ($exemplo['afinidade'] > 0): ?>
-                        <span class="pc-example-card__match"><b><?= numero($exemplo['afinidade'], 0) ?></b>% <?= e(t('resultado.affinity')) ?></span>
-                    <?php endif; ?>
-                </div>
-
-                <h2 class="pc-example-card__title"><?= e($exemplo['titulo']) ?></h2>
-
-                <?php if ($exemplo['descricao'] !== ''): ?>
-                    <p class="pc-example-card__quote"><?= e($exemplo['descricao']) ?></p>
-                <?php endif; ?>
-
-                <?php if ($exemplo['marcas'] !== []): ?>
-                    <div class="pc-example-card__marks">
-                        <span class="pc-example-card__marks-label">
-                            <?= e(t(count($exemplo['marcas']) === 1 ? 'resultado.story_mark' : 'resultado.story_marks', ['n' => count($exemplo['marcas'])])) ?>
-                        </span>
-                        <ul>
-                            <?php foreach ($exemplo['marcas'] as $marca): ?>
-                                <li>
-                                    <i style="background:<?= e($marca['cor']) ?>"></i>
-                                    <span><?= e($marca['curto']) ?></span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ($exemplo['espelhos'] !== []): ?>
-                    <div class="pc-example-card__espelhos">
-                        <?php foreach ($exemplo['espelhos'] as $espelho): ?>
-                            <span class="pc-example-card__espelho">
-                                <span class="pc-example-card__avatar">
-                                    <?php if ($espelho['foto'] !== ''): ?>
-                                        <img src="<?= e($espelho['foto']) ?>" alt="" loading="lazy" decoding="async">
-                                    <?php else: ?>
-                                        <?= e(iniciais($espelho['nome'])) ?>
-                                    <?php endif; ?>
-                                </span>
-                                <b><?= e($espelho['nome']) ?></b>
-                            </span>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-                <div class="pc-example-card__foot">
-                    <span><?= e(t('home.hero.example_code')) ?></span>
-                    <?php if ($exemplo['codigo'] !== ''): ?>
-                        <a class="pc-example-card__code" href="<?= url('resultado.php', ['codigo' => $exemplo['codigo']]) ?>">
-                            <?= e($exemplo['codigo']) ?>
-                            <?= icon('arrow-right', 13) ?>
-                        </a>
-                    <?php else: ?>
-                        <span class="pc-example-card__code">7KQ2M9XA</span>
-                    <?php endif; ?>
-                </div>
-
-            </div>
+        <div class="reveal pc-hero__story">
+            <?php
+            /*
+             * Card 9:16 idêntico ao gerado no questionário: reaproveita o mesmo
+             * parcial do resultado, alimentado pelo perfil de exemplo da landing.
+             * O escopo isolado evita que as variáveis do parcial vazem para a página.
+             */
+            (static function (array $exemplo): void {
+                $codigo = $exemplo['codigo'];
+                $tituloPerfil = $exemplo['titulo'];
+                $perfil = [
+                    'afinidade_media' => $exemplo['afinidade'],
+                    'leituras' => $exemplo['leituras'],
+                    'personagens' => $exemplo['personagens'],
+                    'estante' => $exemplo['estante'],
+                    'diretor' => $exemplo['diretor'],
+                    'estudio' => $exemplo['estudio'],
+                ];
+                require __DIR__ . '/partials/resultado/story-card.php';
+            })($exemplo);
+            ?>
         </div>
     </div>
 </section>
