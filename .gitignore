@@ -1,0 +1,15 @@
+.env
+*.log
+
+# Metadados de arquivos baixados no Windows
+*:Zone.Identifier
+
+# Uploads locais
+uploads/*
+!uploads/.gitkeep
+
+# IDE / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
