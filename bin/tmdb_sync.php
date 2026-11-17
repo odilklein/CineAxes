@@ -85,7 +85,7 @@ foreach ($entidades as $entidade) {
 
         if ($filme !== null) {
             $detalhe = $tmdb->filme((int) $filme['id']) ?? $filme;
-            $poster = $tmdb->imagem($detalhe['poster_path'] ?? $filme['poster_path'] ?? null, 'w500');
+            $poster = $tmdb->imagem($detalhe['poster_path'] ?? $filme['poster_path'] ?? null, 'w780');
 
             if ($poster !== null) {
                 $campos[] = 'imagem_url = :imagem';
@@ -105,7 +105,7 @@ foreach ($entidades as $entidade) {
 
             if ($pessoa !== null) {
                 $detalhe = $tmdb->pessoa((int) $pessoa['id']) ?? $pessoa;
-                $foto = $tmdb->imagem($detalhe['profile_path'] ?? $pessoa['profile_path'] ?? null, 'w300');
+                $foto = $tmdb->imagem($detalhe['profile_path'] ?? $pessoa['profile_path'] ?? null, 'w500');
 
                 if ($foto !== null) {
                     $campos[] = 'ator_foto_url = :ator_foto';
@@ -220,7 +220,7 @@ foreach ($obras as $obra) {
     }
 
     $detalhe = $tmdb->filme((int) $filme['id']) ?? $filme;
-    $poster = $tmdb->imagem($detalhe['poster_path'] ?? $filme['poster_path'] ?? null, 'w500');
+    $poster = $tmdb->imagem($detalhe['poster_path'] ?? $filme['poster_path'] ?? null, 'w780');
 
     $pdo->prepare(
         'UPDATE entidades_obras SET tmdb_id = :tmdb, poster_url = :poster WHERE id = :id'

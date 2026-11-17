@@ -54,7 +54,7 @@ try {
         $elenco[] = [
             'nome' => (string) $ator['name'],
             'personagem' => (string) ($ator['character'] ?? ''),
-            'foto' => $tmdb->imagem($ator['profile_path'] ?? null, 'w185'),
+            'foto' => $tmdb->imagem($ator['profile_path'] ?? null, 'w300'),
         ];
     }
 

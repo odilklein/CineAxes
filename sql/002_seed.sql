@@ -883,3 +883,18 @@ SELECT
     'sintetico',
     NOW() - INTERVAL (n % 180) DAY
 FROM seq;
+
+-- -----------------------------------------------------------------------------
+-- 9. Perfil de exemplo da landing
+-- Vetor curado para render um arquétipo e espelhos reconhecíveis. A landing lê
+-- este código para montar o card de exemplo com dados reais (não é um perfil real
+-- de usuário; origem = sintetico).
+-- -----------------------------------------------------------------------------
+INSERT INTO resultados_usuarios
+    (codigo_unico, idioma, modo, respostas_json,
+     eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6, eixo_7, eixo_8,
+     arquetipo_id, origem, ip_hash, created_at)
+VALUES
+    ('EXEMPLO1', 'pt-BR', 'completo', NULL,
+     62.00, 38.00, 72.00, 45.00, 30.00, 68.00, 74.00, 58.00,
+     NULL, 'sintetico', NULL, '2026-01-15 12:00:00');
