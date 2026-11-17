@@ -1,153 +1,128 @@
-# 📅 Cronograma de desenvolvimento — CineAxes
+# 📅 Cronograma de desenvolvimento — PersonaCut
 
-Plano de 12 semanas para duas pessoas, seguindo a mesma evolução do projeto de referência da disciplina ([barbearia](https://github.com/odilklein/barbearia)): estrutura → formulário → banco → CRUD → login → dashboard → POO.
+Plano de 12 semanas para duas pessoas. O **MVP fecha na semana 6**; as semanas
+seguintes entregam sinergia, i18n, TMDB e GeoCinema.
 
-> As datas são **relativas** (Semana 1, Semana 2...). Ao definir o início do semestre, basta trocar cada semana pela data correspondente.
+> As datas são relativas (Semana 1, Semana 2...). Troque cada semana pela data
+> correspondente ao definir o início do semestre.
+>
+> **Status atual:** semanas 1–10 implementadas e o catálogo ampliado/enriquecido
+> pela TMDB. Faltam GeoCinema, inglês e o acabamento da semana 12.
 
 ## Divisão de trabalho
 
 | Papel | Responsabilidades principais |
 | --- | --- |
-| **Dev A — Back-end/BD** | modelagem do banco, conexão PDO, classes, validações, sessões, regras de negócio |
-| **Dev B — Front-end/UX** | telas Bootstrap, formulários, JavaScript (máscaras, validação, assentos), usabilidade e responsividade |
+| **Dev A — Back-end/BD** | schema, seed, PDO, serviços de cálculo, endpoints, testes, admin |
+| **Dev B — Front-end/UX** | design system, landing, quiz, resultado, radar, acessibilidade |
 
 Regras do combinado:
 
-- Toda entrega entra por **pull request** com revisão do outro integrante (não fazer push direto na `main`).
-- Cada PR precisa: descrição do que foi feito, print da tela e checklist de teste.
-- **Sexta-feira** é o dia de fechamento da semana: merge do PR, atualização do board e planejamento da semana seguinte.
-- Ninguém fica bloqueado: se uma tarefa travar, avisa no grupo no mesmo dia e o outro ajuda.
+- Toda entrega entra por **pull request** com revisão do outro integrante.
+- Cada PR: descrição, print da tela e checklist de teste.
+- **Sexta-feira** fecha a semana: merge, board atualizado e planejamento.
+- Ninguém fica bloqueado: tarefa travada é avisada no mesmo dia.
 
 ## Visão geral
 
-| Semana | Tema | Entrega da semana |
+| Semana | Tema | Entrega |
 | --- | --- | --- |
-| 1 | Preparação do ambiente e estrutura | Repositório rodando com Docker |
-| 2 | Layout base e catálogo de filmes | Cartaz público com dados fictícios |
-| 3 | Banco de dados e conexão | Schema + seed + `conexao.php` |
-| 4 | CRUD de filmes | Admin cadastra/edita/exclui filme |
-| 5 | Salas e sessões | Admin monta a programação |
-| 6 | Página do filme e sessões públicas | Público vê horários disponíveis |
-| 7 | Reserva de ingressos | Reserva gravada no banco |
-| 8 | Mapa de assentos (JS) | Escolha de assentos com validação |
-| 9 | Login e proteção do painel | Rotas admin protegidas |
-| 10 | Dashboard e filtros | Indicadores e busca de reservas |
-| 11 | POO e refatoração | Classes `Filme`, `Sessao`, `Reserva` |
-| 12 | Acabamento e apresentação | Documentação, prints e demo |
+| 1 | Base e conteúdo | Docker no ar + `docs/EIXOS.md` + matriz de perguntas |
+| 2 | Banco | `schema.sql` + `seed.sql` (8 eixos, 32 perguntas, 52 entidades, 32 obras, 16 arquétipos) |
+| 3 | Núcleo PHP | autoload, config, sessão, CSRF, `LikertCalculatorService` + testes |
+| 4 | Matcher | `MatcherService` (ranking, arquétipo, raridade, sinergia) + testes |
+| 5 | Quiz e resultado | `quiz.php`, `resultado.php`, radar SVG, 6 espelhos e estante |
+| 6 | Admin e fechamento | login, CRUD de conteúdo, dashboard — **MVP** |
+| 7 | Sinergia | `sinergia.php`, comparação e filme da dupla |
+| 8 | Inglês | `lang/en.json`, seletor de idioma, revisão de microcopy |
+| 9 | TMDB I | `TmdbService`, cache MySQL, fotos de personagens e atores |
+| 10 | TMDB II | retratos de diretores, logos, obras e `003_enriquecimento.sql` |
+| 11 | GeoCinema | Overpass (`nwr` + `out center`), CEP via BrasilAPI, Haversine |
+| 12 | Acabamento | prints, README, ensaio com `down -v`, release `v1.0.0` |
 
-## Detalhamento semanal
+## Detalhamento
 
-### Semana 1 — Preparação do ambiente e estrutura
-**Meta:** todo mundo consegue rodar o projeto.
+### Semana 1 — Base e conteúdo
+- Dev A: subir o stack, trocar o DocumentRoot para `public/`, `down -v` funcionando.
+- Dev B: fechar o design system (tokens, tipografia, componentes) a partir da referência.
+- Ambos: `docs/EIXOS.md` com a régua de 0–100 e as 32 afirmações.
+- ✅ Entrega: `docker compose up` limpo e conteúdo aprovado.
 
-- Dev A: subir `docker-compose.yml`, `Dockerfile`, `.env.example`; validar apache + PHP + MySQL.
-- Dev B: criar `include/cabecalho.php` com navbar Bootstrap e tema claro/escuro (localStorage).
-- Ambos: alinhar nome/identidade visual, criar board de tarefas e o `docs/CRONOGRAMA.md`.
-- ✅ Entrega: `docker compose up` funcionando para os dois.
+### Semana 2 — Banco de dados
+- Dev A: `001_schema.sql` (7 tabelas, checks, FKs, índices) e `002_seed.sql`.
+- Dev A: base sintética de 400 perfis com distribuição triangular.
+- Dev B: conferir tudo no phpMyAdmin; validar acentuação em utf8mb4.
+- ✅ Entrega: banco populado na primeira subida.
 
-### Semana 2 — Layout base e catálogo de filmes
-**Meta:** página inicial com cartaz, ainda com dados fixos.
+### Semana 3 — Núcleo PHP
+- Dev A: `src/Core` (Database, Session, Csrf, Http, Translator, Vetor), bootstrap e autoload.
+- Dev A: `LikertCalculatorService` + 12 testes.
+- Dev B: partials, header, footer, landing com dados do banco.
+- ✅ Entrega: home 200 renderizando os 8 eixos.
 
-- Dev A: `include/config.php` (nome do cinema, funções auxiliares) e estrutura de pastas.
-- Dev B: `index.php` com grid de cards Bootstrap (pôster, título, gênero, classificação) usando array fixo.
-- ✅ Entrega: cartaz responsivo com 6 filmes fictícios.
+### Semana 4 — Matcher
+- Dev A: `MatcherService` (distância, afinidade, top por tipo, arquétipo, raridade, comparar).
+- Dev A: `PerfilController` e `QuizController`.
+- Dev B: tela de escolha de formato e esqueleto do quiz.
+- ✅ Entrega: 26 testes verdes.
 
-### Semana 3 — Banco de dados e conexão
-**Meta:** banco criado e populado.
+### Semana 5 — Quiz e resultado
+- Dev B: quiz (progresso segmentado, teclado, rascunho, envio fetch).
+- Dev B: resultado com barras duplas, radar, cards e compartilhamento.
+- Dev A: `api/quiz.php`, geração de código e persistência.
+- ✅ Entrega: fluxo completo 16 → resultado → link compartilhável.
 
-- Dev A: `sql/001_schema.sql` (usuarios, generos, filmes, salas, sessoes, reservas) e `sql/002_seed.sql`.
-- Dev B: `include/conexao.php` + teste de conexão; conferir tabelas no phpMyAdmin.
-- ✅ Entrega: schema e seed aplicados automaticamente na subida do Docker.
+### Semana 6 — Admin e fechamento do MVP
+- Dev A: login, sessão, CSRF, dashboard e CRUD de eixos/perguntas/entidades/arquétipos.
+- Dev B: revisão responsiva, acessibilidade e mensagens de erro.
+- Ambos: checklist de segurança (prepared statements, escape, CSRF).
+- ✅ Entrega: MVP em produção local.
 
-### Semana 4 — CRUD de filmes
-**Meta:** primeiro CRUD completo.
+### Semana 7 — Sinergia
+- Dev A: `compareResults` no matcher, médias e vereditos.
+- Dev B: `sinergia.php` com radar duplo e "filme da dupla".
+- ✅ Entrega: dois códigos → compatibilidade.
 
-- Dev A: `classes/Filme.php` com `salvar()`, `listarTodos()`, `buscar()`, `atualizar()`, `excluir()`.
-- Dev B: `admin/filmes.php` (listagem + busca) e formulário de cadastro/edição.
-- ✅ Entrega: admin gerencia o catálogo; exclusão com confirmação.
+### Semana 8 — Inglês
+- Dev A: chaves `texto_key`/`*_key` já existentes + `Translator` por locale.
+- Dev B: `lang/en.json`, seletor e revisão de layout com textos longos.
+- ✅ Entrega: interface em pt-BR e EN.
 
-### Semana 5 — Salas e sessões
-**Meta:** programação do cinema montada.
+### Semanas 9–10 — Enriquecimento TMDB
+- Dev A: `TmdbService` com cURL, cache `sha256`, TTL 24h e chave só no servidor.
+- Dev A: busca de filme/pessoa/empresa, retratos, logos e pôsteres das obras.
+- Dev A: `bin/tmdb_sync.php` + `bin/tmdb_export.php` → `sql/003_enriquecimento.sql`.
+- Dev B: fichas ricas (pôster, intérprete, biografia), estante e fallback de monograma.
+- ✅ Entrega: catálogo com fotos e fichas, offline-safe após o export.
 
-- Dev A: CRUD de salas e sessoes; validação de conflito (mesma sala, mesma data/hora).
-- Dev B: telas de salas e sessões, com selects de filme/sala e campos de data/hora/preço.
-- ✅ Entrega: admin cadastra sessão vinculada a filme e sala.
+### Semana 11 — GeoCinema
+- Dev A: Overpass (`nwr` + `out center`), Haversine e CEP via BrasilAPI.
+- Dev B: widget "Assistir hoje perto de você" com geolocalização do navegador.
+- ✅ Entrega: cinemas reais ordenados por distância.
 
-### Semana 6 — Página do filme e sessões públicas
-**Meta:** público consulta a programação real.
+### Semana 12 — Acabamento
+- Ambos: prints em `docs/prints/`, README final e roteiro de apresentação.
+- Dev A: ensaio do zero com `docker compose down -v`.
+- Dev B: estados vazios, 404 amigável e polimento.
+- ✅ Entrega: release `v1.0.0`.
 
-- Dev A: consulta de sessões por filme e por data (`Sessao::listarPorFilme()`).
-- Dev B: `filme.php` com sinopse, trailer e lista de sessões; filtro por data no `index.php`.
-- ✅ Entrega: cartaz alimentado pelo banco + página de detalhes.
-
-### Semana 7 — Reserva de ingressos
-**Meta:** primeira reserva gravada.
-
-- Dev A: `classes/Reserva.php`, cálculo de valor total e validação de vagas.
-- Dev B: `sessao.php` (formulário de reserva) e `reserva_sucesso.php` (comprovante).
-- ✅ Entrega: reserva persistida e comprovante exibido.
-
-### Semana 8 — Mapa de assentos (JavaScript)
-**Meta:** escolha visual de assentos.
-
-- Dev B: grid de assentos em JS (selecionados, ocupados, quantidade máxima), máscara de telefone e validação do formulário.
-- Dev A: endpoint/consulta de assentos ocupados por sessão e gravação da lista de assentos.
-- ✅ Entrega: assentos escolhidos, validados no cliente e no servidor.
-
-### Semana 9 — Login e proteção do painel
-**Meta:** painel restrito.
-
-- Dev A: `login.php`, `auth.php` (`password_verify`), `logout.php`, `include/check_login.php` e `gerar_senha.php`.
-- Dev B: tela de login estilizada e ajuste da navbar conforme sessão.
-- ✅ Entrega: rotas `admin/*` redirecionam para o login quando não autenticado.
-
-### Semana 10 — Dashboard e filtros
-**Meta:** painel útil no dia a dia.
-
-- Dev A: consultas de indicadores (sessões do dia, ingressos vendidos, receita, ocupação).
-- Dev B: `admin/dashboard.php` com cards e `admin/reservas.php` com filtros (cliente, data, status) e ações de confirmar/cancelar.
-- ✅ Entrega: dashboard com números reais e reservas gerenciáveis.
-
-### Semana 11 — POO e refatoração
-**Meta:** código organizado e explicável na apresentação.
-
-- Dev A: mover regras para as classes, eliminar SQL duplicado nas páginas, tratar erros com `try/catch`.
-- Dev B: revisar acessibilidade, responsividade e mensagens de feedback (alertas de sucesso/erro).
-- Ambos: revisão de segurança — prepared statements em 100% das queries, `htmlspecialchars` em todas as saídas, CSRF nos formulários.
-- ✅ Entrega: projeto refatorado sem regressão funcional.
-
-### Semana 12 — Acabamento e apresentação
-**Meta:** entrega final.
-
-- Ambos: dados de demonstração, prints em `docs/prints/`, README final, roteiro de apresentação.
-- Dev A: ensaio do fluxo completo (subir do zero com `down -v` e validar).
-- Dev B: polimento visual, tela de "em breve" e 404 amigável.
-- ✅ Entrega: release `v1.0.0` e apresentação.
-
-## Marcos (milestones)
+## Marcos
 
 | Marco | Semana | Critério |
 | --- | --- | --- |
-| M1 — Base rodando | 1 | Docker sobe e abre a home |
-| M2 — Catálogo no banco | 4 | Filmes vindos do MySQL, CRUD no admin |
-| M3 — Programação | 6 | Sessões públicas por filme e data |
-| M4 — Reservas | 8 | Reserva com assentos validados |
-| M5 — Painel completo | 10 | Login + dashboard + gestão de reservas |
-| M6 — Entrega | 12 | Release e apresentação |
-
-## Backlog (se sobrar tempo)
-
-- Cadastro de clientes com histórico de reservas.
-- Combos de pipoca e ingressos com desconto.
-- Relatório de ocupação por sala com gráfico (Chart.js).
-- Envio de comprovante por e-mail ou WhatsApp.
-- API JSON simples para consulta de sessões.
+| M1 — Base rodando | 1 | Docker sobe e a home abre |
+| M2 — Conteúdo no banco | 2 | 8 eixos, 32 perguntas, 52 entidades e 32 obras |
+| M3 — Cálculo confiável | 4 | 45 testes verdes |
+| M4 — Fluxo completo | 5 | Quiz → resultado → código |
+| M5 — MVP | 6 | Admin com login e CRUD |
+| M6 — Entrega | 12 | Release, catálogo enriquecido e apresentação |
 
 ## Riscos e planos B
 
 | Risco | Plano B |
 | --- | --- |
-| Ambiente Docker com problema em uma máquina | Rodar com PHP/MySQL instalados localmente; `conexao.php` lê variáveis de ambiente |
-| Semana atrasada | Cortar itens do backlog e o mapa visual de assentos (usar select de quantidade) |
-| Conflito de merge | PRs pequenos, sempre puxar `main` antes de começar a tarefa |
-| Falta de tempo para o dashboard | Priorizar CRUD + reservas, que valem mais na avaliação |
+| Conflito de portas no Docker | trocar 8090/8091 no compose |
+| Conteúdo atrasado | reduzir para 24 perguntas (3 por eixo) mantendo a fórmula |
+| TMDB sem chave | `003_seed_cache.sql` com respostas pré-gravadas |
+| Overpass instável | cache local + lista de cinemas de exemplo em `cache_tmdb` |
+| Semana atrasada | cortar backlog (Elenco Ideal e GeoCinema) e manter o MVP |

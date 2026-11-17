@@ -1,0 +1,398 @@
+<?php
+
+declare(strict_types=1);
+
+/** Landing page do PersonaCut. */
+
+$config = require dirname(__DIR__) . '/src/bootstrap.php';
+
+use Models\Eixo;
+
+// Os eixos vêm do banco; se o banco ainda não estiver pronto, a página usa
+// uma lista estática para não quebrar a apresentação.
+$eixos = [];
+$eixosDoBanco = true;
+
+try {
+    $eixos = Eixo::todos(Core\Database::pdo());
+} catch (Throwable $erro) {
+    $eixosDoBanco = false;
+    $slugs = ['estetica', 'tom', 'universo', 'ritmo', 'moralidade', 'estrutura', 'atmosfera', 'epoca'];
+    $icones = ['frame', 'moon', 'building', 'feather', 'scale', 'list', 'home', 'film'];
+    $cores = [['#A9762F', '#6C63B5'], ['#4F7399', '#D9A441'], ['#4F7F5F', '#9B5BA6'], ['#4E8493', '#C2553A'], ['#6E6A9E', '#B98A2E'], ['#4E8080', '#A84F6B'], ['#9C6F82', '#3F7FA8'], ['#9A7B4F', '#479184']];
+
+    foreach ($slugs as $i => $slug) {
+        $eixos[] = [
+            'id' => $i + 1,
+            'slug' => $slug,
+            'ordem' => $i + 1,
+            'nome' => t('eixo.' . $slug . '.nome'),
+            'descricao' => t('eixo.' . $slug . '.desc'),
+            'polo_esq_key' => 'eixo.' . $slug . '.esq',
+            'polo_esq_nome' => t('eixo.' . $slug . '.esq'),
+            'polo_dir_key' => 'eixo.' . $slug . '.dir',
+            'polo_dir_nome' => t('eixo.' . $slug . '.dir'),
+            'cor_esq' => $cores[$i][0],
+            'cor_dir' => $cores[$i][1],
+            'icone_esq' => $icones[$i],
+            'icone_dir' => $icones[$i],
+        ];
+    }
+}
+
+$paginaTitulo = t('meta.title');
+$paginaDescricao = t('meta.description');
+
+$exemplo = [
+    'titulo' => 'O Alquimista da Imagem',
+    'barras' => [
+        ['rotulo' => 'Experimental', 'valor' => 84],
+        ['rotulo' => 'Épica', 'valor' => 72],
+        ['rotulo' => 'Fragmentada', 'valor' => 66],
+    ],
+];
+
+require __DIR__ . '/partials/head.php';
+require __DIR__ . '/partials/header.php';
+?>
+
+<div class="pc-marquee" aria-hidden="true">
+    <div class="pc-marquee__track">
+        <?php for ($volta = 0; $volta < 2; $volta++): ?>
+            <span>PersonaCut</span><i>✦</i>
+            <span>8 eixos</span><i>✦</i>
+            <span>Um perfil</span><i>✦</i>
+            <span>Cinema analógico</span><i>✦</i>
+            <span>Sem cadastro</span><i>✦</i>
+            <span>Resultado imediato</span><i>✦</i>
+        <?php endfor; ?>
+    </div>
+</div>
+
+<section class="pc-hero">
+    <div class="pc-wrap pc-hero__grid">
+        <div class="reveal">
+            <span class="pc-eyebrow"><?= e(t('home.hero.eyebrow')) ?></span>
+            <h1 class="pc-hero__title"><?= t('home.hero.title') ?></h1>
+            <p class="pc-hero__sub"><?= e(t('home.hero.subtitle')) ?></p>
+
+            <div class="pc-hero__cta">
+                <a class="pc-btn" href="<?= url('quiz.php') ?>">
+                    <?= e(t('home.hero.cta_primary')) ?>
+                    <?= icon('arrow-right', 18) ?>
+                </a>
+                <a class="pc-btn pc-btn--ghost" href="#eixos">
+                    <?= e(t('home.hero.cta_secondary')) ?>
+                </a>
+            </div>
+
+            <div class="pc-hero__meta">
+                <?php foreach (tl('home.hero.meta') as $item): ?>
+                    <span><?= e($item) ?></span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div class="reveal">
+            <div class="pc-example-card">
+                <div class="pc-example-card__top">
+                    <span class="pc-example-card__label">
+                        <?= icon('film', 14) ?>
+                        <?= e(t('home.hero.example_label')) ?>
+                    </span>
+                    <span class="pc-example-card__match"><b>92</b>% afinidade</span>
+                </div>
+
+                <h2 class="pc-example-card__title"><?= e($exemplo['titulo']) ?></h2>
+                <p class="pc-example-card__quote"><?= e(t('home.hero.example_quote')) ?></p>
+
+                <div class="pc-mini-bars">
+                    <?php foreach ($exemplo['barras'] as $barra): ?>
+                        <div class="pc-mini-bar">
+                            <div class="pc-mini-bar__head">
+                                <span><?= e($barra['rotulo']) ?></span>
+                                <span><?= pct($barra['valor']) ?></span>
+                            </div>
+                            <div class="pc-mini-bar__track">
+                                <div class="pc-mini-bar__fill" style="width: <?= (int) $barra['valor'] ?>%"></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="pc-example-card__foot">
+                    <span><?= e(t('home.hero.example_code')) ?></span>
+                    <span class="pc-example-card__code">7KQ2M9XA</span>
+                </div>
+
+                <div class="pc-hero__float" aria-hidden="true">
+                    <strong><?= e(t('home.hero.example_label')) ?></strong>
+                    <span>Rick Deckard · 94%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pc-section">
+    <div class="pc-wrap">
+        <div class="pc-section__head reveal">
+            <div>
+                <span class="pc-eyebrow"><?= e(t('home.discover.eyebrow')) ?></span>
+                <h2 class="pc-title"><?= e(t('home.discover.title')) ?></h2>
+            </div>
+            <p class="pc-lead"><?= e(t('home.discover.subtitle')) ?></p>
+        </div>
+
+        <div class="pc-features">
+            <?php foreach (tl('home.discover.cards') as $card): ?>
+                <article class="pc-feature reveal">
+                    <span class="pc-feature__icon"><?= icon((string) $card['icon'], 21) ?></span>
+                    <div>
+                        <h3><?= e($card['title']) ?></h3>
+                        <p><?= e($card['text']) ?></p>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="pc-section pc-example">
+    <div class="pc-wrap">
+        <div class="pc-example__grid">
+            <div class="reveal">
+                <span class="pc-eyebrow"><?= e(t('home.example.eyebrow')) ?></span>
+                <h2 class="pc-title"><?= e(t('home.example.title')) ?></h2>
+                <p class="pc-lead pc-mt-2"><?= e(t('home.example.note')) ?></p>
+                <a class="pc-link-arrow pc-mt-3" href="<?= url('quiz.php') ?>">
+                    <?= e(t('home.example.cta')) ?>
+                    <?= icon('arrow-right', 16) ?>
+                </a>
+            </div>
+
+            <div class="reveal">
+                <div class="pc-example__panel">
+                    <div class="pc-example__panel-head">
+                        <div>
+                            <span class="pc-example__badge"><?= icon('star', 12) ?> <?= e(t('resultado.affinity')) ?></span>
+                            <h3 class="pc-example__name"><?= e($exemplo['titulo']) ?></h3>
+                        </div>
+                        <span class="pc-chip pc-chip--red">92%</span>
+                    </div>
+
+                    <?php
+                    $linhasExemplo = [
+                        ['Estética', 'Clássico', 'Experimental', 84, '#8C5A2B', '#4F6480'],
+                        ['Atmosfera', 'Íntima', 'Épica', 72, '#8A5F6B', '#4A6B85'],
+                        ['Estrutura', 'Linear', 'Fragmentada', 66, '#3E6A66', '#9E5560'],
+                    ];
+                    foreach ($linhasExemplo as [$nome, $esq, $dir, $valor, $corEsq, $corDir]):
+                        ?>
+                        <div class="pc-axis-line">
+                            <div class="pc-axis-line__top">
+                                <span class="pc-axis-line__name"><?= e($nome) ?></span>
+                                <span class="pc-axis-line__intensity" data-level="tendencia"><?= e(t('resultado.intensity.tendencia')) ?></span>
+                            </div>
+                            <div class="pc-dual">
+                                <span class="pc-dual__pole"><b><?= pct(100 - $valor) ?></b> <?= e($esq) ?></span>
+                                <span class="pc-dual__track">
+                                    <span class="pc-dual__esq" style="width: <?= 100 - $valor ?>%; background: <?= e($corEsq) ?>"></span>
+                                    <span class="pc-dual__dir" style="width: <?= $valor ?>%; background: <?= e($corDir) ?>"></span>
+                                </span>
+                                <span class="pc-dual__pole pc-dual__pole--dir"><?= e($dir) ?> <b><?= pct($valor) ?></b></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pc-section pc-dark" id="como-funciona">
+    <div class="pc-wrap">
+        <div class="reveal" style="max-width:640px">
+            <span class="pc-eyebrow"><?= e(t('home.how.eyebrow')) ?></span>
+            <h2 class="pc-title"><?= e(t('home.how.title')) ?></h2>
+            <p class="pc-lead pc-mt-2"><?= e(t('home.how.subtitle')) ?></p>
+        </div>
+
+        <div class="pc-steps reveal">
+            <?php foreach (tl('home.how.steps') as $i => $passo): ?>
+                <article class="pc-step">
+                    <span class="pc-step__num"><?= str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                    <h3><?= e($passo['title']) ?></h3>
+                    <p><?= e($passo['text']) ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="pc-section" id="eixos">
+    <div class="pc-wrap">
+        <div class="pc-section__head reveal">
+            <div>
+                <span class="pc-eyebrow"><?= e(t('home.axes.eyebrow')) ?></span>
+                <h2 class="pc-title"><?= e(t('home.axes.title')) ?></h2>
+            </div>
+            <p class="pc-lead"><?= e(t('home.axes.subtitle')) ?></p>
+        </div>
+
+        <div class="pc-axes">
+            <?php foreach ($eixos as $i => $eixo): ?>
+                <article class="pc-axis-row reveal">
+                    <span class="pc-axis-row__num"><?= str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                    <span class="pc-axis-row__icon"><?= icon((string) $eixo['icone_esq'], 20) ?></span>
+                    <div>
+                        <h3><?= e(eixo_nome($eixo)) ?></h3>
+                        <div class="pc-axis-row__poles">
+                            <i class="pc-pole-dot" style="background: <?= e($eixo['cor_esq']) ?>"></i>
+                            <span><?= e(eixo_polo($eixo, 'esq')) ?></span>
+                            <span aria-hidden="true">↔</span>
+                            <i class="pc-pole-dot" style="background: <?= e($eixo['cor_dir']) ?>"></i>
+                            <span><?= e(eixo_polo($eixo, 'dir')) ?></span>
+                        </div>
+                        <p><?= e(eixo_descricao($eixo)) ?></p>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+
+        <?php if (!$eixosDoBanco): ?>
+            <p class="pc-hint pc-text-center pc-mt-3">Banco de dados indisponível: exibindo a definição estática dos eixos.</p>
+        <?php endif; ?>
+    </div>
+</section>
+
+<section class="pc-section" id="formatos" style="background: var(--pc-bg-2); border-block: 1px solid var(--pc-line);">
+    <div class="pc-wrap">
+        <div class="pc-section__head reveal">
+            <div>
+                <span class="pc-eyebrow"><?= e(t('home.formats.eyebrow')) ?></span>
+                <h2 class="pc-title"><?= e(t('home.formats.title')) ?></h2>
+            </div>
+            <p class="pc-lead"><?= e(t('home.formats.subtitle')) ?></p>
+        </div>
+
+        <div class="pc-formats">
+            <article class="pc-format reveal">
+                <span class="pc-format__label"><?= e(t('home.formats.quick.label')) ?></span>
+                <div class="pc-format__count">
+                    <b><?= e(t('home.formats.quick.count')) ?></b>
+                    <span><?= e(t('home.formats.quick.unit')) ?></span>
+                </div>
+                <p><?= e(t('home.formats.quick.text')) ?></p>
+                <hr class="pc-format__rule">
+                <div class="pc-format__meta">
+                    <?= icon('clock', 15) ?>
+                    <?= e(t('home.formats.quick.time')) ?>
+                </div>
+                <a class="pc-btn pc-btn--ghost" href="<?= url('quiz.php', ['modo' => 'rapido']) ?>">
+                    <?= e(t('home.formats.quick.cta')) ?>
+                    <?= icon('arrow-right', 17) ?>
+                </a>
+            </article>
+
+            <article class="pc-format pc-format--featured reveal">
+                <span class="pc-format__recommended"><?= e(t('home.formats.recommended')) ?></span>
+                <span class="pc-format__label"><?= e(t('home.formats.full.label')) ?></span>
+                <div class="pc-format__count">
+                    <b><?= e(t('home.formats.full.count')) ?></b>
+                    <span><?= e(t('home.formats.full.unit')) ?></span>
+                </div>
+                <p><?= e(t('home.formats.full.text')) ?></p>
+                <hr class="pc-format__rule">
+                <div class="pc-format__meta">
+                    <?= icon('clock', 15) ?>
+                    <?= e(t('home.formats.full.time')) ?>
+                </div>
+                <a class="pc-btn pc-btn--light" href="<?= url('quiz.php', ['modo' => 'completo']) ?>">
+                    <?= e(t('home.formats.full.cta')) ?>
+                    <?= icon('arrow-right', 17) ?>
+                </a>
+            </article>
+
+            <article class="pc-format reveal">
+                <span class="pc-format__label"><?= e(t('home.formats.extreme.label')) ?></span>
+                <div class="pc-format__count">
+                    <b><?= e(t('home.formats.extreme.count')) ?></b>
+                    <span><?= e(t('home.formats.extreme.unit')) ?></span>
+                </div>
+                <p><?= e(t('home.formats.extreme.text')) ?></p>
+                <hr class="pc-format__rule">
+                <div class="pc-format__meta">
+                    <?= icon('clock', 15) ?>
+                    <?= e(t('home.formats.extreme.time')) ?>
+                </div>
+                <a class="pc-btn pc-btn--ghost" href="<?= url('quiz.php', ['modo' => 'extremo']) ?>">
+                    <?= e(t('home.formats.extreme.cta')) ?>
+                    <?= icon('arrow-right', 17) ?>
+                </a>
+            </article>
+        </div>
+
+        <p class="pc-formats__note"><?= e(t('home.formats.note')) ?></p>
+
+        <form class="pc-open-code pc-mt-4" action="<?= url('resultado.php') ?>" method="get" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center">
+            <label class="pc-label" for="codigo-existente" style="margin:0"><?= e(t('home.open_code.label')) ?></label>
+            <input class="pc-input" id="codigo-existente" name="codigo" type="text" maxlength="8" placeholder="<?= e(t('home.open_code.placeholder')) ?>" required data-code-input style="width:170px">
+            <button class="pc-btn pc-btn--ghost pc-btn--sm" type="submit"><?= e(t('home.open_code.cta')) ?></button>
+        </form>
+    </div>
+</section>
+
+<section class="pc-section" id="comparar">
+    <div class="pc-wrap">
+        <div class="pc-compare reveal">
+            <div>
+                <span class="pc-eyebrow"><?= e(t('home.compare.eyebrow')) ?></span>
+                <h2 class="pc-title"><?= e(t('home.compare.title')) ?></h2>
+                <p class="pc-lead pc-mt-2"><?= e(t('home.compare.subtitle')) ?></p>
+            </div>
+
+            <div>
+                <form class="pc-compare__form" action="<?= url('sinergia.php') ?>" method="get">
+                    <div class="pc-field">
+                        <label class="pc-label" for="codigo-a"><?= e(t('home.compare.label_a')) ?></label>
+                        <input class="pc-input" id="codigo-a" name="a" type="text" maxlength="8" required data-code-input placeholder="ABCD2345">
+                    </div>
+                    <div class="pc-field">
+                        <label class="pc-label" for="codigo-b"><?= e(t('home.compare.label_b')) ?></label>
+                        <input class="pc-input" id="codigo-b" name="b" type="text" maxlength="8" required data-code-input placeholder="WXYZ6789">
+                    </div>
+                    <button class="pc-btn" type="submit">
+                        <?= e(t('home.compare.cta')) ?>
+                        <?= icon('users', 17) ?>
+                    </button>
+                </form>
+                <p class="pc-hint"><?= e(t('home.compare.hint')) ?></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pc-section">
+    <div class="pc-wrap pc-faq">
+        <div class="reveal">
+            <span class="pc-eyebrow"><?= e(t('home.faq.eyebrow')) ?></span>
+            <h2 class="pc-title"><?= e(t('home.faq.title')) ?></h2>
+            <p class="pc-lead pc-mt-2"><?= e(t('home.axes.subtitle')) ?></p>
+        </div>
+
+        <div class="pc-faq__list reveal">
+            <?php foreach (tl('home.faq.items') as $i => $item): ?>
+                <details<?= $i === 0 ? ' open' : '' ?>>
+                    <summary>
+                        <?= e($item['q']) ?>
+                        <?= icon('chevron', 18) ?>
+                    </summary>
+                    <p><?= e($item['a']) ?></p>
+                </details>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PersonaCut">
+  <rect width="64" height="64" rx="16" fill="#0c3b2e"/>
+  <path d="M18 45V19h9.2c5.4 0 8.6 2.9 8.6 7.4 0 4.6-3.3 7.5-8.8 7.5H23V45h-5Zm5-15h4.1c2.5 0 4-1.2 4-3.6 0-2.3-1.5-3.5-4-3.5H23V30Z" fill="#f7f3ea"/>
+  <circle cx="46" cy="42" r="4" fill="#c23a2b"/>
+</svg>

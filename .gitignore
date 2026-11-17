@@ -1,4 +1,5 @@
 .env
+config/env.php
 *.log
 
 # Metadados de arquivos baixados no Windows
@@ -8,8 +9,18 @@
 uploads/*
 !uploads/.gitkeep
 
+# Backups gerados por bin/midia_autofill.php
+storage/backups/
+
+# Cache e logs de execução (imagens do proxy, respostas geradas)
+storage/cache/
+storage/logs/
+
 # IDE / sistema
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Playwright / capturas locais de referência
+.playwright-mcp/
