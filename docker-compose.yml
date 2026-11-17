@@ -1,21 +1,21 @@
 services:
   db:
     image: docker.io/library/mysql:8.4
-    container_name: cineaxes-db
+    container_name: personacut-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS:-cineaxes123}
-      MYSQL_DATABASE: ${DB_NAME:-cineaxes}
-      MYSQL_USER: ${DB_USER:-cineaxes}
-      MYSQL_PASSWORD: ${DB_PASS:-cineaxes123}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-personacut123}
+      MYSQL_DATABASE: ${DB_NAME:-personacut}
+      MYSQL_USER: ${DB_USER:-personacut}
+      MYSQL_PASSWORD: ${DB_PASS:-personacut123}
     ports:
       - "3308:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./sql:/docker-entrypoint-initdb.d:ro,Z
     healthcheck:
-      # Só fica "healthy" depois que o schema e o seed terminaram de rodar
-      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE -e 'SELECT 1 FROM filmes LIMIT 1' >/dev/null 2>&1"]
+      # Só fica "healthy" depois que o schema e o seed terminaram de rodar.
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE -e 'SELECT 1 FROM eixos LIMIT 1' >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -23,31 +23,36 @@ services:
 
   app:
     build: .
-    container_name: cineaxes-app
+    container_name: personacut-app
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "8080:80"
+      - "8090:80"
     volumes:
       - .:/var/www/html:Z
     environment:
       DB_HOST: db
       DB_PORT: 3306
-      DB_USER: ${DB_USER:-cineaxes}
-      DB_PASS: ${DB_PASS:-cineaxes123}
-      DB_NAME: ${DB_NAME:-cineaxes}
+      DB_USER: ${DB_USER:-personacut}
+      DB_PASS: ${DB_PASS:-personacut123}
+      DB_NAME: ${DB_NAME:-personacut}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-}
+      GROQ_TRANSCRIPTION_MODEL: ${GROQ_TRANSCRIPTION_MODEL:-}
 
   phpmyadmin:
     image: docker.io/phpmyadmin:latest
-    container_name: cineaxes-phpmyadmin
+    container_name: personacut-phpmyadmin
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "8081:80"
+      - "8091:80"
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
