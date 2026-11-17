@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 /**
  * Análise completa do perfil (dashboard). Recebe o view model montado em
- * resultado.php: $perfil, $codigo, $tituloPerfil, $arquetipo, $dominantes,
+ * resultado.php: $perfil, $codigo, $tituloPerfil, $arquetipo,
  * $radar, $temGroq e $raridade.
  */
+
+$temRetro = $temRetro ?? false;
 ?>
 
     <section class="pc-result">
@@ -44,15 +46,12 @@ declare(strict_types=1);
 
                     <h2 class="pc-profile-card__title"><?= e($tituloPerfil) ?></h2>
 
-                    <?php if ($dominantes !== []): ?>
+                    <?php if ($perfil['leituras'] !== []): ?>
                         <div class="pc-profile-card__poles">
-                            <?php foreach ($dominantes as $dominante): ?>
+                            <?php foreach (array_slice($perfil['leituras'], 0, 2) as $leitura): ?>
                                 <span class="pc-chip">
-                                    <i class="pc-chip__dot" style="background: <?= e($dominante['cor']) ?>"></i>
-                                    <?= e($dominante['nome']) ?> · <?= e($dominante['polo']) ?>
-                                    <?php if ($dominante['pct'] !== null): ?>
-                                        <b class="pc-chip__pct"><?= pct((float) $dominante['pct']) ?></b>
-                                    <?php endif; ?>
+                                    <i class="pc-chip__dot" style="background: <?= e($leitura['cor']) ?>"></i>
+                                    <?= e($leitura['curto']) ?>
                                 </span>
                             <?php endforeach; ?>
                         </div>
@@ -75,15 +74,9 @@ declare(strict_types=1);
                             <span><?= e(t('resultado.ficha_affinity')) ?></span>
                             <b><?= pct($perfil['afinidade_media']) ?></b>
                         </div>
-                        <div class="pc-ficha__item">
-                            <span><?= e(t('resultado.ficha_rarity')) ?></span>
-                            <b>
-                                <?php if ($raridade['confiavel'] && $raridade['um_em'] !== null): ?>
-                                    <?= e(t('resultado.rarity_one_in', ['n' => $raridade['um_em']])) ?>
-                                <?php else: ?>
-                                    <?= e(t('resultado.rarity_initial')) ?>
-                                <?php endif; ?>
-                            </b>
+                        <div class="pc-ficha__item pc-ficha__item--reading">
+                            <span><?= e(t('resultado.ficha_reading')) ?></span>
+                            <b><?= e($perfil['leituras'][0]['curto'] ?? '—') ?></b>
                         </div>
                         <div class="pc-ficha__item">
                             <span><?= e(t('resultado.ficha_decade')) ?></span>
@@ -131,76 +124,125 @@ declare(strict_types=1);
                 </section>
             <?php endif; ?>
 
-            <div class="pc-result__grid">
-                <section class="pc-panel reveal">
-                    <div class="pc-panel__head">
-                        <div>
-                            <h2><?= e(t('resultado.axes_title')) ?></h2>
-                            <p><?= e(t('resultado.axes_subtitle')) ?></p>
-                        </div>
+            <section class="pc-panel pc-readings reveal" id="leituras">
+                <div class="pc-panel__head">
+                    <div>
+                        <h2><?= e(t('resultado.readings_title')) ?></h2>
+                        <p><?= e(t('resultado.readings_subtitle')) ?></p>
                     </div>
+                </div>
 
-                    <?php foreach ($perfil['linhas'] as $linha): ?>
-                        <div class="pc-axis-line">
-                            <div class="pc-axis-line__top">
-                                <span class="pc-axis-line__name">
-                                    <?= icon((string) $linha['eixo']['icone_esq'], 14) ?>
-                                    <?= e(eixo_nome($linha['eixo'])) ?>
-                                </span>
-                                <span class="pc-axis-line__intensity" data-level="<?= e($linha['intensidade']) ?>">
-                                    <?= e(t('resultado.intensity.' . $linha['intensidade'])) ?>
-                                </span>
+                <div class="pc-readings__grid<?= count($perfil['leituras']) === 1 ? ' pc-readings__grid--single' : '' ?>">
+                    <?php foreach ($perfil['leituras'] as $indice => $leitura): ?>
+                        <article class="pc-reading" style="--reading:<?= e($leitura['cor']) ?>">
+                            <div class="pc-reading__top">
+                                <span class="pc-reading__num"><?= str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                                <span class="pc-reading__eixo"><?= e($leitura['eixo']) ?> · <?= e($leitura['polo']) ?></span>
+                                <span class="pc-reading__forca"><?= e($leitura['forca']) ?></span>
                             </div>
 
-                            <div class="pc-dual">
-                                <span class="pc-dual__pole"><b><?= pct($linha['pct_esq']) ?></b> <?= e($linha['rotulo_esq']) ?></span>
-                                <span class="pc-dual__track">
-                                    <span class="pc-dual__esq" data-bar="<?= num_css($linha['pct_esq']) ?>" style="width:0;background:<?= e($linha['cor_esq']) ?>"></span>
-                                    <span class="pc-dual__dir" data-bar="<?= num_css($linha['pct_dir']) ?>" style="width:0;background:<?= e($linha['cor_dir']) ?>"></span>
-                                </span>
-                                <span class="pc-dual__pole pc-dual__pole--dir"><?= e($linha['rotulo_dir']) ?> <b><?= pct($linha['pct_dir']) ?></b></span>
+                            <h3 class="pc-reading__title"><?= e($leitura['manchete']) ?></h3>
+                            <p class="pc-reading__body"><?= e($leitura['corpo']) ?></p>
+
+                            <div class="pc-reading__films">
+                                <span><?= e(t('retro.reading.matches')) ?></span>
+                                <ul>
+                                    <?php foreach ($leitura['combina'] as $filme): ?>
+                                        <li><?= e($filme['titulo']) ?> <small><?= (int) $filme['ano'] ?></small></li>
+                                    <?php endforeach; ?>
+                                </ul>
                             </div>
-                        </div>
+
+                            <p class="pc-reading__tired">
+                                <span><?= e(t('retro.reading.tired')) ?></span>
+                                <?= e($leitura['cansa']) ?>
+                            </p>
+
+                            <?php if ($leitura['espelho'] !== null): ?>
+                                <p class="pc-reading__mirror">
+                                    <?= e(t('retro.reading.mirror', [
+                                        'nome' => $leitura['espelho']['nome'],
+                                        'obra' => $leitura['espelho']['obra'],
+                                    ])) ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <span class="pc-reading__technical">
+                                <?= e($leitura['pct'] !== null
+                                    ? t('retro.reading.technical', [
+                                        'eixo' => $leitura['eixo'],
+                                        'polo' => $leitura['polo'],
+                                        'pct' => numero((float) $leitura['pct'], 0),
+                                    ])
+                                    : t('retro.reading.technical_neutral', [
+                                        'eixo' => $leitura['eixo'],
+                                        'polo' => $leitura['polo'],
+                                    ])) ?>
+                            </span>
+                        </article>
                     <?php endforeach; ?>
-                </section>
+                </div>
 
-                <section class="pc-panel pc-panel--radar reveal">
-                    <div class="pc-panel__head">
-                        <div>
-                            <h2><?= e(t('resultado.radar_title')) ?></h2>
-                            <p><?= e(t('resultado.radar_subtitle')) ?></p>
-                        </div>
+                <p class="pc-readings__note"><?= e(t('resultado.readings_note')) ?></p>
+            </section>
+
+            <details class="pc-dados">
+                <summary>
+                    <span><?= e(t('resultado.technical_title')) ?></span>
+                    <small><?= e(t('resultado.technical_help')) ?></small>
+                </summary>
+
+                <div class="pc-dados__body">
+                    <div class="pc-result__grid">
+                        <section class="pc-panel">
+                            <div class="pc-panel__head">
+                                <div>
+                                    <h2><?= e(t('resultado.axes_title')) ?></h2>
+                                    <p><?= e(t('resultado.axes_subtitle')) ?></p>
+                                </div>
+                            </div>
+
+                            <?php foreach ($perfil['linhas'] as $linha): ?>
+                                <div class="pc-axis-line">
+                                    <div class="pc-axis-line__top">
+                                        <span class="pc-axis-line__name">
+                                            <?= icon((string) $linha['eixo']['icone_esq'], 14) ?>
+                                            <?= e(eixo_nome($linha['eixo'])) ?>
+                                        </span>
+                                        <span class="pc-axis-line__intensity" data-level="<?= e($linha['intensidade']) ?>">
+                                            <?= e(t('resultado.intensity.' . $linha['intensidade'])) ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="pc-dual">
+                                        <span class="pc-dual__pole"><b><?= pct($linha['pct_esq']) ?></b> <?= e($linha['rotulo_esq']) ?></span>
+                                        <span class="pc-dual__track">
+                                            <span class="pc-dual__esq" data-bar="<?= num_css($linha['pct_esq']) ?>" style="width:0;background:<?= e($linha['cor_esq']) ?>"></span>
+                                            <span class="pc-dual__dir" data-bar="<?= num_css($linha['pct_dir']) ?>" style="width:0;background:<?= e($linha['cor_dir']) ?>"></span>
+                                        </span>
+                                        <span class="pc-dual__pole pc-dual__pole--dir"><?= e($linha['rotulo_dir']) ?> <b><?= pct($linha['pct_dir']) ?></b></span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </section>
+
+                        <section class="pc-panel pc-panel--radar reveal">
+                            <div class="pc-panel__head">
+                                <div>
+                                    <h2><?= e(t('resultado.radar_title')) ?></h2>
+                                    <p><?= e(t('resultado.radar_subtitle')) ?></p>
+                                </div>
+                            </div>
+
+                            <div class="pc-radar-wrap">
+                                <?= $radar ?>
+                            </div>
+
+                            <p class="pc-radar__caption"><?= e(t('resultado.radar_caption')) ?></p>
+                        </section>
                     </div>
-
-                    <div class="pc-radar-wrap">
-                        <?= $radar ?>
-                    </div>
-
-                    <p class="pc-radar__caption"><?= e(t('resultado.radar_caption')) ?></p>
-                </section>
-            </div>
-
-            <?php if ($perfil['retrato'] !== []): ?>
-                <section class="pc-panel pc-retrato reveal">
-                    <div class="pc-panel__head">
-                        <div>
-                            <h2><?= e(t('resultado.portrait_title')) ?></h2>
-                            <p><?= e(t('resultado.portrait_subtitle')) ?></p>
-                        </div>
-                    </div>
-
-                    <div class="pc-retrato__grid">
-                        <?php foreach ($perfil['retrato'] as $item): ?>
-                            <article class="pc-retrato__item">
-                                <span class="pc-retrato__tag" style="--tag-color: <?= e($item['cor']) ?>">
-                                    <?= e($item['eixo']) ?> · <?= e($item['polo']) ?> <?= pct($item['pct']) ?>
-                                </span>
-                                <p><?= e($item['texto']) ?></p>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-            <?php endif; ?>
+                </div>
+            </details>
 
             <?php $ins = $perfil['insights']; ?>
             <section class="pc-section" id="insights">
@@ -213,30 +255,6 @@ declare(strict_types=1);
                 </div>
 
                 <div class="pc-insights">
-                    <?php if ($ins['distincao'] !== null): ?>
-                        <article class="pc-insight reveal">
-                            <span class="pc-insight__icon"><?= icon('compass', 18) ?></span>
-                            <span class="pc-insight__label"><?= e(t('resultado.insights.distincao_title')) ?></span>
-                            <span class="pc-insight__value">
-                                <i class="pc-insight__dot" style="background: <?= e($ins['distincao']['cor']) ?>"></i>
-                                <?= e($ins['distincao']['eixo']) ?> · <?= e($ins['distincao']['polo']) ?>
-                            </span>
-                            <p><?= e(t('resultado.insights.distincao_text', [
-                                'polo' => $ins['distincao']['polo'],
-                                'pct' => numero($ins['distincao']['percentil'], 0),
-                            ])) ?></p>
-                        </article>
-                    <?php endif; ?>
-
-                    <?php if ($ins['tipico'] !== null): ?>
-                        <article class="pc-insight reveal">
-                            <span class="pc-insight__icon"><?= icon('scale', 18) ?></span>
-                            <span class="pc-insight__label"><?= e(t('resultado.insights.tipico_title')) ?></span>
-                            <span class="pc-insight__value"><?= e($ins['tipico']['eixo']) ?> · <?= pct($ins['tipico']['pct']) ?></span>
-                            <p><?= e(t('resultado.insights.tipico_text', ['eixo' => $ins['tipico']['eixo']])) ?></p>
-                        </article>
-                    <?php endif; ?>
-
                     <?php if ($ins['decada'] !== null): ?>
                         <article class="pc-insight pc-insight--decade reveal">
                             <span class="pc-insight__icon"><?= icon('clock', 18) ?></span>
@@ -259,6 +277,7 @@ declare(strict_types=1);
                                 'obra' => $ins['oposto']['obra'],
                                 'pct' => numero($ins['oposto']['afinidade'], 0),
                             ])) ?></p>
+                            <p><?= e(t('retro.insights.oposto_cta', ['obra' => $ins['oposto']['obra']])) ?></p>
                         </article>
                     <?php endif; ?>
 

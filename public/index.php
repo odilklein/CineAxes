@@ -46,7 +46,7 @@ $paginaDescricao = t('meta.description');
 /*
  * Card de exemplo da landing: usa um perfil real da base sintética, montado pelo
  * mesmo PerfilController do resultado. Assim o exemplo nunca "envelhece" e mostra
- * o arquétipo, os eixos e os espelhos de verdade. Sem banco, cai num exemplo fixo.
+ * o arquétipo, as marcas e os espelhos de verdade. Sem banco, cai num exemplo fixo.
  */
 $exemplo = [
     'codigo' => '',
@@ -54,6 +54,7 @@ $exemplo = [
     'descricao' => 'Um perfil equilibrado, que transita entre os dois polos de cada eixo.',
     'afinidade' => 0.0,
     'barras' => [],
+    'marcas' => [],
     'espelhos' => [],
     'linhas' => [],
 ];
@@ -105,6 +106,13 @@ try {
                         'cor'    => $linha['cor'],
                     ],
                     $destacadas
+                ),
+                'marcas' => array_map(
+                    static fn (array $leitura): array => [
+                        'curto' => (string) $leitura['curto'],
+                        'cor'   => (string) $leitura['cor'],
+                    ],
+                    $perfilExemplo['leituras']
                 ),
                 'espelhos' => array_map(
                     static fn (array $p): array => [
@@ -194,19 +202,19 @@ require __DIR__ . '/partials/header.php';
                     <p class="pc-example-card__quote"><?= e($exemplo['descricao']) ?></p>
                 <?php endif; ?>
 
-                <?php if ($exemplo['barras'] !== []): ?>
-                    <div class="pc-mini-bars">
-                        <?php foreach ($exemplo['barras'] as $barra): ?>
-                            <div class="pc-mini-bar">
-                                <div class="pc-mini-bar__head">
-                                    <span><?= e($barra['rotulo']) ?> · <?= e($barra['polo']) ?></span>
-                                    <span><?= pct($barra['pct']) ?></span>
-                                </div>
-                                <div class="pc-mini-bar__track">
-                                    <div class="pc-mini-bar__fill" style="width: <?= num_css($barra['pct']) ?>%; background: <?= e($barra['cor']) ?>"></div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
+                <?php if ($exemplo['marcas'] !== []): ?>
+                    <div class="pc-example-card__marks">
+                        <span class="pc-example-card__marks-label">
+                            <?= e(t(count($exemplo['marcas']) === 1 ? 'resultado.story_mark' : 'resultado.story_marks', ['n' => count($exemplo['marcas'])])) ?>
+                        </span>
+                        <ul>
+                            <?php foreach ($exemplo['marcas'] as $marca): ?>
+                                <li>
+                                    <i style="background:<?= e($marca['cor']) ?>"></i>
+                                    <span><?= e($marca['curto']) ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
                     </div>
                 <?php endif; ?>
 

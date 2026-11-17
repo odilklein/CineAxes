@@ -5148,3 +5148,328 @@ body.pc-qv-open {
 }
 
 .pc-format .pc-btn:hover .pc-ico { transform: translateX(3px); }
+
+/* ---------------------- 34. Retrospectiva (reentrada) --------------------- */
+.pc-result__code {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.pc-result__code > span {
+  flex: 1 1 150px;
+}
+
+.pc-retro-open {
+  flex: 0 0 auto;
+}
+
+/* ------------------------ 35. Leituras do perfil -------------------------- */
+.pc-readings__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pc-reading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--pc-line);
+  border-top: 3px solid var(--reading);
+  border-radius: var(--pc-radius);
+  background: var(--pc-surface);
+}
+
+.pc-reading__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pc-reading__num {
+  color: var(--reading);
+  font-family: var(--pc-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.pc-reading__eixo {
+  color: var(--pc-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pc-reading__forca {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--pc-line);
+  border-radius: 999px;
+  color: var(--pc-muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pc-reading__title {
+  font-family: var(--pc-serif);
+  font-size: clamp(20px, 2.2vw, 24px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.pc-reading__body {
+  color: var(--pc-ink-2);
+  font-size: 13.5px;
+  line-height: 1.62;
+}
+
+.pc-reading__films {
+  display: grid;
+  gap: 5px;
+}
+
+.pc-reading__films > span {
+  color: var(--pc-muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pc-reading__films ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-reading__films li {
+  padding: 4px 9px;
+  border: 1px solid var(--pc-line);
+  border-radius: 999px;
+  color: var(--pc-ink-2);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.pc-reading__films small {
+  margin-left: 3px;
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+}
+
+.pc-reading__tired {
+  padding-left: 10px;
+  border-left: 2px solid var(--pc-line-2);
+  color: var(--pc-ink-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.pc-reading__tired span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--pc-red);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pc-reading__mirror {
+  color: var(--pc-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.pc-reading__technical {
+  margin-top: auto;
+  padding-top: 4px;
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  opacity: 0.65;
+}
+
+.pc-readings__note {
+  margin-top: 14px;
+  color: var(--pc-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+/* --------------------------- 36. Dados técnicos --------------------------- */
+.pc-dados {
+  margin-top: 18px;
+  border: 1px dashed var(--pc-line-2);
+  border-radius: var(--pc-radius);
+  background: var(--pc-surface-2);
+}
+
+.pc-dados > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.pc-dados > summary::-webkit-details-marker { display: none; }
+
+.pc-dados > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--pc-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pc-dados[open] > summary::after { content: '−'; }
+
+.pc-dados > summary > span {
+  color: var(--pc-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pc-dados > summary > small {
+  color: var(--pc-muted);
+  font-size: 11px;
+}
+
+.pc-dados__body { padding: 0 18px 18px; }
+.pc-dados__body .pc-result__grid { margin-top: 0; }
+
+@media (max-width: 900px) {
+  .pc-readings__grid { grid-template-columns: 1fr; }
+}
+
+/* ---------------------- 37. Marcas no card de story ----------------------- */
+.pc-story__marks {
+  display: grid;
+  gap: 6px;
+}
+
+.pc-story__marks-label {
+  color: rgba(247, 238, 218, 0.5);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.pc-story__marks ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-story__marks li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: #f7eeda;
+  font-size: 9.5px;
+  line-height: 1.2;
+}
+
+.pc-story__marks li i {
+  width: 4px;
+  height: 4px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--mark);
+}
+
+.pc-story__marks li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-ficha__item--reading b {
+  display: -webkit-box;
+  overflow: hidden;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pc-dados .pc-dual__pole {
+  width: 30%;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.pc-dados .pc-dual { font-size: 10px; }
+
+.pc-ficha__item { align-content: start; }
+
+.pc-example-card__marks {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(247, 243, 234, 0.18);
+}
+
+.pc-example-card__marks-label {
+  color: rgba(247, 243, 234, 0.5);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.pc-example-card__marks ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-example-card__marks li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #f7eeda;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.pc-example-card__marks li i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.pc-example-card__marks li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-readings__grid--single {
+  grid-template-columns: 1fr;
+}

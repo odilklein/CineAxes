@@ -13,6 +13,7 @@ use Core\Vetor;
 use Models\Resultado;
 use PDO;
 use Services\LikertCalculatorService;
+use Services\LeituraService;
 use Services\MatcherService;
 use Services\RetratoService;
 
@@ -22,12 +23,17 @@ use Services\RetratoService;
  */
 final class PerfilController
 {
+    /** @var array<string, mixed> */
+    private readonly array $leiturasConfig;
+
     public function __construct(
         private readonly PDO $pdo,
         private readonly MatcherService $matcher,
         private readonly LikertCalculatorService $likert,
         private readonly array $config
     ) {
+        $base = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2);
+        $this->leiturasConfig = require $base . '/config/leituras.php';
     }
 
     /** @return array<string, mixed>|null */
@@ -129,11 +135,14 @@ final class PerfilController
             ? round(array_sum(array_column($personagens, 'afinidade')) / count($personagens), 0)
             : 0.0;
 
+        $leituras = (new LeituraService($this->leiturasConfig))->selecionar($linhas, $personagens);
+
         return [
             'resultado'       => $resultado,
             'vetor'           => $vetor,
             'eixos'           => $eixos,
             'linhas'          => $linhas,
+            'leituras'        => $leituras,
             'arquetipo'       => $arquetipo,
             'resolucao'       => $resolucao,
             'neutro'          => $arquetipo === null,

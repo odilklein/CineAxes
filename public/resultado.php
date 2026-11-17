@@ -60,48 +60,10 @@ if ($perfil !== null && !$modoCompleto && $temRetro) {
     $bodyClass = 'pc-story-open';
 }
 
-$dominantes = [];
-$eixosPorId = [];
 $radar = '';
 $extremos = [];
 
 if ($perfil !== null) {
-    foreach ($perfil['eixos'] as $eixo) {
-        $eixosPorId[(int) $eixo['id']] = $eixo;
-    }
-
-    foreach ([
-        ['id' => $perfil['resolucao']['eixo_1'], 'polo' => $perfil['resolucao']['polo_1']],
-        ['id' => $perfil['resolucao']['eixo_2'], 'polo' => $perfil['resolucao']['polo_2']],
-    ] as $dominante) {
-        if ($dominante['id'] === null) {
-            continue;
-        }
-
-        $eixo = $eixosPorId[(int) $dominante['id']] ?? null;
-
-        if ($eixo === null) {
-            continue;
-        }
-
-        $ehDireita = $dominante['polo'] === 'D';
-        $pct = null;
-
-        foreach ($perfil['linhas'] as $linha) {
-            if ((int) ($linha['eixo']['id'] ?? 0) === (int) $dominante['id']) {
-                $pct = $ehDireita ? (float) $linha['pct_dir'] : (float) $linha['pct_esq'];
-                break;
-            }
-        }
-
-        $dominantes[] = [
-            'nome' => eixo_nome($eixo),
-            'polo' => eixo_polo($eixo, $ehDireita ? 'dir' : 'esq'),
-            'cor'  => $ehDireita ? (string) $eixo['cor_dir'] : (string) $eixo['cor_esq'],
-            'pct'  => $pct,
-        ];
-    }
-
     $radar = Radar::render(
         array_map(static fn (array $linha): string => eixo_nome($linha['eixo']), $perfil['linhas']),
         [[

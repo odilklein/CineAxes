@@ -16,6 +16,7 @@ require __DIR__ . '/MatcherTest.php';
 require __DIR__ . '/MidiaTest.php';
 require __DIR__ . '/SceneTest.php';
 require __DIR__ . '/RadarTest.php';
+require __DIR__ . '/LeituraTest.php';
 require __DIR__ . '/ModosTest.php';
 
 exit(resumoTestes());

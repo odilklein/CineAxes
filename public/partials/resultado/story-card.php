@@ -5,10 +5,15 @@ declare(strict_types=1);
 /**
  * Card 9:16 do perfil. Reaproveitado na análise completa e no capítulo final
  * da retrospectiva. Depende de $codigo, $tituloPerfil e $perfil.
+ *
+ * A partir desta versão, o card não mostra os 8 eixos: mostra as marcas que o
+ * perfil gerou. A leitura técnica fica na análise completa.
  */
 
 $storyChars = array_slice($perfil['personagens'], 0, 3);
 $storyFilms = array_slice($perfil['estante'], 0, 3);
+$storyMarks = array_slice($perfil['leituras'] ?? [], 0, 4);
+$storyTotalMarcas = count($perfil['leituras'] ?? []);
 ?>
 <div class="pc-story" data-story data-codigo="<?= e($codigo) ?>">
     <div class="pc-story__top">
@@ -16,14 +21,18 @@ $storyFilms = array_slice($perfil['estante'], 0, 3);
         <span class="pc-story__kicker"><?= e(t('resultado.story_kicker')) ?></span>
     </div>
 
-    <div class="pc-story__rarity">
-        <?php if ($raridade['confiavel']): ?>
-            <strong><?= $raridade['um_em'] !== null ? e(t('resultado.rarity_one_in', ['n' => $raridade['um_em']])) : '—' ?></strong>
-            <small><?= e(t('resultado.rarity_percent', ['pct' => numero($raridade['percentual'], 1)])) ?></small>
-        <?php else: ?>
-            <strong><?= e(t('resultado.rarity_initial')) ?></strong>
-            <small><?= e(t('resultado.rarity_base', ['n' => $raridade['total']])) ?></small>
-        <?php endif; ?>
+    <div class="pc-story__marks">
+        <span class="pc-story__marks-label">
+            <?= e(t($storyTotalMarcas === 1 ? 'resultado.story_mark' : 'resultado.story_marks', ['n' => $storyTotalMarcas])) ?>
+        </span>
+        <ul>
+            <?php foreach ($storyMarks as $marca): ?>
+                <li style="--mark:<?= e($marca['cor']) ?>">
+                    <i aria-hidden="true"></i>
+                    <span><?= e($marca['curto']) ?></span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
     </div>
 
     <h2 class="pc-story__title"><?= e($tituloPerfil) ?></h2>
@@ -31,19 +40,6 @@ $storyFilms = array_slice($perfil['estante'], 0, 3);
         <?= pct($perfil['afinidade_media']) ?> <?= e(t('resultado.affinity')) ?>
         · <?= e($codigo) ?>
     </p>
-
-    <div class="pc-story__bars">
-        <?php foreach ($perfil['linhas'] as $linha): ?>
-            <div class="pc-story__bar">
-                <span class="pc-story__bar-label"><?= e(eixo_nome($linha['eixo'])) ?></span>
-                <span class="pc-story__bar-track">
-                    <i style="width:<?= num_css($linha['pct_esq']) ?>%;background:<?= e($linha['cor_esq']) ?>"></i>
-                    <i style="width:<?= num_css($linha['pct_dir']) ?>%;background:<?= e($linha['cor_dir']) ?>"></i>
-                </span>
-                <small><?= e($linha['polo'] === 'D' ? $linha['rotulo_dir'] : $linha['rotulo_esq']) ?></small>
-            </div>
-        <?php endforeach; ?>
-    </div>
 
     <div class="pc-story__actors">
         <?php foreach ($storyChars as $personagem): ?>

@@ -3,36 +3,16 @@
    Captura o card renderizado (270 x 480) em PNG 1080 x 1920 e usa a Web Share
    API quando o navegador aceita arquivos; caso contrário, baixa o PNG.
    Todas as imagens do card vêm de /api/imagem.php (mesma origem), então o
-   canvas não é contaminado.
+   canvas não é contaminado. A página pode ter mais de um card (análise
+   completa e retrospectiva); cada botão captura o card do seu bloco.
    ========================================================================== */
 (function () {
   'use strict';
 
-  var botao = document.querySelector('[data-story-share]');
-  var card = document.querySelector('[data-story]');
+  var botoes = Array.prototype.slice.call(document.querySelectorAll('[data-story-share]'));
 
-  if (!botao || !card) {
+  if (!botoes.length) {
     return;
-  }
-
-  var nota = document.querySelector('[data-story-note]');
-  var textoOriginal = botao.innerHTML;
-  var ocupado = false;
-
-  var msg = {
-    preparando: botao.getAttribute('data-msg-preparing') || 'Preparando o card…',
-    erro: botao.getAttribute('data-msg-error') || 'Não foi possível gerar o card.',
-    salvo: botao.getAttribute('data-msg-download') || 'Card salvo em PNG.',
-    notaOriginal: nota ? nota.textContent : ''
-  };
-
-  var codigo = (botao.getAttribute('data-codigo') || 'perfil').toLowerCase();
-  var arquivo = 'personacut-' + codigo + '.png';
-
-  function estado(texto) {
-    if (nota) {
-      nota.textContent = texto;
-    }
   }
 
   function esperar(ms) {
@@ -85,7 +65,7 @@
     return Promise.resolve();
   }
 
-  function capturar() {
+  function capturar(card) {
     return html2canvas(card, {
       scale: 4,
       width: 270,
@@ -100,7 +80,7 @@
     });
   }
 
-  function baixar(blob) {
+  function baixar(blob, arquivo) {
     var url = URL.createObjectURL(blob);
     var link = document.createElement('a');
     link.href = url;
@@ -112,7 +92,7 @@
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  function compartilhar(blob) {
+  function compartilhar(blob, arquivo, card) {
     var pdf = new File([blob], arquivo, { type: 'image/png' });
 
     if (!navigator.canShare || !navigator.canShare({ files: [pdf] })) {
@@ -137,63 +117,94 @@
     });
   }
 
-  function ocupadoUI(ativo, rotulo) {
-    botao.disabled = ativo;
+  function configurar(botao) {
+    var escopo = botao.closest('[data-story-side]') || document;
+    var card = escopo.querySelector('[data-story]');
 
-    if (ativo) {
-      botao.textContent = rotulo;
-    } else {
-      botao.innerHTML = textoOriginal;
+    if (!card) {
+      return;
     }
+
+    var nota = escopo.querySelector('[data-story-note]');
+    var textoOriginal = botao.innerHTML;
+    var ocupado = false;
+
+    var msg = {
+      preparando: botao.getAttribute('data-msg-preparing') || 'Preparando o card…',
+      erro: botao.getAttribute('data-msg-error') || 'Não foi possível gerar o card.',
+      salvo: botao.getAttribute('data-msg-download') || 'Card salvo em PNG.',
+      notaOriginal: nota ? nota.textContent : ''
+    };
+
+    var codigo = (botao.getAttribute('data-codigo') || 'perfil').toLowerCase();
+    var arquivo = 'personacut-' + codigo + '.png';
+
+    function estado(texto) {
+      if (nota) {
+        nota.textContent = texto;
+      }
+    }
+
+    function ocupadoUI(ativo, rotulo) {
+      botao.disabled = ativo;
+
+      if (ativo) {
+        botao.textContent = rotulo;
+      } else {
+        botao.innerHTML = textoOriginal;
+      }
+    }
+
+    botao.addEventListener('click', function () {
+      if (ocupado) {
+        return;
+      }
+
+      if (typeof window.html2canvas !== 'function') {
+        estado(msg.erro);
+        return;
+      }
+
+      ocupado = true;
+      ocupadoUI(true, msg.preparando);
+      estado(msg.preparando);
+
+      cruzarFonte()
+        .then(function () { return carregarImagens(card); })
+        .then(function () {
+          // Um frame para o layout assentar antes da captura.
+          return esperar(60).then(function () { return capturar(card); });
+        })
+        .then(function (canvas) {
+          return new Promise(function (resolve, reject) {
+            canvas.toBlob(function (blob) {
+              blob ? resolve(blob) : reject(new Error('blob'));
+            }, 'image/png');
+          });
+        })
+        .then(function (blob) {
+          return compartilhar(blob, arquivo, card).then(function (compartilhado) {
+            if (!compartilhado) {
+              baixar(blob, arquivo);
+              estado(msg.salvo);
+            } else {
+              estado(msg.notaOriginal);
+            }
+          });
+        })
+        .catch(function (erro) {
+          if (window.console && console.warn) {
+            console.warn('[PersonaCut] story card:', erro);
+          }
+
+          estado(msg.erro);
+        })
+        .then(function () {
+          ocupado = false;
+          ocupadoUI(false);
+        });
+    });
   }
 
-  botao.addEventListener('click', function () {
-    if (ocupado) {
-      return;
-    }
-
-    if (typeof window.html2canvas !== 'function') {
-      estado(msg.erro);
-      return;
-    }
-
-    ocupado = true;
-    ocupadoUI(true, msg.preparando);
-    estado(msg.preparando);
-
-    cruzarFonte()
-      .then(function () { return carregarImagens(card); })
-      .then(function () {
-        // Um frame para o layout assentar antes da captura.
-        return esperar(60).then(capturar);
-      })
-      .then(function (canvas) {
-        return new Promise(function (resolve, reject) {
-          canvas.toBlob(function (blob) {
-            blob ? resolve(blob) : reject(new Error('blob'));
-          }, 'image/png');
-        });
-      })
-      .then(function (blob) {
-        return compartilhar(blob).then(function (compartilhado) {
-          if (!compartilhado) {
-            baixar(blob);
-            estado(msg.salvo);
-          } else {
-            estado(msg.notaOriginal);
-          }
-        });
-      })
-      .catch(function (erro) {
-        if (window.console && console.warn) {
-          console.warn('[PersonaCut] story card:', erro);
-        }
-
-        estado(msg.erro);
-      })
-      .then(function () {
-        ocupado = false;
-        ocupadoUI(false);
-      });
-  });
+  botoes.forEach(configurar);
 }());

@@ -1,13 +1,13 @@
 # 🎬 PersonaCut
 
-**Seu perfil cinéfilo em 8 eixos — com arquétipo, espelhos no catálogo, radar, retrato escrito por IA e um card 9:16 para os stories.**
+**Seu perfil cinéfilo em 8 eixos — com quatro leituras em linguagem clara, arquétipo, espelhos no catálogo, retrato escrito por IA e um card 9:16 para os stories.**
 
 <p>
 <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white">
 <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white">
 <img alt="Bootstrap" src="https://img.shields.io/badge/Bootstrap-5-7952B3?logo=bootstrap&logoColor=white">
 <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white">
-<img alt="Testes" src="https://img.shields.io/badge/testes-53%20passando-2F7D4F">
+<img alt="Testes" src="https://img.shields.io/badge/testes-59%20passando-2F7D4F">
 <img alt="DW2" src="https://img.shields.io/badge/DW2-projeto%20acad%C3%AAmico-8F2B1F">
 </p>
 
@@ -39,10 +39,10 @@
 
 PersonaCut é uma aplicação web de análise de personalidade cinematográfica. Você
 responde a afirmações de gosto (Likert de 5 pontos) e o sistema posiciona o seu
-perfil em **oito eixos bipolares** — forma, tom, realismo, tempo, moral, narrativa,
-escala e temporalidade. A partir desse vetor, ele busca no catálogo os personagens,
-o diretor e o estúdio mais próximos de você, calcula a raridade do conjunto e
-redige um retrato.
+perfil em **oito eixos bipolares** — imagem, emoção, mundo, ritmo, ética, história,
+tamanho e época. A partir desse vetor, ele traduz o conjunto em **quatro leituras
+em linguagem clara** (o que você procura, o que te afasta e dois filmes), busca no
+catálogo os personagens, o diretor e o estúdio mais próximos e redige um retrato.
 
 - **100% em pt-BR**, interface em "cinema analógico": papel envelhecido, vinho de
   cartaz, dourado de letreiro, Bodoni Moda para display e Public Sans para texto.
@@ -203,16 +203,21 @@ equivalente à média ponderada de "esquerdice" usada pelo 12 Axes.
 
 ## O que o resultado entrega
 
-- **Arquétipo** com descrição e ritual de cinema, e os dois eixos dominantes com percentual.
-- **Ficha do perfil**: afinidade média com os espelhos, raridade e década do repertório.
-- **8 barras duplas**, radar SVG e a leitura de cada polo.
+- **Quatro leituras** em linguagem clara: o que você procura na tela, o que costuma
+  te afastar e dois filmes para reconhecer isso na prática.
+- **Arquétipo** com descrição e ritual de cinema; as duas marcas principais aparecem
+  como chips, sem percentual.
+- **Ficha do perfil**: afinidade média com os espelhos, marca principal e década do
+  repertório.
 - **6 personagens espelho** com pôster, biografia e intérprete, **diretor gêmeo**,
   **estúdio/escola** e a **estante de obras**.
-- **Além do espelho**: o que te distingue da base, a posição mais típica, a década do
-  repertório (mediana das obras), o seu oposto no catálogo, o arquétipo secundário e
-  os 10 perfis mais próximos.
+- **Além do espelho**: a década do repertório (mediana das obras), o seu oposto no
+  catálogo como convite para o outro lado, o arquétipo secundário e os 10 perfis mais
+  próximos.
+- **Dados técnicos** (fechados por padrão): as 8 barras duplas, o radar SVG e os
+  percentuais que geraram as leituras.
 - **Retrato escrito por IA** (quando configurado).
-- **Card 9:16** para compartilhar.
+- **Card 9:16** para compartilhar, com as 4 marcas no lugar das 8 barras.
 - **Modo Sinergia**: compatibilidade entre dois códigos, radar duplo, convergências,
   divergências e o espelho da dupla.
 - **Quick View**: clique em qualquer card para ver sinopse, duração, gêneros e elenco
@@ -221,7 +226,7 @@ equivalente à média ponderada de "esquerdice" usada pelo 12 Axes.
 ### Card de story
 
 O card fica ao lado do arquétipo (`pc-profile-card__side`) e é montado no servidor
-com os mesmos dados do resultado: arquétipo, raridade, 8 eixos, 3 espelhos, diretor,
+com os mesmos dados do resultado: arquétipo, quatro marcas, 3 espelhos, diretor,
 estúdio e 3 pôsteres.
 
 `public/assets/js/storycard.js` captura o elemento com `html2canvas` em `scale: 4`
@@ -378,12 +383,13 @@ declara isso explicitamente.
 docker compose exec app php tests/run.php
 ```
 
-Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com 53 testes:
+Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com 59 testes:
 
 | Arquivo | Cobre |
 | --- | --- |
 | `LikertTest.php` | normalização por eixo, polos, pesos e validação de respostas |
 | `MatcherTest.php` | arquétipo, afinidade composta, raridade e desempates |
+| `LeituraTest.php` | seleção das leituras, polo, força, perfil neutro e config |
 | `RadarTest.php` | SVG do radar, rótulos e clamp de valores |
 | `MidiaTest.php` | resolução de imagem, GIF e vídeo, com crédito e legenda |
 | `SceneTest.php` | escolha automática de clipes e recorte do YouTube |

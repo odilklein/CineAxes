@@ -12,7 +12,7 @@ namespace Services;
  */
 final class RetratoService
 {
-    public const PROMPT_VERSAO = 'retrato-v2';
+    public const PROMPT_VERSAO = 'retrato-v3';
 
     public function __construct(private readonly GroqService $groq)
     {
@@ -78,6 +78,19 @@ final class RetratoService
                 ],
                 $perfil['linhas'] ?? []
             ),
+            'leituras' => array_map(
+                static fn (array $leitura): array => [
+                    'eixo' => $leitura['eixo'],
+                    'polo' => $leitura['polo'],
+                    'manchete' => $leitura['manchete'],
+                    'corpo' => $leitura['corpo'],
+                    'filmes' => array_map(
+                        static fn (array $filme): string => $filme['titulo'] . ' (' . $filme['ano'] . ')',
+                        $leitura['combina'] ?? []
+                    ),
+                ],
+                $perfil['leituras'] ?? []
+            ),
             'personagens' => array_map(
                 static fn (array $p): array => [
                     'nome' => $p['nome'],
@@ -131,7 +144,9 @@ Regras invioláveis:
 - Use APENAS os dados do JSON fornecido. Não invente filmes, pessoas, prêmios, cenas, datas ou fatos.
 - Nunca cite um filme, diretor ou personagem que não esteja no JSON.
 - Não fale sobre inteligência artificial, prompt, modelo ou algoritmo.
-- Conecte os dois eixos dominantes aos personagens, ao diretor e ao estúdio fornecidos.
+- Não mencione percentuais, notas, médias, vetores ou comparação com outros perfis.
+- Conecte as duas leituras mais fortes aos personagens, ao diretor e ao estúdio fornecidos.
+- Use as manchetes das leituras como bússola, sem repeti-las literalmente.
 - Termine com um ritual de cinema curto e simples, coerente com o arquétipo.
 TXT;
 
