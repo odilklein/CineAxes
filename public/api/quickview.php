@@ -21,6 +21,48 @@ if (Http::metodo() !== 'GET') {
 }
 
 $id = filter_input(INPUT_GET, 'tmdb', FILTER_VALIDATE_INT);
+$pessoaId = filter_input(INPUT_GET, 'pessoa', FILTER_VALIDATE_INT);
+
+if (is_int($pessoaId) && $pessoaId > 0) {
+    try {
+        $tmdb = new TmdbService(Database::pdo(), $config['tmdb']);
+
+        if (!$tmdb->disponivel()) {
+            Http::erro('A TMDB não está configurada.', 503);
+        }
+
+        $pessoa = $tmdb->pessoa($pessoaId);
+
+        if ($pessoa === null) {
+            Http::erro('Pessoa não encontrada.', 404);
+        }
+
+        $biografia = trim((string) ($pessoa['biography'] ?? ''));
+
+        if (mb_strlen($biografia) > 1200) {
+            $biografia = mb_substr($biografia, 0, 1200);
+            $biografia = mb_substr($biografia, 0, (int) mb_strrpos($biografia, ' ')) . '…';
+        }
+
+        header('Cache-Control: public, max-age=86400');
+
+        Http::json([
+            'ok'         => true,
+            'id'         => $pessoaId,
+            'nome'       => (string) ($pessoa['name'] ?? ''),
+            'nascimento' => (string) ($pessoa['birthday'] ?? ''),
+            'falecimento' => (string) ($pessoa['deathday'] ?? ''),
+            'local'      => (string) ($pessoa['place_of_birth'] ?? ''),
+            'biografia'  => $biografia,
+            'foto'       => $tmdb->imagem($pessoa['profile_path'] ?? null, 'w300'),
+        ]);
+    } catch (Throwable $erro) {
+        error_log('[PersonaCut][api/quickview:pessoa] ' . $erro->getMessage());
+        Http::erro($config['debug'] ? $erro->getMessage() : t('erros.generic'), 500);
+    }
+
+    exit;
+}
 
 if (!is_int($id) || $id <= 0) {
     Http::erro('ID de filme inválido.', 422);

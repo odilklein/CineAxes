@@ -363,12 +363,13 @@ done
 │   └── assets/                 # css, js, fontes, imagens e vendor
 ├── src/
 │   ├── Core/                   # Database, Session, Csrf, Http, Translator, Vetor, Radar
-│   ├── Models/                 # Eixo, Pergunta, EntidadeMatch, Obra, Arquetipo, Resultado, Retrato
+│   ├── Data/                   # eixos_guia.php (guia dos eixos) e decadas.php (retrato das décadas)
+│   ├── Models/                 # Eixo, EixoGuia, FilmeCard, Decada, Pergunta, EntidadeMatch, Obra, Arquetipo, Resultado, Retrato
 │   ├── Services/               # Likert, Matcher, Midia, Tmdb, Groq, Retrato
 │   ├── Controllers/            # QuizController, PerfilController
 │   └── bootstrap.php           # autoload, sessão, config e erros
-├── bin/                        # tmdb_sync/export, midia_autofill/export, gerar_perguntas
-├── config/                     # app.php, database.php, midia.php
+├── bin/                        # tmdb_sync/export, filmes_cards, midia_autofill/export, gerar_perguntas
+├── config/                     # app.php, database.php, midia.php, leituras.php, filmes_cards.php
 ├── lang/                       # pt-BR.json (estrutura pronta para en/es)
 ├── sql/                        # schema, seed, enriquecimento, cenas e migrations
 ├── tests/                      # micro-framework + testes dos serviços

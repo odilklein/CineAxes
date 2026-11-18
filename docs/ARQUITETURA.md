@@ -20,7 +20,8 @@ Isso permite rodar `tests/run.php` sem banco.
 ## Fluxo do quiz
 
 1. `public/quiz.php` carrega as perguntas do modo escolhido e serializa um
-   `quiz-config` (ids, textos, eixo, cor, descrição, cena ilustrativa e token CSRF).
+   `quiz-config` (ids, textos, eixo, cor, cena ilustrativa e token CSRF, além do
+   guia editorial de cada eixo para o modal "Entender este eixo").
    A cena é resolvida no servidor por `Services\MidiaService` (`imagem`, `gif` ou
    `video_yt`), então o navegador só recebe URLs prontas.
 2. `assets/js/quiz.js` controla a navegação, o rascunho em `localStorage` e o
@@ -143,23 +144,57 @@ elimina o descompasso entre o radar e as barras duplas.
 
 ## Quick View
 
-Cada card (`personagem`, `diretor`, `estudio` ou item da estante) carrega um
+Cada card (`personagem`, `diretor`, `estudio`, ator ou filme) carrega um
 `data-quickview` com o que já está no banco. O `assets/js/quickview.js` abre um
-`<dialog>` e, quando há `tmdb_id`, busca `/api/quickview.php?tmdb=ID` para
-sinopse, duração, gêneros e elenco. O endpoint usa `TmdbService::filmeComCreditos`
-e o cache de 24h. Sem chave ou sem rede, o modal mostra o que veio do banco e um
-aviso discreto — nunca quebra a página.
+`<dialog>` com uma ficha por tipo:
+
+- **personagem**: bio, frase icônica, intérprete (com a biografia da TMDB),
+  dois polos do eixo mais fortes e um atalho para a ficha do filme;
+- **ator**: foto, nascimento, país e trajetória;
+- **diretor / estúdio-escola**: bio, frase, obras essenciais e polos;
+- **filme**: sinopse, duração, gêneros, nota e elenco.
+
+Fichas de filme e de ator completam os dados via `/api/quickview.php`
+(`?tmdb=ID` ou `?pessoa=ID`), sempre com o cache de 24h da TMDB. Quando a ficha
+do filme é aberta a partir de um personagem, o botão *Voltar* retorna à ficha
+anterior. Sem chave ou sem rede, o modal mostra o que veio do banco.
+
+## Cards de filme
+
+Todo filme citado no perfil (leituras, década e guia dos eixos) aparece como
+card com pôster. Os pôsteres são resolvidos **offline** por
+`bin/filmes_cards.php`, que grava `config/filmes_cards.php` a partir de
+`config/leituras.php`, `src/Data/eixos_guia.php` e `src/Data/decadas.php`;
+`Models\FilmeCard` faz o lookup (com fallback para títulos com subtítulo) e o
+partial `public/partials/card-filme.php` renderiza o card tipográfico quando o
+filme não está no mapa. A página de resultado não faz chamadas de rede para
+montar a lista.
+
+## Frase do perfil
+
+`RetratoService` pede ao modelo uma linha curta antes do retrato
+(`FRASE: ...` / `TEXTO: ...`), guarda em `retratos.frase` e devolve em
+`/api/retrato.php`. O JS preenche `[data-frase-perfil]` no card do perfil e na
+retrospectiva; sem IA, o espaço usa a manchete da leitura mais forte. As
+citações de personagens, diretores e escolas vêm do campo `frase` do catálogo,
+nunca de texto gerado — assim ninguém atribui uma frase inventada a alguém real.
 
 ## Quiz em uma tela
 
-No desktop o card continua em **uma coluna**: tag, cena 16:9 em tamanho grande,
-pergunta, respostas e ações. A cena é exibida com `object-fit: contain`, então o
-frame inteiro aparece; o formulário rola junto. O texto da pergunta usa Public
-Sans e as respostas são compactas, mas a altura da cena é priorizada. O texto da pergunta usa **Public Sans** (não a Bodoni
-de display), com respostas compactas e o rodapé do site removido no quiz. Em telas
-de 768px de altura o hint de teclado é ocultado e o formulário inteiro cabe sem
-scroll; em telas até 600px o banner reduz para 150px e as ações quebram em duas
-linhas.
+No desktop (a partir de 900px) o cartão abre em **duas colunas**: a cena à
+esquerda (4:3, `object-fit: cover`) e, à direita, tag do eixo, pergunta,
+alternativas e ações. O conjunto (progresso + cartão + atalhos) é centralizado em
+`calc(100svh - var(--pc-header))`, então responder não exige rolar a página.
+Em janelas de até 720px de altura o cartão compacta (paddings menores e hint de
+teclado oculto); abaixo de 900px o layout volta a uma coluna, com a cena 16:9
+empilhada e a página rolando normalmente. O texto da pergunta usa **Public Sans**
+(não a Bodoni de display) e o rodapé do site é removido no quiz.
+
+O botão **Entender este eixo** abre um `<dialog>` com o guia editorial do eixo
+(`src/Data/eixos_guia.php`, exposto por `Models\EixoGuia`): explicação longa, o
+que significa ficar perto de cada polo, cenas de filmes e séries e as leituras
+críticas que sustentam a régua. O conteúdo é estático e versionado — não depende
+do banco.
 
 ## Segurança
 

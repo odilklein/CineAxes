@@ -93,6 +93,13 @@
       alvos.forEach(function (secao) {
         preencher(secao, resultado.dados.texto);
       });
+
+      if (resultado.dados.frase) {
+        Array.prototype.forEach.call(document.querySelectorAll('[data-frase-perfil]'), function (alvo) {
+          alvo.textContent = resultado.dados.frase;
+          alvo.classList.add('is-ia');
+        });
+      }
     }).catch(function () {
       alvos.forEach(falhar);
       delete pedidos[codigo];

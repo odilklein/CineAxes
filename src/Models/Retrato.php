@@ -17,7 +17,7 @@ final class Retrato
     public static function porCodigo(PDO $pdo, string $codigo, ?string $versao = null): ?array
     {
         $stmt = $pdo->prepare(
-            'SELECT codigo_unico, idioma, texto, modelo, prompt_versao, tokens, created_at
+            'SELECT codigo_unico, idioma, texto, frase, modelo, prompt_versao, tokens, created_at
                FROM retratos
               WHERE codigo_unico = :codigo
               LIMIT 1'
@@ -40,11 +40,12 @@ final class Retrato
     public static function criar(PDO $pdo, array $dados): void
     {
         $stmt = $pdo->prepare(
-            'INSERT INTO retratos (codigo_unico, idioma, texto, modelo, prompt_versao, tokens)
-             VALUES (:codigo, :idioma, :texto, :modelo, :prompt_versao, :tokens)
+            'INSERT INTO retratos (codigo_unico, idioma, texto, frase, modelo, prompt_versao, tokens)
+             VALUES (:codigo, :idioma, :texto, :frase, :modelo, :prompt_versao, :tokens)
              ON DUPLICATE KEY UPDATE
                 idioma = VALUES(idioma),
                 texto = VALUES(texto),
+                frase = VALUES(frase),
                 modelo = VALUES(modelo),
                 prompt_versao = VALUES(prompt_versao),
                 tokens = VALUES(tokens),
@@ -54,6 +55,7 @@ final class Retrato
             'codigo' => $dados['codigo'],
             'idioma' => $dados['idioma'] ?? 'pt-BR',
             'texto' => $dados['texto'],
+            'frase' => $dados['frase'] ?? null,
             'modelo' => $dados['modelo'],
             'prompt_versao' => $dados['prompt_versao'],
             'tokens' => $dados['tokens'] ?? null,

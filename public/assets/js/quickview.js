@@ -1,7 +1,7 @@
 /* =============================================================================
    PersonaCut — Quick View
-   Abre uma ficha do card com sinopse, elenco e obras. Os dados de filme vêm de
-   /api/quickview.php (cache da TMDB); o que já está no card aparece na hora.
+   Ficha de filme, personagem, diretor ou estúdio/escola. Os dados do catálogo
+   chegam no card; a TMDB completa sinopse, elenco e a biografia do intérprete.
    ========================================================================== */
 (function () {
   'use strict';
@@ -9,7 +9,28 @@
   var dialog = null;
   var ultimoFoco = null;
   var cache = {};
+  var cachePessoa = {};
   var pedidoAtual = 0;
+  var pilha = [];
+  var dadosAtuais = null;
+
+  var TEXTOS = {
+    ficha: 'Ficha rápida',
+    sobre: 'Sobre',
+    frase: 'Frase',
+    ator: 'Quem interpreta',
+    elenco: 'Elenco',
+    polos: 'Perfil do personagem',
+    polosAncora: 'Perfil do diretor',
+    obras: 'Obras essenciais',
+    sinopse: 'Sinopse',
+    onde: 'Onde aparece',
+    verFilme: 'Ver ficha do filme',
+    voltar: 'Voltar',
+    fechar: 'Fechar ficha',
+    carregando: 'Buscando sinopse e elenco…',
+    carregandoPessoa: 'Buscando a trajetória do intérprete…'
+  };
 
   function el(tag, classe, texto) {
     var node = document.createElement(tag);
@@ -52,21 +73,69 @@
     return (h > 0 ? h + 'h ' : '') + (m > 0 ? m + 'min' : '').trim();
   }
 
+  function dataCurta(valor) {
+    if (typeof valor !== 'string' || valor === '') {
+      return '';
+    }
+
+    var partes = valor.split('-');
+
+    if (partes.length !== 3) {
+      return valor;
+    }
+
+    return partes[2] + '/' + partes[1] + '/' + partes[0];
+  }
+
+  function tituloTipo(dados) {
+    if (dados.tipo === 'personagem') {
+      return 'Personagem';
+    }
+
+    if (dados.tipo === 'diretor') {
+      return 'Diretor';
+    }
+
+    if (dados.tipo === 'estudio') {
+      return 'Estúdio / escola';
+    }
+
+    if (dados.tipo === 'ator') {
+      return 'Ator';
+    }
+
+    return 'Filme';
+  }
+
   function montarDialogo() {
     dialog = document.createElement('dialog');
     dialog.className = 'pc-qv';
     dialog.setAttribute('aria-labelledby', 'pc-qv-title');
 
     var topo = el('div', 'pc-qv__top');
-    topo.appendChild(el('span', 'pc-qv__kicker', 'Ficha rápida'));
+    var voltar = el('button', 'pc-qv__back', '←');
+    voltar.type = 'button';
+    voltar.hidden = true;
+    voltar.setAttribute('aria-label', TEXTOS.voltar);
+    voltar.addEventListener('click', function () {
+      desempilhar();
+    });
+
+    var kicker = el('span', 'pc-qv__kicker', TEXTOS.ficha);
+    kicker.setAttribute('data-qv-kicker', '');
 
     var fechar = el('button', 'pc-qv__close', '×');
     fechar.type = 'button';
-    fechar.setAttribute('aria-label', 'Fechar ficha');
+    fechar.setAttribute('aria-label', TEXTOS.fechar);
     fechar.addEventListener('click', function () {
       dialog.close();
     });
-    topo.appendChild(fechar);
+
+    var acoes = el('div', 'pc-qv__actions');
+    acoes.appendChild(kicker);
+    acoes.appendChild(fechar);
+    topo.appendChild(voltar);
+    topo.appendChild(acoes);
 
     var grade = el('div', 'pc-qv__grid');
 
@@ -85,42 +154,71 @@
     filme.setAttribute('data-qv-film', '');
     filme.hidden = true;
 
-    var carregando = el('p', 'pc-qv__loading', 'Buscando sinopse e elenco…');
+    var carregando = el('p', 'pc-qv__loading', TEXTOS.carregando);
     carregando.setAttribute('data-qv-loading', '');
     carregando.hidden = true;
-
-    var sinopse = el('section', 'pc-qv__section');
-    sinopse.setAttribute('data-qv-sinopse', '');
-    sinopse.hidden = true;
-    sinopse.appendChild(el('h3', null, 'Sinopse'));
-    sinopse.appendChild(el('p'));
 
     var bio = el('section', 'pc-qv__section');
     bio.setAttribute('data-qv-bio', '');
     bio.hidden = true;
-    bio.appendChild(el('h3', null, 'Sobre'));
+    bio.appendChild(el('h3', null, TEXTOS.sobre));
     bio.appendChild(el('p'));
 
-    var elenco = el('section', 'pc-qv__section');
-    elenco.setAttribute('data-qv-elenco', '');
-    elenco.hidden = true;
-    elenco.appendChild(el('h3', null, 'Elenco'));
-    var elencoLista = el('div', 'pc-qv__cast');
-    elenco.appendChild(elencoLista);
+    var frase = el('figure', 'pc-qv__quote');
+    frase.setAttribute('data-qv-frase', '');
+    frase.hidden = true;
+    frase.appendChild(el('blockquote'));
+    frase.appendChild(el('figcaption'));
+
+    var ator = el('section', 'pc-qv__section');
+    ator.setAttribute('data-qv-ator', '');
+    ator.hidden = true;
+    ator.appendChild(el('h3', null, TEXTOS.ator));
+    var atorCartao = el('div', 'pc-qv__actor-card');
+    ator.appendChild(atorCartao);
+    ator.appendChild(el('p', 'pc-qv__actor-bio'));
+
+    var polos = el('section', 'pc-qv__section');
+    polos.setAttribute('data-qv-polos', '');
+    polos.hidden = true;
+    polos.appendChild(el('h3', null, TEXTOS.polos));
+    polos.appendChild(el('ul', 'pc-qv__poles'));
 
     var obras = el('section', 'pc-qv__section');
     obras.setAttribute('data-qv-obras', '');
     obras.hidden = true;
-    obras.appendChild(el('h3', null, 'Obras essenciais'));
-    var obrasLista = el('ul', 'pc-qv__works');
-    obras.appendChild(obrasLista);
+    obras.appendChild(el('h3', null, TEXTOS.obras));
+    obras.appendChild(el('ul', 'pc-qv__works'));
+
+    var onde = el('section', 'pc-qv__section');
+    onde.setAttribute('data-qv-onde', '');
+    onde.hidden = true;
+    onde.appendChild(el('h3', null, TEXTOS.onde));
+    var ondeCorpo = el('div', 'pc-qv__onde');
+    onde.appendChild(ondeCorpo);
+
+    var sinopse = el('section', 'pc-qv__section');
+    sinopse.setAttribute('data-qv-sinopse', '');
+    sinopse.hidden = true;
+    sinopse.appendChild(el('h3', null, TEXTOS.sinopse));
+    sinopse.appendChild(el('p'));
+
+    var elenco = el('section', 'pc-qv__section');
+    elenco.setAttribute('data-qv-elenco', '');
+    elenco.hidden = true;
+    elenco.appendChild(el('h3', null, TEXTOS.elenco));
+    elenco.appendChild(el('div', 'pc-qv__cast'));
 
     conteudo.appendChild(titulo);
     conteudo.appendChild(meta);
     conteudo.appendChild(filme);
     conteudo.appendChild(carregando);
-    conteudo.appendChild(sinopse);
     conteudo.appendChild(bio);
+    conteudo.appendChild(frase);
+    conteudo.appendChild(ator);
+    conteudo.appendChild(polos);
+    conteudo.appendChild(onde);
+    conteudo.appendChild(sinopse);
     conteudo.appendChild(elenco);
     conteudo.appendChild(obras);
 
@@ -141,6 +239,7 @@
 
     dialog.addEventListener('close', function () {
       document.body.classList.remove('pc-qv-open');
+      pilha = [];
 
       if (ultimoFoco && typeof ultimoFoco.focus === 'function') {
         ultimoFoco.focus();
@@ -152,9 +251,12 @@
     return dialog;
   }
 
-  function preencherPoster(container, url, ehLogo, titulo) {
+  function preencherPoster(url, ehLogo, titulo, tipo) {
+    var container = dialog.querySelector('[data-qv-poster]');
+
     container.innerHTML = '';
     container.classList.toggle('pc-qv__poster--logo', !!ehLogo);
+    container.classList.toggle('pc-qv__poster--mark', !url);
 
     var src = imagemSegura(url);
 
@@ -165,12 +267,27 @@
       img.loading = 'eager';
       img.addEventListener('error', function () {
         img.remove();
+        container.classList.add('pc-qv__poster--mark');
+        container.appendChild(marca(titulo, tipo));
       });
       container.appendChild(img);
-    } else {
-      var mono = el('span', 'pc-qv__mono', (titulo || '?').slice(0, 1).toUpperCase());
-      container.appendChild(mono);
+
+      return;
     }
+
+    container.appendChild(marca(titulo, tipo));
+  }
+
+  function marca(titulo, tipo) {
+    var selo = el('div', 'pc-qv__seal');
+
+    selo.appendChild(el('span', 'pc-qv__seal-mono', (titulo || '?').slice(0, 2).toUpperCase()));
+
+    if (tipo === 'estudio') {
+      selo.appendChild(el('small', null, 'Estúdio / escola'));
+    }
+
+    return selo;
   }
 
   function mostrarSecao(seletor, visivel, texto) {
@@ -191,80 +308,124 @@
     }
   }
 
-  function abrir(dados, gatilho) {
-    if (!dialog) {
-      montarDialogo();
-    }
+  function limpar() {
+    var seletores = [
+      '[data-qv-bio]', '[data-qv-frase]', '[data-qv-ator]', '[data-qv-polos]',
+      '[data-qv-obras]', '[data-qv-onde]', '[data-qv-sinopse]', '[data-qv-elenco]'
+    ];
 
-    ultimoFoco = gatilho;
+    seletores.forEach(function (seletor) {
+      var secao = dialog.querySelector(seletor);
+
+      if (secao) {
+        secao.hidden = true;
+      }
+    });
+
+    dialog.querySelector('.pc-qv__works').innerHTML = '';
+    dialog.querySelector('.pc-qv__cast').innerHTML = '';
+    dialog.querySelector('.pc-qv__poles').innerHTML = '';
+    dialog.querySelector('.pc-qv__onde').innerHTML = '';
+    dialog.querySelector('.pc-qv__actor-card').innerHTML = '';
+    dialog.querySelector('.pc-qv__actor-bio').textContent = '';
+    dialog.querySelector('[data-qv-frase] blockquote').textContent = '';
+    dialog.querySelector('[data-qv-frase] figcaption').textContent = '';
+  }
+
+  function render(dados) {
+    dadosAtuais = dados;
+
     var pedido = ++pedidoAtual;
-
-    var poster = dialog.querySelector('[data-qv-poster]');
     var titulo = dialog.querySelector('[data-qv-title]');
+    var kicker = dialog.querySelector('[data-qv-kicker]');
     var meta = dialog.querySelector('[data-qv-meta]');
-    var filme = dialog.querySelector('[data-qv-film]');
+    var contexto = dialog.querySelector('[data-qv-film]');
     var carregando = dialog.querySelector('[data-qv-loading]');
-    var bio = dialog.querySelector('[data-qv-bio]');
-    var obras = dialog.querySelector('[data-qv-obras]');
-    var elenco = dialog.querySelector('[data-qv-elenco]');
-    var elencoLista = elenco.querySelector('.pc-qv__cast');
-    var obrasLista = obras.querySelector('.pc-qv__works');
 
     var nome = dados.nome || dados.titulo || 'Ficha';
+
+    limpar();
+
     titulo.textContent = nome;
+    kicker.textContent = tituloTipo(dados);
 
     var pedacos = [];
 
-    if (dados.ano) {
-      pedacos.push(String(dados.ano));
-    }
+    if (dados.tipo === 'ator') {
+      if (dados.atorNascimento) {
+        pedacos.push(String(dados.atorNascimento));
+      }
 
-    if (dados.ator) {
-      pedacos.push(dados.ator);
-    }
+      if (dados.atorPais) {
+        pedacos.push(dados.atorPais);
+      }
 
-    if (dados.tipo) {
-      pedacos.push(dados.tipo === 'estudio' ? 'Estúdio / escola' : dados.tipo.charAt(0).toUpperCase() + dados.tipo.slice(1));
+      pedacos.push('Ator');
+    } else {
+      if (dados.ano) {
+        pedacos.push(String(dados.ano));
+      }
+
+      if (dados.ator) {
+        pedacos.push(dados.ator);
+      }
+
+      if (dados.tipo && dados.tipo !== 'filme') {
+        pedacos.push(tituloTipo(dados));
+      }
     }
 
     meta.textContent = pedacos.join(' · ');
 
-    filme.hidden = true;
-    carregando.hidden = !dados.tmdb;
+    contexto.hidden = true;
 
-    mostrarSecao('[data-qv-sinopse]', false);
-    mostrarSecao('[data-qv-bio]', !!dados.bio, dados.bio || '');
-    mostrarSecao('[data-qv-elenco]', false);
-    mostrarSecao('[data-qv-obras]', !!(dados.obras && dados.obras.length));
-    mostrarSecao('[data-qv-sinopse]', false);
-
-    elencoLista.innerHTML = '';
-    obrasLista.innerHTML = '';
-
-    if (dados.obras && dados.obras.length) {
-      dados.obras.forEach(function (obra) {
-        var li = el('li');
-        li.appendChild(el('span', null, obra.titulo || ''));
-        li.appendChild(el('small', null, obra.ano ? String(obra.ano) : ''));
-        obrasLista.appendChild(li);
-      });
+    if ((dados.tipo === 'personagem' || dados.tipo === 'ator') && dados.obra) {
+      contexto.hidden = false;
+      contexto.textContent = dados.tipo === 'ator'
+        ? 'Interpreta ' + (dados.personagem || 'um personagem') + ' em ' + dados.obra
+        : 'De ' + dados.obra + (dados.ano ? ' (' + dados.ano + ')' : '');
     }
 
-    preencherPoster(poster, dados.poster, dados.tipo === 'estudio', nome);
+    carregando.hidden = true;
 
-    if (!dados.tmdb) {
-      if (!dialog.open) {
-        dialog.showModal();
-        document.body.classList.add('pc-qv-open');
+    preencherPoster(
+      dados.tipo === 'ator' ? (dados.atorFoto || dados.poster) : dados.poster,
+      dados.tipo === 'estudio',
+      nome,
+      dados.tipo
+    );
+
+    if (dados.bio) {
+      mostrarSecao('[data-qv-bio]', true, dados.bio);
+    }
+
+    if (dados.frase) {
+      var figura = dialog.querySelector('[data-qv-frase]');
+      var autor = dados.tipo === 'filme' ? '' : (dados.nome || '');
+
+      figura.hidden = false;
+      figura.querySelector('blockquote').textContent = '“' + dados.frase + '”';
+      figura.querySelector('figcaption').textContent = autor
+        + (dados.obra && dados.tipo === 'personagem' ? ', ' + dados.obra : '')
+        + (dados.ano ? ' (' + dados.ano + ')' : '');
+    }
+
+    if (dados.ator && dados.tipo === 'personagem') {
+      montarAtor(dados);
+    }
+
+    if (dados.polos && dados.polos.length) {
+      montarPolos(dados);
+    }
+
+    if (dados.obras && dados.obras.length) {
+      montarObras(dados.obras);
+    }
+
+    if (dados.tipo === 'personagem' || dados.tipo === 'ator') {
+      if (dados.obra && dados.tmdb) {
+        montarOnde(dados);
       }
-
-      var fechar = dialog.querySelector('.pc-qv__close');
-
-      if (fechar) {
-        fechar.focus();
-      }
-
-      return;
     }
 
     if (!dialog.open) {
@@ -272,16 +433,159 @@
       document.body.classList.add('pc-qv-open');
     }
 
-    var fecharBtn = dialog.querySelector('.pc-qv__close');
+    var fechar = dialog.querySelector('.pc-qv__close');
 
-    if (fecharBtn) {
-      fecharBtn.focus();
+    if (fechar) {
+      fechar.focus();
     }
 
+    if (dados.tipo === 'filme' && dados.tmdb) {
+      buscarFilme(dados, pedido, carregando);
+    }
+
+    if (dados.atorTmdb && !dados.atorBio) {
+      buscarPessoa(dados, pedido);
+    }
+  }
+
+  function montarAtor(dados) {
+    var secao = dialog.querySelector('[data-qv-ator]');
+    var cartao = secao.querySelector('.pc-qv__actor-card');
+    var foto = el('span', 'pc-qv__actor-photo');
+    var src = imagemSegura(dados.atorFoto);
+
+    if (src) {
+      var img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      img.loading = 'lazy';
+      foto.appendChild(img);
+    } else {
+      foto.textContent = (dados.ator || '?').slice(0, 1).toUpperCase();
+    }
+
+    var info = el('span', 'pc-qv__actor-info');
+    info.appendChild(el('b', null, dados.ator));
+    info.appendChild(el('small', null, [
+      dados.atorNascimento ? String(dados.atorNascimento) : '',
+      dados.atorPais || ''
+    ].filter(Boolean).join(' · ')));
+
+    cartao.appendChild(foto);
+    cartao.appendChild(info);
+    secao.hidden = false;
+  }
+
+  function montarPolos(dados) {
+    var secao = dialog.querySelector('[data-qv-polos]');
+    var lista = secao.querySelector('.pc-qv__poles');
+    var titulo = secao.querySelector('h3');
+
+    titulo.textContent = dados.tipo === 'personagem' ? TEXTOS.polos : TEXTOS.polosAncora;
+    secao.hidden = false;
+
+    dados.polos.forEach(function (polo) {
+      var item = el('li');
+      var ponto = el('i');
+
+      ponto.style.background = polo.cor || 'currentColor';
+      item.appendChild(ponto);
+      item.appendChild(el('span', null, polo.eixo + ' · ' + polo.polo));
+      item.appendChild(el('b', null, polo.pct + '%'));
+      lista.appendChild(item);
+    });
+  }
+
+  function montarObras(obras) {
+    var secao = dialog.querySelector('[data-qv-obras]');
+    var lista = secao.querySelector('.pc-qv__works');
+
+    secao.hidden = false;
+
+    obras.forEach(function (obra) {
+      var li = el('li');
+      var botao = el('button', 'pc-qv__work');
+      botao.type = 'button';
+
+      botao.appendChild(el('span', null, obra.titulo || ''));
+      botao.appendChild(el('small', null, obra.ano ? String(obra.ano) : ''));
+
+      if (obra.tmdb) {
+        botao.addEventListener('click', function () {
+          navegar({
+            tipo: 'filme',
+            tmdb: obra.tmdb,
+            titulo: obra.titulo,
+            ano: obra.ano,
+            poster: obra.poster || null
+          });
+        });
+      } else {
+        botao.disabled = true;
+      }
+
+      li.appendChild(botao);
+      lista.appendChild(li);
+    });
+  }
+
+  function montarOnde(dados) {
+    var secao = dialog.querySelector('[data-qv-onde]');
+    var corpo = secao.querySelector('.pc-qv__onde');
+
+    secao.hidden = false;
+
+    var cartao = el('button', 'pc-qv__filmcard');
+    cartao.type = 'button';
+    var poster = el('span', 'pc-qv__filmcard-poster');
+    var src = imagemSegura(dados.poster);
+
+    if (src) {
+      var img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      img.loading = 'lazy';
+      poster.appendChild(img);
+    } else {
+      poster.textContent = (dados.obra || '?').slice(0, 1).toUpperCase();
+    }
+
+    var info = el('span', 'pc-qv__filmcard-info');
+    info.appendChild(el('b', null, dados.obra));
+    info.appendChild(el('small', null, [
+      dados.ano ? String(dados.ano) : '',
+      dados.tmdb ? TEXTOS.verFilme : 'Filme'
+    ].filter(Boolean).join(' · ')));
+
+    cartao.appendChild(poster);
+    cartao.appendChild(info);
+
+    if (dados.tmdb) {
+      cartao.addEventListener('click', function () {
+        navegar({
+          tipo: 'filme',
+          tmdb: dados.tmdb,
+          titulo: dados.obra,
+          ano: dados.ano,
+          poster: dados.poster
+        });
+      });
+    } else {
+      cartao.disabled = true;
+    }
+
+    corpo.appendChild(cartao);
+  }
+
+  function buscarFilme(dados, pedido, carregando) {
     var chave = String(dados.tmdb);
 
+    carregando.hidden = false;
+
     if (cache[chave]) {
+      carregando.hidden = true;
       aplicarFilme(cache[chave], dados);
+
       return;
     }
 
@@ -318,21 +622,109 @@
     });
   }
 
+  function buscarPessoa(dados, pedido) {
+    var chave = String(dados.atorTmdb);
+
+    if (cachePessoa[chave]) {
+      preencherPessoa(cachePessoa[chave], dados);
+
+      return;
+    }
+
+    fetch('/api/quickview.php?pessoa=' + encodeURIComponent(chave), {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    }).then(function (resposta) {
+      return resposta.json();
+    }).then(function (corpo) {
+      if (pedido !== pedidoAtual || !corpo || !corpo.ok) {
+        return;
+      }
+
+      cachePessoa[chave] = corpo;
+      preencherPessoa(corpo, dados);
+    }).catch(function () {
+      /* silêncio: a ficha do personagem continua completa */
+    });
+  }
+
+  function preencherPessoa(pessoa, dados) {
+    if (dados.tipo === 'ator') {
+      var secaoBio = dialog.querySelector('[data-qv-bio]');
+      var texto = trimTexto(pessoa.biografia || '', 700);
+
+      if (texto !== '') {
+        secaoBio.hidden = false;
+        secaoBio.querySelector('p').textContent = texto;
+      }
+
+      return;
+    }
+
+    var cartao = dialog.querySelector('.pc-qv__actor-card');
+    var bio = dialog.querySelector('.pc-qv__actor-bio');
+
+    if (!cartao || !cartao.children.length) {
+      return;
+    }
+
+    var info = cartao.querySelector('.pc-qv__actor-info');
+
+    if (info) {
+      var partes = [];
+
+      if (pessoa.nascimento) {
+        partes.push(dataCurta(pessoa.nascimento).slice(-4) || pessoa.nascimento);
+      }
+
+      if (pessoa.local) {
+        partes.push(pessoa.local);
+      }
+
+      if (partes.length) {
+        var small = el('small', null, partes.join(' · '));
+        var antigo = info.querySelector('small');
+
+        if (antigo) {
+          info.replaceChild(small, antigo);
+        } else {
+          info.appendChild(small);
+        }
+      }
+    }
+
+    if (pessoa.biografia) {
+      bio.textContent = trimTexto(pessoa.biografia, 420);
+    }
+  }
+
+  function trimTexto(texto, limite) {
+    var limpo = String(texto || '').replace(/\s+/g, ' ').trim();
+
+    if (limpo.length <= limite) {
+      return limpo;
+    }
+
+    limpo = limpo.slice(0, limite);
+    limpo = limpo.slice(0, limpo.lastIndexOf(' ')) + '…';
+
+    return limpo;
+  }
+
   function aplicarFilme(filme, dados) {
-    var poster = dialog.querySelector('[data-qv-poster]');
     var meta = dialog.querySelector('[data-qv-meta]');
-    var linhaFilme = dialog.querySelector('[data-qv-film]');
+    var contexto = dialog.querySelector('[data-qv-film]');
     var sinopse = dialog.querySelector('[data-qv-sinopse]');
     var elenco = dialog.querySelector('[data-qv-elenco]');
     var elencoLista = elenco.querySelector('.pc-qv__cast');
 
-    if (!dialog.open) {
+    if (!dialog.open || !dadosAtuais || dadosAtuais !== dados) {
       return;
     }
 
     if (filme.titulo) {
-      linhaFilme.hidden = false;
-      linhaFilme.textContent = filme.titulo
+      contexto.hidden = false;
+      contexto.textContent = filme.titulo
         + (filme.ano ? ' (' + filme.ano + ')' : '')
         + (filme.duracao ? ' · ' + duracao(filme.duracao) : '');
     }
@@ -360,7 +752,7 @@
     }
 
     if (!dados.poster && filme.poster) {
-      preencherPoster(poster, filme.poster, false, filme.titulo);
+      preencherPoster(filme.poster, false, filme.titulo, 'filme');
     }
 
     elencoLista.innerHTML = '';
@@ -390,6 +782,51 @@
     sinopse.hidden = !filme.sinopse;
   }
 
+  function navegar(dados) {
+    if (dadosAtuais) {
+      pilha.push(dadosAtuais);
+    }
+
+    render(dados);
+    atualizarVoltar();
+  }
+
+  function desempilhar() {
+    if (!pilha.length) {
+      return;
+    }
+
+    render(pilha.pop());
+    atualizarVoltar();
+  }
+
+  function atualizarVoltar() {
+    var voltar = dialog.querySelector('.pc-qv__back');
+
+    if (voltar) {
+      voltar.hidden = pilha.length === 0;
+    }
+  }
+
+  function abrir(dados, gatilho) {
+    if (!dialog) {
+      montarDialogo();
+    }
+
+    ultimoFoco = gatilho;
+    pilha = [];
+    render(dados);
+    atualizarVoltar();
+  }
+
+  function dadosDoCard(card) {
+    try {
+      return JSON.parse(card.getAttribute('data-quickview') || '{}');
+    } catch (e) {
+      return null;
+    }
+  }
+
   document.addEventListener('click', function (evento) {
     var card = evento.target.closest('[data-quickview]');
 
@@ -397,15 +834,11 @@
       return;
     }
 
-    var dados;
+    var dados = dadosDoCard(card);
 
-    try {
-      dados = JSON.parse(card.getAttribute('data-quickview') || '{}');
-    } catch (e) {
-      return;
+    if (dados) {
+      abrir(dados, card);
     }
-
-    abrir(dados, card);
   });
 
   document.addEventListener('keydown', function (evento) {
@@ -419,16 +852,13 @@
       return;
     }
 
-    evento.preventDefault();
+    var dados = dadosDoCard(card);
 
-    var dados;
-
-    try {
-      dados = JSON.parse(card.getAttribute('data-quickview') || '{}');
-    } catch (e) {
+    if (!dados) {
       return;
     }
 
+    evento.preventDefault();
     abrir(dados, card);
   });
 }());

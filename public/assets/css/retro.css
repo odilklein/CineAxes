@@ -1440,3 +1440,233 @@ body.pc-story-open .pc-result {
   font-size: 9.5px;
   letter-spacing: 0.06em;
 }
+
+/* =============================================================================
+   18. Filmes, espelhos em grade e detalhes da retrospectiva
+   ========================================================================== */
+
+/* ------------------------------ Card de filme ------------------------------ */
+.pc-retro .pc-filme-row {
+  display: flex;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.pc-retro .pc-filme-row > .pc-filme {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pc-retro .pc-filme {
+  border-color: var(--retro-line);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--retro-ink);
+}
+
+.pc-retro .pc-filme:hover {
+  border-color: rgba(224, 185, 109, 0.6);
+  background: rgba(224, 185, 109, 0.07);
+}
+
+.pc-retro .pc-filme__poster {
+  width: 38px;
+  height: 57px;
+}
+
+.pc-retro .pc-filme__title {
+  color: var(--retro-ink);
+  font-family: var(--pc-font);
+  font-size: 10.5px;
+}
+
+.pc-retro .pc-filme__meta {
+  color: var(--retro-muted);
+  font-size: 8.5px;
+}
+
+/* --------------------------- Outros espelhos (grade) ----------------------- */
+.pc-retro__mirrors {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.pc-retro__mirrors .pc-retro__mini {
+  grid-column: span 2;
+  flex: initial;
+  padding: 13px 8px 12px;
+  scroll-snap-align: none;
+}
+
+/* Com cinco espelhos, a segunda linha fica centralizada. */
+.pc-retro__mirrors .pc-retro__mini:nth-child(4) { grid-column: 2 / span 2; }
+
+.pc-retro__mirrors .pc-retro__mini-photo {
+  width: 60px;
+  height: 60px;
+  font-size: 16px;
+}
+
+.pc-retro__mirrors .pc-retro__mini b {
+  font-size: 14px;
+  min-height: 0;
+}
+
+.pc-retro__mirrors .pc-retro__mini small { font-size: 9px; }
+
+.pc-retro__mirrors .pc-retro__mini-pct { font-size: 10px; }
+
+@media (max-width: 380px) {
+  .pc-retro__mirrors .pc-retro__mini-photo { width: 50px; height: 50px; }
+}
+
+/* ------------------------------- Selo da escola ---------------------------- */
+.pc-retro__anchor-photo.is-seal {
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(224, 185, 109, 0.16), transparent 70%),
+    rgba(247, 238, 218, 0.04);
+  border: 1px solid rgba(224, 185, 109, 0.35);
+}
+
+.pc-retro__anchor-photo.is-seal::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(224, 185, 109, 0.22);
+  border-radius: 6px;
+}
+
+.pc-retro__anchor-seal {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.pc-retro__anchor-seal b {
+  color: var(--retro-gold);
+  font-family: var(--pc-serif);
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.pc-retro__anchor-seal small {
+  color: var(--retro-muted);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* ----------------------------- Citação do espelho -------------------------- */
+.pc-retro__mirror-quote {
+  margin: 12px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid rgba(224, 185, 109, 0.55);
+  color: var(--retro-ink);
+  font-family: var(--pc-serif);
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.pc-retro__mirror-quote cite {
+  display: block;
+  margin-top: 6px;
+  color: var(--retro-muted);
+  font-family: var(--pc-font);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------ Frase do perfil ---------------------------- */
+.pc-retro__critic-frase {
+  margin: 2px 0 16px;
+  color: var(--retro-gold);
+  font-family: var(--pc-serif);
+  font-size: clamp(17px, 4.6vw, 21px);
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+/* --------------------------- Insights enriquecidos ------------------------- */
+.pc-retro__insight-epiteto {
+  margin: 2px 0 4px;
+  color: var(--retro-gold);
+  font-family: var(--pc-serif);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.pc-retro__insight-curio {
+  margin-top: 8px;
+  color: var(--retro-ink);
+  font-size: 11.5px;
+  line-height: 1.55;
+  opacity: 0.82;
+}
+
+.pc-retro__insight-sublabel {
+  display: block;
+  margin: 12px 0 2px;
+  color: var(--retro-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pc-retro__traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.pc-retro__trait {
+  padding: 3px 8px;
+  border: 1px solid var(--trait, rgba(224, 185, 109, 0.4));
+  border-radius: 999px;
+  color: var(--trait, var(--retro-gold));
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-theme='dark'] .pc-retro__trait { color: var(--retro-gold); }
+
+/* Marcos da década: pôster grande com o título embaixo (a coluna do story é
+   estreita demais para o card horizontal). */
+.pc-retro .pc-filme--poster {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 7px;
+}
+
+.pc-retro .pc-filme--poster .pc-filme__poster {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+}
+
+.pc-retro .pc-filme--poster .pc-filme__title {
+  font-size: 9.5px;
+  line-height: 1.3;
+  -webkit-line-clamp: 3;
+}
+
+.pc-retro .pc-filme--poster .pc-filme__meta {
+  font-size: 8px;
+}
+
+.pc-retro__marks { margin-top: 2px; }

@@ -12,7 +12,7 @@ namespace Services;
  */
 final class RetratoService
 {
-    public const PROMPT_VERSAO = 'retrato-v3';
+    public const PROMPT_VERSAO = 'retrato-v4';
 
     public function __construct(private readonly GroqService $groq)
     {
@@ -25,7 +25,7 @@ final class RetratoService
 
     /**
      * @param array<string, mixed> $perfil view model do PerfilController
-     * @return array{texto: string, modelo: string, tokens: int|null, prompt_versao: string}|null
+     * @return array{texto: string, frase: string|null, modelo: string, tokens: int|null, prompt_versao: string}|null
      */
     public function gerar(array $perfil): ?array
     {
@@ -33,13 +33,13 @@ final class RetratoService
             return null;
         }
 
-        $resposta = $this->groq->chat($this->mensagens($perfil), 800, 0.7);
+        $resposta = $this->groq->chat($this->mensagens($perfil), 900, 0.7);
 
         if ($resposta === null) {
             return null;
         }
 
-        $texto = $this->limpar($resposta['texto']);
+        [$frase, $texto] = $this->separar($this->limpar($resposta['texto']));
 
         if (!$this->valido($texto)) {
             return null;
@@ -47,10 +47,42 @@ final class RetratoService
 
         return [
             'texto' => $texto,
+            'frase' => $frase,
             'modelo' => $resposta['modelo'],
             'tokens' => $resposta['tokens'],
             'prompt_versao' => self::PROMPT_VERSAO,
         ];
+    }
+
+    /**
+     * Separa a frase de perfil do texto corrido. O modelo é instruído a
+     * responder "FRASE: ..." e "TEXTO:"; se não seguir o formato, só o texto
+     * é aproveitado.
+     *
+     * @return array{0: string|null, 1: string}
+     */
+    public function separar(string $conteudo): array
+    {
+        $frase = null;
+        $texto = $conteudo;
+
+        if (preg_match('/^\s*FRASE\s*:\s*(.+?)\s*$/mi', $conteudo, $achado) === 1) {
+            $candidata = trim($achado[1], " \t\n\r\0\x0B\"“”");
+
+            if (mb_strlen($candidata) >= 12 && mb_strlen($candidata) <= 160 && !str_contains($candidata, '  ')) {
+                $frase = $candidata;
+            }
+        }
+
+        $posicao = mb_stripos($conteudo, 'TEXTO:');
+
+        if ($posicao !== false) {
+            $texto = ltrim(mb_substr($conteudo, $posicao + 6));
+        } elseif ($frase !== null) {
+            $texto = ltrim((string) preg_replace('/^\s*FRASE\s*:.*$/mi', '', $conteudo));
+        }
+
+        return [$frase, trim($texto)];
     }
 
     /**
@@ -133,12 +165,16 @@ final class RetratoService
         $sistema = <<<'TXT'
 Você escreve, em português do Brasil, um retrato curto do gosto de cinema de uma pessoa.
 
+Formato da resposta (obrigatório, sem markdown):
+FRASE: uma frase de até 90 caracteres sobre o jeito de assistir dessa pessoa, sem aspas e sem citar nomes.
+TEXTO:
+três parágrafos curtos, entre 120 e 170 palavras no total.
+
 Como escrever:
 - Fale como alguém que entende de cinema conversando com um amigo: claro, direto, sem pose.
 - Frases curtas. Evite jargão de crítica ("diegese", "catarse", "mise-en-scène", "imagem-tempo", "narrativa diegética") e adjetivos empilhados.
 - Explique com exemplos concretos do que a pessoa gosta de ver na tela.
-- Três parágrafos curtos, entre 120 e 170 palavras no total.
-- Nada de listas, títulos, markdown, emojis ou negrito.
+- Nada de listas, títulos, emojis ou negrito.
 
 Regras invioláveis:
 - Use APENAS os dados do JSON fornecido. Não invente filmes, pessoas, prêmios, cenas, datas ou fatos.

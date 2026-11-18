@@ -9,6 +9,7 @@ $config = require dirname(__DIR__) . '/src/bootstrap.php';
 use Core\Database;
 use Core\Csrf;
 use Models\Eixo;
+use Models\EixoGuia;
 use Models\Pergunta;
 
 $modoParam = $_GET['modo'] ?? null;
@@ -54,10 +55,32 @@ if ($modo !== null && $perguntas !== []) {
             'id'          => (int) $pergunta['id'],
             'texto'       => (string) $pergunta['texto'],
             'eixo'        => eixo_nome($eixo ?? []),
-            'descricao'   => eixo_descricao($eixo ?? []),
+            'slug'        => $slug,
             'cor'         => (string) ($eixo['cor_dir'] ?? '#0c3b2e'),
             'icone'       => icon((string) ($eixo['icone_dir'] ?? 'sparkles'), 15),
             'midia'       => midia_pergunta($pergunta),
+        ];
+    }
+
+    // Guia completo de cada eixo, usado no modal "Entender este eixo".
+    $guias = [];
+
+    foreach ($eixos as $eixo) {
+        $slug = (string) ($eixo['slug'] ?? '');
+        $guia = EixoGuia::porSlug($slug);
+
+        $guias[$slug] = [
+            'nome'       => eixo_nome($eixo),
+            'poloEsq'    => eixo_polo($eixo, 'esq'),
+            'poloDir'    => eixo_polo($eixo, 'dir'),
+            'corEsq'     => (string) ($eixo['cor_esq'] ?? '#8c5a2b'),
+            'corDir'     => (string) ($eixo['cor_dir'] ?? '#4f6480'),
+            'icone'      => icon((string) ($eixo['icone_dir'] ?? 'sparkles'), 18),
+            'resumo'     => (string) ($guia['resumo'] ?? ''),
+            'paragrafos' => $guia['paragrafos'] ?? [],
+            'leitura'    => $guia['leitura'] ?? ['esq' => '', 'dir' => ''],
+            'cenas'      => $guia['cenas'] ?? [],
+            'citacoes'   => $guia['citacoes'] ?? [],
         ];
     }
 
@@ -67,12 +90,17 @@ if ($modo !== null && $perguntas !== []) {
         'resultadoUrl' => url('resultado.php'),
         'csrf'         => Csrf::token(),
         'perguntas'    => $lista,
+        'guias'        => $guias,
         'textos'       => [
             'next'       => t('quiz.next'),
             'finish'     => t('quiz.finish'),
             'incomplete' => t('quiz.incomplete'),
             'error'      => t('quiz.error'),
             'restart'    => t('quiz.restart'),
+            'kicker'     => t('quiz.guide_kicker'),
+            'title'      => t('quiz.guide_title'),
+            'film'       => t('quiz.guide_film'),
+            'series'     => t('quiz.guide_series'),
         ],
     ];
 
@@ -85,14 +113,18 @@ require __DIR__ . '/partials/header.php';
 
 <?php if ($modo === null): ?>
     <section class="pc-section">
-        <div class="pc-wrap pc-wrap--narrow">
-            <span class="pc-eyebrow"><?= e(t('home.formats.eyebrow')) ?></span>
-            <h1 class="pc-title" style="font-size:clamp(34px,5.5vw,58px)"><?= e(t('home.formats.title')) ?></h1>
-            <p class="pc-lead pc-mt-2"><?= e(t('home.formats.subtitle')) ?></p>
+        <div class="pc-wrap">
+            <div class="pc-section__head">
+                <div>
+                    <span class="pc-eyebrow"><?= e(t('home.formats.eyebrow')) ?></span>
+                    <h1 class="pc-title"><?= e(t('home.formats.title')) ?></h1>
+                </div>
+                <p class="pc-lead"><?= e(t('home.formats.subtitle')) ?></p>
+            </div>
 
-            <div class="pc-formats pc-mt-4">
+            <div class="pc-formats">
                 <article class="pc-format">
-                    <span class="pc-format__label"><?= e(t('home.formats.quick.label')) ?></span>
+                    <h2 class="pc-format__label"><?= e(t('home.formats.quick.label')) ?></h2>
                     <div class="pc-format__count">
                         <b><?= e(t('home.formats.quick.count')) ?></b>
                         <span><?= e(t('home.formats.quick.unit')) ?></span>
@@ -101,13 +133,14 @@ require __DIR__ . '/partials/header.php';
                     <hr class="pc-format__rule">
                     <div class="pc-format__meta"><?= icon('clock', 15) ?> <?= e(t('home.formats.quick.time')) ?></div>
                     <a class="pc-btn pc-btn--ghost" href="<?= url('quiz.php', ['modo' => 'rapido']) ?>">
-                        <?= e(t('home.formats.quick.cta')) ?> <?= icon('arrow-right', 17) ?>
+                        <span class="pc-btn__label"><?= e(t('home.formats.quick.cta')) ?></span>
+                        <?= icon('arrow-right', 17) ?>
                     </a>
                 </article>
 
                 <article class="pc-format pc-format--featured">
                     <span class="pc-format__recommended"><?= e(t('home.formats.recommended')) ?></span>
-                    <span class="pc-format__label"><?= e(t('home.formats.full.label')) ?></span>
+                    <h2 class="pc-format__label"><?= e(t('home.formats.full.label')) ?></h2>
                     <div class="pc-format__count">
                         <b><?= e(t('home.formats.full.count')) ?></b>
                         <span><?= e(t('home.formats.full.unit')) ?></span>
@@ -116,12 +149,13 @@ require __DIR__ . '/partials/header.php';
                     <hr class="pc-format__rule">
                     <div class="pc-format__meta"><?= icon('clock', 15) ?> <?= e(t('home.formats.full.time')) ?></div>
                     <a class="pc-btn pc-btn--light" href="<?= url('quiz.php', ['modo' => 'completo']) ?>">
-                        <?= e(t('home.formats.full.cta')) ?> <?= icon('arrow-right', 17) ?>
+                        <span class="pc-btn__label"><?= e(t('home.formats.full.cta')) ?></span>
+                        <?= icon('arrow-right', 17) ?>
                     </a>
                 </article>
 
                 <article class="pc-format">
-                    <span class="pc-format__label"><?= e(t('home.formats.extreme.label')) ?></span>
+                    <h2 class="pc-format__label"><?= e(t('home.formats.extreme.label')) ?></h2>
                     <div class="pc-format__count">
                         <b><?= e(t('home.formats.extreme.count')) ?></b>
                         <span><?= e(t('home.formats.extreme.unit')) ?></span>
@@ -130,7 +164,8 @@ require __DIR__ . '/partials/header.php';
                     <hr class="pc-format__rule">
                     <div class="pc-format__meta"><?= icon('clock', 15) ?> <?= e(t('home.formats.extreme.time')) ?></div>
                     <a class="pc-btn pc-btn--ghost" href="<?= url('quiz.php', ['modo' => 'extremo']) ?>">
-                        <?= e(t('home.formats.extreme.cta')) ?> <?= icon('arrow-right', 17) ?>
+                        <span class="pc-btn__label"><?= e(t('home.formats.extreme.cta')) ?></span>
+                        <?= icon('arrow-right', 17) ?>
                     </a>
                 </article>
             </div>
@@ -160,20 +195,6 @@ require __DIR__ . '/partials/header.php';
                 <div class="pc-question__body">
                     <span class="pc-question__num" data-q-num aria-hidden="true">01</span>
 
-                    <div class="pc-question__head">
-                        <p class="pc-axis-tag" data-q-tag>
-                            <span class="pc-axis-tag__icon" data-q-axis-icon aria-hidden="true">
-                                <?= icon((string) ($eixosPorId[(int) ($perguntas[0]['eixo_id'] ?? 0)]['icone_dir'] ?? 'sparkles'), 15) ?>
-                            </span>
-                            <span data-q-axis><?= e(eixo_nome($eixosPorId[(int) ($perguntas[0]['eixo_id'] ?? 0)] ?? [])) ?></span>
-                        </p>
-
-                        <button class="pc-understand" type="button" data-help-toggle aria-expanded="false" aria-controls="quiz-help">
-                            <?= icon('compass', 14) ?>
-                            <?= e(t('quiz.understand')) ?>
-                        </button>
-                    </div>
-
                     <div class="pc-question__media" data-q-media-col>
                         <figure class="pc-scene" data-q-media hidden>
                             <div class="pc-scene__frame" data-q-media-frame></div>
@@ -184,52 +205,64 @@ require __DIR__ . '/partials/header.php';
                         </figure>
                     </div>
 
-                    <h1 class="pc-question__text" data-q-text><?= e((string) ($perguntas[0]['texto'] ?? '')) ?></h1>
+                    <div class="pc-question__main">
+                        <div class="pc-question__head">
+                            <p class="pc-axis-tag" data-q-tag>
+                                <span class="pc-axis-tag__icon" data-q-axis-icon aria-hidden="true">
+                                    <?= icon((string) ($eixosPorId[(int) ($perguntas[0]['eixo_id'] ?? 0)]['icone_dir'] ?? 'sparkles'), 15) ?>
+                                </span>
+                                <span data-q-axis><?= e(eixo_nome($eixosPorId[(int) ($perguntas[0]['eixo_id'] ?? 0)] ?? [])) ?></span>
+                            </p>
 
-                    <div class="pc-axis-help" id="quiz-help" data-q-help>
-                        <p data-q-help-text></p>
-                    </div>
-
-                    <div class="pc-answers" role="radiogroup" aria-label="Opções de resposta" data-answers>
-                        <?php foreach (tl('quiz.answers') as $resposta): ?>
-                            <?php
-                            $valor = (int) $resposta['value'];
-                            $icone = match (true) {
-                                $valor === 2, $valor === 1 => 'check',
-                                $valor === 0 => 'minus',
-                                default => 'x',
-                            };
-                            ?>
-                            <button
-                                class="pc-answer"
-                                type="button"
-                                role="radio"
-                                aria-checked="false"
-                                data-value="<?= $valor ?>"
-                            >
-                                <span class="pc-answer__icon" aria-hidden="true"><?= icon($icone, 15) ?></span>
-                                <span><?= e($resposta['label']) ?></span>
-                                <span class="pc-answer__tail" aria-hidden="true"></span>
+                            <button class="pc-understand" type="button" data-guide-open aria-haspopup="dialog">
+                                <?= icon('compass', 14) ?>
+                                <?= e(t('quiz.understand')) ?>
                             </button>
-                        <?php endforeach; ?>
-                    </div>
+                        </div>
 
-                    <div class="pc-quiz__actions">
-                        <button class="pc-btn pc-btn--ghost pc-btn--sm" type="button" data-quiz-back disabled>
-                            <?= icon('arrow-left', 16) ?>
-                            <?= e(t('quiz.back')) ?>
-                        </button>
+                        <h1 class="pc-question__text" data-q-text><?= e((string) ($perguntas[0]['texto'] ?? '')) ?></h1>
 
-                        <label class="pc-switch">
-                            <input type="checkbox" data-auto-advance checked>
-                            <span class="pc-switch__track" aria-hidden="true"></span>
-                            <?= e(t('quiz.auto_advance')) ?>
-                        </label>
+                        <div class="pc-answers" role="radiogroup" aria-label="Opções de resposta" data-answers>
+                            <?php foreach (tl('quiz.answers') as $resposta): ?>
+                                <?php
+                                $valor = (int) $resposta['value'];
+                                $icone = match (true) {
+                                    $valor === 2, $valor === 1 => 'check',
+                                    $valor === 0 => 'minus',
+                                    default => 'x',
+                                };
+                                ?>
+                                <button
+                                    class="pc-answer"
+                                    type="button"
+                                    role="radio"
+                                    aria-checked="false"
+                                    data-value="<?= $valor ?>"
+                                >
+                                    <span class="pc-answer__icon" aria-hidden="true"><?= icon($icone, 15) ?></span>
+                                    <span><?= e($resposta['label']) ?></span>
+                                    <span class="pc-answer__tail" aria-hidden="true"></span>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
 
-                        <button class="pc-btn pc-btn--sm" type="button" data-quiz-next disabled>
-                            <span data-next-label><?= e(t('quiz.next')) ?></span>
-                            <?= icon('arrow-right', 16) ?>
-                        </button>
+                        <div class="pc-quiz__actions">
+                            <button class="pc-btn pc-btn--ghost pc-btn--sm" type="button" data-quiz-back disabled>
+                                <?= icon('arrow-left', 16) ?>
+                                <?= e(t('quiz.back')) ?>
+                            </button>
+
+                            <label class="pc-switch">
+                                <input type="checkbox" data-auto-advance checked>
+                                <span class="pc-switch__track" aria-hidden="true"></span>
+                                <?= e(t('quiz.auto_advance')) ?>
+                            </label>
+
+                            <button class="pc-btn pc-btn--sm" type="button" data-quiz-next disabled>
+                                <span data-next-label><?= e(t('quiz.next')) ?></span>
+                                <?= icon('arrow-right', 16) ?>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </article>
@@ -253,6 +286,46 @@ require __DIR__ . '/partials/header.php';
                 <p><?= e(t('quiz.saving_hint')) ?></p>
             </div>
         </div>
+
+        <dialog class="pc-guide" data-guide aria-labelledby="quiz-guide-title">
+            <div class="pc-guide__top">
+                <span class="pc-guide__kicker" data-guide-kicker></span>
+                <button class="pc-guide__close" type="button" data-guide-close aria-label="<?= e(t('quiz.guide_close')) ?>">
+                    <?= icon('x', 16) ?>
+                </button>
+            </div>
+
+            <div class="pc-guide__scroll" tabindex="0">
+                <header class="pc-guide__head">
+                    <span class="pc-guide__icon" data-guide-icon aria-hidden="true"></span>
+                    <h2 class="pc-guide__title" id="quiz-guide-title" data-guide-title></h2>
+                    <p class="pc-guide__resumo" data-guide-resumo></p>
+                </header>
+
+                <div class="pc-guide__poles" data-guide-poles></div>
+
+                <div class="pc-guide__prose" data-guide-prose></div>
+
+                <section class="pc-guide__section">
+                    <h3><?= e(t('quiz.guide_scenes')) ?></h3>
+                    <ul class="pc-guide__scenes" data-guide-scenes></ul>
+                </section>
+
+                <section class="pc-guide__section">
+                    <h3><?= e(t('quiz.guide_refs')) ?></h3>
+                    <ul class="pc-guide__cites" data-guide-cites></ul>
+                </section>
+
+                <section class="pc-guide__section">
+                    <h3><?= e(t('quiz.guide_score')) ?></h3>
+                    <div class="pc-guide__score" data-guide-leitura></div>
+                </section>
+            </div>
+
+            <footer class="pc-guide__foot">
+                <button class="pc-btn pc-btn--sm" type="button" data-guide-close><?= e(t('quiz.guide_close')) ?></button>
+            </footer>
+        </dialog>
 
         <noscript>
             <div class="pc-wrap pc-mt-3">

@@ -313,6 +313,49 @@ function modo_rotulo(string $modo): string
 }
 
 /**
+ * Polos em que o vetor de uma entidade é mais forte.
+ *
+ * @param array<string, mixed> $entidade linha com `vetor`
+ * @param list<array<string, mixed>> $eixos
+ * @return list<array{eixo: string, polo: string, pct: float, cor: string}>
+ */
+function entidade_polos(array $entidade, array $eixos, int $limite = 2): array
+{
+    $itens = [];
+
+    foreach (array_values($eixos) as $indice => $eixo) {
+        $pct = (float) (($entidade['vetor'] ?? [])[$indice] ?? 50);
+        $direita = $pct >= 50;
+
+        $itens[] = [
+            'distancia' => abs($pct - 50),
+            'eixo'      => eixo_nome($eixo),
+            'polo'      => eixo_polo($eixo, $direita ? 'dir' : 'esq'),
+            'pct'       => round($direita ? $pct : 100 - $pct, 0),
+            'cor'       => (string) ($direita ? $eixo['cor_dir'] : $eixo['cor_esq']),
+        ];
+    }
+
+    usort($itens, static fn (array $a, array $b): int => $b['distancia'] <=> $a['distancia']);
+
+    return array_map(
+        static fn (array $item): array => [
+            'eixo' => $item['eixo'],
+            'polo' => $item['polo'],
+            'pct'  => $item['pct'],
+            'cor'  => $item['cor'],
+        ],
+        array_slice($itens, 0, max(1, $limite))
+    );
+}
+
+/** Ano de fundação/estreia legível ("2012" ou "" quando não há). */
+function ano_curto(mixed $ano): string
+{
+    return is_numeric($ano) && (int) $ano >= 1800 ? (string) (int) $ano : '';
+}
+
+/**
  * Nome curto para o card de compartilhamento: remove o alias entre parênteses
  * ("Batman (Bruce Wayne)" → "Batman") e mantém no máximo duas palavras.
  */

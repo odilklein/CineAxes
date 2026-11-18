@@ -1046,9 +1046,11 @@ button { font-family: inherit; }
 
 .pc-format__label {
   color: var(--pc-red);
+  font-family: var(--pc-font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -1087,6 +1089,10 @@ button { font-family: inherit; }
 }
 
 .pc-format p { max-width: 38ch; font-size: 14px; line-height: 1.6; }
+
+/* O texto absorve a sobra de altura: a régua e o rodapé de todos os cards
+   ficam alinhados, independentemente do tamanho da descrição. */
+.pc-format > p { flex: 1 1 auto; }
 
 .pc-format__rule {
   margin: 22px 0 18px;
@@ -1524,26 +1530,295 @@ button { font-family: inherit; }
   letter-spacing: -0.04em;
 }
 
-.pc-axis-help {
+/* ------------------- Guia do eixo: modal do quiz ------------------- */
+body.pc-guide-open { overflow: hidden; }
+
+.pc-guide {
+  width: min(760px, 94vw);
+  max-height: min(88vh, 860px);
+  padding: 0;
   overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.25s ease;
+  border: 1px solid var(--pc-line-2);
+  border-radius: 3px;
+  background: var(--pc-surface);
+  color: var(--pc-ink);
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.8);
 }
 
-.pc-axis-help.is-open {
-  max-height: 220px;
-  margin: -14px 0 26px;
-  opacity: 1;
+.pc-guide[open] {
+  display: flex;
+  flex-direction: column;
 }
 
-.pc-axis-help p {
-  padding: 16px 20px;
-  border-left: 3px solid var(--pc-red);
-  background: var(--pc-bg);
-  color: var(--pc-muted);
-  font-size: 14px;
+.pc-guide::backdrop {
+  background: rgba(14, 9, 6, 0.74);
+  backdrop-filter: blur(4px);
+}
+
+.pc-guide__top {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 18px;
+  background: var(--pc-primary);
+  color: var(--pc-primary-ink);
+}
+
+.pc-guide__kicker {
+  color: var(--pc-gold-2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.pc-guide__close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(247, 238, 218, 0.4);
+  border-radius: 1px;
+  background: transparent;
+  color: var(--pc-primary-ink);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.pc-guide__close:hover { background: rgba(247, 238, 218, 0.12); }
+
+.pc-guide__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 26px 28px 30px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.pc-guide__head {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--pc-line);
+}
+
+.pc-guide__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  background: var(--pc-primary);
+  color: var(--pc-primary-ink);
+}
+
+.pc-guide__title {
+  font-size: clamp(26px, 3.4vw, 34px);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.pc-guide__resumo {
+  max-width: 58ch;
+  color: var(--pc-ink-2);
+  font-size: 15.5px;
   line-height: 1.65;
+}
+
+.pc-guide__poles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 16px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pc-guide__pole {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pc-guide__pole i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.pc-guide__pole-arrow { color: var(--pc-muted); }
+
+.pc-guide__prose {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.pc-guide__prose p {
+  color: var(--pc-ink-2);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+.pc-guide__section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dotted var(--pc-line-2);
+}
+
+.pc-guide__section h3 {
+  margin-bottom: 12px;
+  color: var(--pc-red);
+  font-family: var(--pc-font);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.pc-guide__scenes {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-guide__scene {
+  padding: 12px 14px;
+  border: 1px solid var(--pc-line);
+  border-left: 3px solid var(--guide-polo, var(--pc-line-2));
+  border-radius: 2px;
+  background: var(--pc-bg);
+}
+
+.pc-guide__scene-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.pc-guide__scene-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.pc-guide__scene-year {
+  color: var(--pc-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pc-guide__scene-tag {
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  color: var(--pc-muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pc-guide__scene p {
+  color: var(--pc-ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pc-guide__scene .pc-guide__scene-why {
+  margin-top: 6px;
+  color: var(--pc-muted);
+  font-style: italic;
+}
+
+.pc-guide__cites {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-guide__cite {
+  padding-left: 14px;
+  border-left: 2px solid var(--pc-gold);
+}
+
+.pc-guide__cite p {
+  color: var(--pc-ink-2);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+.pc-guide__cite cite {
+  display: block;
+  margin-top: 5px;
+  color: var(--pc-muted);
+  font-size: 11.5px;
+  font-style: normal;
+}
+
+.pc-guide__score {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.pc-guide__score div {
+  padding: 12px 14px;
+  border: 1px solid var(--pc-line);
+  border-radius: 2px;
+  background: var(--pc-bg);
+}
+
+.pc-guide__score b {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pc-guide__score span {
+  color: var(--pc-ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pc-guide__foot {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 13px 20px;
+  border-top: 1px solid var(--pc-line);
+  background: var(--pc-bg-2);
+}
+
+@media (max-width: 620px) {
+  .pc-guide {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92svh;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .pc-guide__scroll { padding: 20px 18px 24px; }
+
+  .pc-guide__scene-tag { margin-left: 0; }
 }
 
 .pc-answers {
@@ -4196,7 +4471,7 @@ body.pc-qv-open {
 }
 
 /* =============================================================================
-   27. Layout final do quiz: uma coluna, cena 16:9 grande (a página rola)
+   27. Layout do quiz: duas colunas no desktop (cabe na tela), uma no mobile
    ========================================================================== */
 .pc-quiz { padding: 14px 0 30px; }
 
@@ -4220,6 +4495,12 @@ body.pc-qv-open {
   display: flex;
   flex-direction: column;
   padding: 22px 30px 22px;
+}
+
+.pc-question__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .pc-question__media {
@@ -4299,10 +4580,87 @@ body.pc-qv-open {
   font-size: 10.5px;
 }
 
+/* Duas colunas no desktop: a cena à esquerda, pergunta e alternativas à
+   direita. O conjunto (progresso + cartão + atalhos) cabe na altura da tela,
+   então não é preciso rolar para responder. */
+@media (min-width: 900px) {
+  .pc-quiz {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100svh - var(--pc-header));
+    padding: 22px 0 26px;
+  }
+
+  .pc-quiz__progress {
+    width: 100%;
+    max-width: 1060px;
+  }
+
+  .pc-question { max-width: 1060px; }
+
+  .pc-question__body {
+    display: grid;
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    align-items: center;
+    gap: 32px;
+    padding: 26px 30px;
+  }
+
+  .pc-question__media { margin: 0; }
+
+  .pc-question__media .pc-scene__frame { aspect-ratio: 4 / 3; }
+
+  .pc-question__media .pc-scene__poster { object-fit: cover; }
+
+  .pc-question.is-solo .pc-question__body {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .pc-question.is-solo .pc-question__media { display: none; }
+
+  .pc-question__num { font-size: 76px; }
+}
+
+/* Entre 900 e 1100px a coluna de texto fica estreita: cena menor para os
+   controles caberem em uma linha. */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .pc-question__body {
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .pc-question__text { font-size: 20px; }
+}
+
+/* Janelas baixas: compacta o suficiente para o cartão continuar inteiro. */
+@media (min-width: 900px) and (max-height: 720px) {
+  .pc-quiz { padding: 10px 0 16px; }
+
+  .pc-quiz__kbd { display: none; }
+
+  .pc-question__body { padding: 18px 24px; gap: 24px; }
+
+  .pc-question__text {
+    margin-bottom: 14px;
+    font-size: clamp(18px, 1.7vw, 22px);
+  }
+
+  .pc-answer { padding: 8px 12px; }
+
+  .pc-quiz__actions { margin-top: 12px; }
+}
+
+/* No mobile o numeral cai sobre a cena; ele é decorativo e sai de cena. */
+@media (max-width: 899px) {
+  .pc-question__num { display: none; }
+}
+
 @media (max-width: 600px) {
   .pc-question__body { padding: 16px; }
   .pc-question__text { font-size: 19px; }
-  .pc-question__num { top: 2px; right: 12px; font-size: 48px; }
   .pc-quiz__actions { flex-wrap: wrap; }
   .pc-quiz__actions .pc-switch {
     order: 3;
@@ -4979,6 +5337,16 @@ body.pc-qv-open {
   .pc-formats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Com três cards e duas colunas, o último fica sozinho: centraliza em vez de
+   deixar um buraco à direita. */
+@media (min-width: 721px) and (max-width: 1080px) {
+  .pc-format:last-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 9px);
+  }
+}
+
 @media (max-width: 720px) {
   .pc-formats { grid-template-columns: 1fr; }
   .pc-format { padding: 26px 22px; }
@@ -5141,20 +5509,36 @@ body.pc-qv-open {
     radial-gradient(circle at 86% 82%, rgba(211, 169, 92, 0.05), transparent 55%);
 }
 
-/* CTA dos formatos: rótulo realmente centralizado, seta ancorada à direita. */
+/* CTA dos formatos: rótulo centralizado e seta ancorada à direita, sem
+   sobreposição mesmo nos cards estreitos (o texto quebra em duas linhas). */
 .pc-format .pc-btn {
-  position: relative;
-  justify-content: center;
-  padding-inline: 46px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-inline: 16px;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+}
+
+/* Espaçador que espelha a seta: o rótulo fica opticamente centrado. */
+.pc-format .pc-btn::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 17px;
+}
+
+.pc-format .pc-btn__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-wrap: balance;
 }
 
 .pc-format .pc-btn .pc-ico {
-  position: absolute;
-  right: 18px;
+  position: static;
+  flex: 0 0 auto;
   margin: 0;
 }
-
-.pc-format .pc-btn:hover .pc-ico { transform: translateX(3px); }
 
 /* ---------------------- 34. Retrospectiva (reentrada) --------------------- */
 .pc-result__code {
@@ -5552,4 +5936,737 @@ body.pc-qv-open {
   .pc-example__reading-forca {
     display: none;
   }
+}
+
+/* =============================================================================
+   37. Cards de filme, pessoas da ficha e detalhes do perfil
+   ========================================================================== */
+
+/* ------------------------------ Card de filme ------------------------------ */
+.pc-filme-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pc-filme-row > .pc-filme {
+  flex: 1 1 190px;
+  min-width: 0;
+}
+
+.pc-filme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 14px;
+}
+
+.pc-filme {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px;
+  border: 1px solid var(--pc-line);
+  border-radius: 3px;
+  background: var(--pc-surface);
+  color: var(--pc-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.pc-filme:hover {
+  border-color: var(--pc-line-2);
+  transform: translateY(-1px);
+  box-shadow: var(--pc-shadow-sm);
+}
+
+.pc-filme__poster {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 63px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #14100d;
+}
+
+.pc-filme__poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pc-filme__mark {
+  color: rgba(244, 239, 226, 0.72);
+  font-family: var(--pc-serif);
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.pc-filme__body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pc-filme__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pc-filme__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+}
+
+.pc-filme__role::before {
+  content: '·';
+  margin-right: 4px;
+}
+
+.pc-filme--card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.pc-filme--card .pc-filme__poster {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  border-radius: 0;
+}
+
+.pc-filme--card .pc-filme__mark { font-size: 30px; }
+
+.pc-filme--card .pc-filme__body { padding: 9px 10px 11px; }
+
+.pc-filme--card .pc-filme__title { font-size: 12px; }
+
+/* ------------------------- Detalhes nos cards do perfil -------------------- */
+.pc-entity__quote {
+  margin: 2px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--pc-gold);
+  color: var(--pc-ink-2);
+  font-family: var(--pc-serif);
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.pc-entity__traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+}
+
+.pc-entity__trait {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--pc-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pc-entity__trait i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--trait, var(--pc-line-2));
+}
+
+/* Selo para escola/movimento sem logotipo no catálogo. */
+.pc-entity__seal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--seal) 22%, transparent), transparent 70%),
+    var(--pc-bg-2);
+  color: var(--seal, var(--pc-ink));
+}
+
+.pc-entity__seal::before {
+  content: '';
+  position: absolute;
+  inset: 13px;
+  border: 1px solid color-mix(in srgb, var(--seal) 55%, transparent);
+  border-radius: 2px;
+}
+
+.pc-entity__seal-mono {
+  font-family: var(--pc-serif);
+  font-size: 46px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.pc-entity__seal small {
+  color: var(--pc-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ------------------- Frase do perfil e citação do espelho ------------------ */
+.pc-profile-card__frase {
+  max-width: 46ch;
+  margin-top: 14px;
+  color: var(--pc-ink);
+  font-family: var(--pc-serif);
+  font-size: clamp(18px, 1.7vw, 22px);
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.pc-profile-card__quote {
+  max-width: 52ch;
+  margin: 16px 0 0;
+  padding-left: 13px;
+  border-left: 2px solid var(--pc-gold);
+}
+
+.pc-profile-card__quote blockquote {
+  margin: 0;
+  color: var(--pc-ink-2);
+  font-family: var(--pc-serif);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.pc-profile-card__quote figcaption {
+  margin-top: 6px;
+  color: var(--pc-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ------------------------ Guia do eixo na leitura -------------------------- */
+.pc-reading__guide {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dotted var(--pc-line-2);
+}
+
+.pc-reading__guide > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 8px;
+  color: var(--pc-red);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.pc-reading__guide > summary::-webkit-details-marker { display: none; }
+
+.pc-reading__guide > summary small {
+  color: var(--pc-muted);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.pc-reading__guide > summary::after {
+  content: '+';
+  margin-left: auto;
+  font-family: var(--pc-mono);
+  font-size: 13px;
+}
+
+.pc-reading__guide[open] > summary::after { content: '−'; }
+
+.pc-reading__guide-body {
+  display: grid;
+  gap: 11px;
+  margin-top: 11px;
+}
+
+.pc-reading__guide-resumo {
+  color: var(--pc-ink-2);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.pc-reading__sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: 10px;
+}
+
+.pc-reading__side {
+  padding: 11px 12px;
+  border: 1px solid var(--pc-line);
+  border-radius: 3px;
+  background: var(--pc-bg);
+}
+
+.pc-reading__side.is-user {
+  border-color: var(--reading, var(--pc-gold));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--reading, var(--pc-gold)) 32%, transparent);
+}
+
+.pc-reading__side b {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--pc-red);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pc-reading__side p {
+  color: var(--pc-ink-2);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.pc-reading__scenes {
+  display: grid;
+  gap: 7px;
+  margin: 9px 0 0;
+  padding: 9px 0 0;
+  border-top: 1px dotted var(--pc-line);
+  list-style: none;
+}
+
+.pc-reading__scenes li {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.pc-reading__scenes b { font-weight: 700; }
+
+.pc-reading__scenes small {
+  margin-left: 4px;
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+}
+
+.pc-reading__scenes span {
+  display: block;
+  margin-top: 1px;
+  color: var(--pc-muted);
+  font-size: 10.5px;
+}
+
+.pc-reading__cite {
+  color: var(--pc-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.pc-reading__cite b { color: var(--pc-ink-2); }
+
+/* --------------------------- Insights enriquecidos ------------------------- */
+.pc-insight__epiteto {
+  color: var(--pc-red);
+  font-family: var(--pc-serif);
+  font-size: 14.5px;
+  font-style: italic;
+  line-height: 1.25;
+}
+
+.pc-insight__curio {
+  padding-top: 8px;
+  border-top: 1px dotted var(--pc-line);
+  font-size: 11.5px !important;
+  line-height: 1.55;
+}
+
+.pc-insight__meta {
+  margin-top: auto;
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.pc-insight__compat { color: var(--pc-red); font-size: 11px !important; }
+
+.pc-insight__traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.pc-insight__trait {
+  padding: 3px 8px;
+  border: 1px solid var(--trait, var(--pc-line-2));
+  border-radius: 999px;
+  color: var(--trait, var(--pc-muted));
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pc-insight__ritual {
+  padding-left: 9px;
+  border-left: 2px solid var(--pc-line-2);
+  font-size: 11.5px !important;
+}
+
+.pc-insight__ritual span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--pc-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pc-decade-panel { margin-top: 16px; }
+
+.pc-decade-marks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dotted var(--pc-line-2);
+}
+
+.pc-decade-marks__label {
+  color: var(--pc-muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pc-decade-marks .pc-filme-row { flex: 1 1 420px; }
+
+.pc-anchors-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 28px;
+}
+
+/* ------------------------------ Atores do espelho -------------------------- */
+.pc-people {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+}
+
+.pc-person {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 18px 14px 16px;
+  border: 1px solid var(--pc-line);
+  border-radius: 3px;
+  background: var(--pc-surface);
+  color: var(--pc-ink);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.pc-person:hover {
+  transform: translateY(-2px);
+  border-color: var(--pc-line-2);
+  box-shadow: var(--pc-shadow);
+}
+
+.pc-person__photo {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  border: 1px solid var(--pc-line-2);
+  border-radius: 50%;
+  background: var(--pc-bg-2);
+  color: var(--pc-muted);
+  font-family: var(--pc-serif);
+  font-size: 20px;
+}
+
+.pc-person__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pc-person b { font-size: 13px; line-height: 1.2; }
+
+.pc-person small {
+  color: var(--pc-muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.pc-person__meta {
+  margin-top: 2px;
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+}
+
+@media (max-width: 720px) {
+  .pc-anchors-list { grid-template-columns: 1fr; }
+  .pc-filme-row > .pc-filme { flex: 1 1 100%; }
+}
+
+/* ------------------------------ Ficha rápida ------------------------------- */
+.pc-qv__top {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.pc-qv__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.pc-qv__back {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(247, 238, 218, 0.4);
+  border-radius: 1px;
+  background: transparent;
+  color: var(--pc-primary-ink);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pc-qv__back:hover { background: rgba(247, 238, 218, 0.12); }
+
+.pc-qv__quote {
+  margin: 16px 0 0;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--pc-gold);
+}
+
+.pc-qv__quote blockquote {
+  margin: 0;
+  color: var(--pc-ink);
+  font-family: var(--pc-serif);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.pc-qv__quote figcaption {
+  margin-top: 6px;
+  color: var(--pc-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pc-qv__actor-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.pc-qv__actor-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pc-qv__actor-info b { font-size: 13.5px; }
+
+.pc-qv__actor-info small {
+  color: var(--pc-muted);
+  font-size: 11px;
+}
+
+.pc-qv__actor-bio {
+  margin-top: 9px;
+  color: var(--pc-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.pc-qv__poles {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-qv__poles li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.pc-qv__poles i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.pc-qv__poles b {
+  margin-left: auto;
+  font-family: var(--pc-mono);
+  font-size: 11px;
+}
+
+.pc-qv__filmcard {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--pc-line);
+  border-radius: 3px;
+  background: var(--pc-bg);
+  color: var(--pc-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pc-qv__filmcard:hover { border-color: var(--pc-line-2); }
+
+.pc-qv__filmcard-poster {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 68px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #14100d;
+  color: #f4efe2;
+  font-family: var(--pc-serif);
+}
+
+.pc-qv__filmcard-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pc-qv__filmcard-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pc-qv__filmcard-info b { font-size: 12.5px; }
+
+.pc-qv__filmcard-info small {
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 10px;
+}
+
+.pc-qv__works li { display: block; }
+
+.pc-qv__work {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 0;
+  border: 0;
+  border-bottom: 1px dotted var(--pc-line);
+  background: transparent;
+  color: var(--pc-ink-2);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pc-qv__work:hover { color: var(--pc-ink); }
+
+.pc-qv__work:disabled { cursor: default; opacity: 0.8; }
+
+.pc-qv__work small {
+  color: var(--pc-muted);
+  font-family: var(--pc-mono);
+  font-size: 10px;
+}
+
+.pc-qv__poster--mark { background: var(--pc-bg-2); }
+
+.pc-qv__seal {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(83, 32, 28, 0.12), transparent 70%),
+    var(--pc-bg-2);
+}
+
+.pc-qv__seal-mono {
+  color: var(--pc-primary);
+  font-family: var(--pc-serif);
+  font-size: 54px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.pc-qv__seal small {
+  color: var(--pc-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+[data-theme='dark'] .pc-qv__seal-mono { color: var(--pc-gold-2); }
+
+@media (max-width: 620px) {
+  .pc-qv__grid { grid-template-columns: 1fr; }
+  .pc-anchors-list { grid-template-columns: 1fr; }
 }

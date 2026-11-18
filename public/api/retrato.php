@@ -41,6 +41,7 @@ try {
         Http::json([
             'ok' => true,
             'texto' => $existente['texto'],
+            'frase' => $existente['frase'] ?? null,
             'modelo' => $existente['modelo'],
             'tokens' => $existente['tokens'] !== null ? (int) $existente['tokens'] : null,
             'gerado' => false,
@@ -90,6 +91,7 @@ try {
     Http::json([
         'ok' => true,
         'texto' => $salvo['texto'] ?? $gerado['texto'],
+        'frase' => $salvo['frase'] ?? $gerado['frase'] ?? null,
         'modelo' => $salvo['modelo'] ?? $gerado['modelo'],
         'tokens' => isset($salvo['tokens']) ? (int) $salvo['tokens'] : ($gerado['tokens'] ?? null),
         'gerado' => true,

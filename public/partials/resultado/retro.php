@@ -31,27 +31,39 @@ $retroUrlPerfil = url('resultado.php', ['codigo' => $codigo]);
 
 $retroQuickPersonagem = static function (array $entidade): array {
     return [
-        'tipo' => 'personagem',
-        'tmdb' => $entidade['tmdb_id'],
-        'nome' => $entidade['nome'],
-        'titulo' => $entidade['obra_origem'],
-        'ano' => $entidade['ano'],
-        'poster' => $entidade['imagem_url'],
-        'bio' => $entidade['bio'],
-        'ator' => $entidade['ator_nome'],
-        'atorFoto' => $entidade['ator_foto_url'],
-        'afinidade' => $entidade['afinidade'],
+        'tipo'           => 'personagem',
+        'nome'           => $entidade['nome'],
+        'obra'           => $entidade['obra_origem'],
+        'ano'            => $entidade['ano'],
+        'tmdb'           => $entidade['tmdb_id'],
+        'poster'         => $entidade['imagem_url'],
+        'bio'            => $entidade['bio'],
+        'frase'          => $entidade['frase'] ?? null,
+        'ator'           => $entidade['ator_nome'],
+        'atorFoto'       => $entidade['ator_foto_url'],
+        'atorTmdb'       => $entidade['ator_tmdb_id'] ?? null,
+        'atorNascimento' => $entidade['nascimento'] ?? null,
+        'atorPais'       => origem_curta($entidade['pais'] ?? null),
+        'polos'          => $entidade['polos'] ?? [],
+        'afinidade'      => $entidade['afinidade'],
     ];
 };
 
 $retroQuickAncora = static function (array $item, string $tipo): array {
     return [
-        'tipo' => $tipo,
-        'nome' => $item['nome'],
-        'bio' => $item['bio'],
-        'poster' => $item['imagem_url'],
-        'obras' => array_map(
-            static fn (array $obra): array => ['titulo' => $obra['titulo'], 'ano' => $obra['ano']],
+        'tipo'      => $tipo,
+        'nome'      => $item['nome'],
+        'bio'       => $item['bio'],
+        'frase'     => $item['frase'] ?? null,
+        'poster'    => $item['imagem_url'],
+        'polos'     => $item['polos'] ?? [],
+        'obras'     => array_map(
+            static fn (array $obra): array => [
+                'titulo' => $obra['titulo'],
+                'ano'    => $obra['ano'],
+                'tmdb'   => $obra['tmdb_id'] ?? null,
+                'poster' => $obra['poster_url'] ?? null,
+            ],
             $item['obras'] ?? []
         ),
         'afinidade' => $item['afinidade'],
@@ -194,14 +206,12 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
 
                     <div class="pc-retro__films" data-reveal style="--d:.22s">
                         <span class="pc-retro__films-label"><?= e(t('retro.reading.matches')) ?></span>
-                        <ul role="list">
+                        <div class="pc-filme-row pc-filme-row--retro">
+                            <?php $filmeVariante = 'chip'; ?>
                             <?php foreach ($leitura['combina'] as $filme): ?>
-                                <li>
-                                    <b><?= e($filme['titulo']) ?></b>
-                                    <span><?= (int) $filme['ano'] ?></span>
-                                </li>
+                                <?php require __DIR__ . '/../card-filme.php'; ?>
                             <?php endforeach; ?>
-                        </ul>
+                        </div>
                     </div>
 
                     <p class="pc-retro__cansa" data-reveal style="--d:.3s">
@@ -273,6 +283,15 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                             <p class="pc-retro__mirror-bio"><?= e((string) $retroPrincipal['bio']) ?></p>
                         <?php endif; ?>
 
+                        <?php if (!empty($retroPrincipal['frase'])): ?>
+                            <blockquote class="pc-retro__mirror-quote">
+                                “<?= e((string) $retroPrincipal['frase']) ?>”
+                                <cite>
+                                    <?= e($retroPrincipal['nome']) ?>, <?= e($retroPrincipal['obra_origem']) ?><?= $retroPrincipal['ano'] !== null ? ' (' . (int) $retroPrincipal['ano'] . ')' : '' ?>
+                                </cite>
+                            </blockquote>
+                        <?php endif; ?>
+
                         <div class="pc-retro__mirror-foot">
                             <span class="pc-retro__affinity"><?= pct($retroPrincipal['afinidade']) ?></span>
                             <span><?= e(t('retro.mirror.affinity_label')) ?></span>
@@ -290,7 +309,7 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
             </article>
 
             <?php $c = $retroCap++; ?>
-            <article class="pc-retro__chapter pc-retro__chapter--scroll" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
+            <article class="pc-retro__chapter" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
                      aria-labelledby="retro-titulo-espelhos" hidden>
                 <span class="pc-retro__ghost" aria-hidden="true"><?= str_pad((string) ($c + 1), 2, '0', STR_PAD_LEFT) ?></span>
                 <span class="pc-retro__eyebrow" data-reveal><?= e(t('retro.mirrors.eyebrow')) ?></span>
@@ -299,7 +318,7 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                 </h2>
                 <p class="pc-retro__lead" data-reveal style="--d:.14s"><?= e(t('retro.mirrors.lead')) ?></p>
 
-                <div class="pc-retro__rail" data-retro-swipe-ignore>
+                <div class="pc-retro__mirrors">
                     <?php foreach ($retroOutros as $indice => $personagem): ?>
                         <?php
                         $foto = (string) ($personagem['ator_foto_url'] ?? '');
@@ -321,17 +340,13 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                     <?php endforeach; ?>
                 </div>
 
-                <?php if (count($retroOutros) > 1): ?>
-                    <p class="pc-retro__note pc-retro__note--center" data-reveal style="--d:.4s">
-                        <?= e(t('retro.mirrors.swipe')) ?>
-                    </p>
-                <?php elseif ($retroOutros === []): ?>
+                <?php if ($retroOutros === []): ?>
                     <p class="pc-retro__note pc-retro__note--center"><?= e(t('admin.no_data')) ?></p>
                 <?php endif; ?>
             </article>
 
             <?php $c = $retroCap++; ?>
-            <article class="pc-retro__chapter pc-retro__chapter--scroll" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
+            <article class="pc-retro__chapter" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
                      aria-labelledby="retro-titulo-ancoras" hidden>
                 <span class="pc-retro__ghost" aria-hidden="true"><?= str_pad((string) ($c + 1), 2, '0', STR_PAD_LEFT) ?></span>
                 <span class="pc-retro__eyebrow" data-reveal><?= e(t('retro.anchors.eyebrow')) ?></span>
@@ -355,10 +370,13 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                         <button class="pc-retro__anchor" type="button"
                                 style="--d:<?= 0.2 + ($indice * 0.08) ?>s" data-reveal
                                 data-quickview="<?= json_attr($retroQuickAncora($retroAncora, $bloco['tipo'])) ?>">
-                            <span class="pc-retro__anchor-photo<?= $retroPoster !== '' ? ' has-photo' : '' ?><?= $bloco['tipo'] === 'estudio' ? ' is-logo' : '' ?>"
+                            <span class="pc-retro__anchor-photo<?= $retroPoster !== '' ? ' has-photo' : '' ?><?= $bloco['tipo'] === 'estudio' ? ' is-logo' : '' ?><?= $retroPoster === '' ? ' is-seal' : '' ?>"
                                   <?php if ($retroPoster !== ''): ?>style="background-image:url('<?= e($retroPoster) ?>')" aria-hidden="true"<?php endif; ?>>
                                 <?php if ($retroPoster === ''): ?>
-                                    <?= e(iniciais((string) $retroAncora['nome'])) ?>
+                                    <span class="pc-retro__anchor-seal" aria-hidden="true">
+                                        <b><?= e(iniciais((string) $retroAncora['nome'])) ?></b>
+                                        <small><?= e($bloco['tipo'] === 'estudio' ? t('retro.anchors.studio') : t('retro.anchors.director')) ?></small>
+                                    </span>
                                 <?php endif; ?>
                             </span>
                             <span class="pc-retro__anchor-role"><?= e($bloco['rotulo']) ?></span>
@@ -392,6 +410,10 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                 </h2>
                 <p class="pc-retro__lead" data-reveal style="--d:.14s">
                     <?= e($temGroq ? t('retro.critic.lead') : t('retro.critic.fallback_lead')) ?>
+                </p>
+
+                <p class="pc-retro__critic-frase" data-frase-perfil data-reveal style="--d:.16s">
+                    <?= e((string) ($perfil['retrato_salvo']['frase'] ?? $perfil['leituras'][0]['manchete'] ?? t('resultado.portrait_title'))) ?>
                 </p>
 
                 <figure class="pc-retro__critic" data-reveal style="--d:.2s">
@@ -439,7 +461,23 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                         <div class="pc-retro__insight" data-reveal style="--d:.2s">
                             <span class="pc-retro__insight-label"><?= e(t('retro.insights.decada_label')) ?></span>
                             <div class="pc-retro__insight-number"><?= e($retroInsights['decada']['label']) ?></div>
+                            <?php if ($retroInsights['decada']['epiteto'] !== ''): ?>
+                                <p class="pc-retro__insight-epiteto"><?= e($retroInsights['decada']['epiteto']) ?></p>
+                            <?php endif; ?>
                             <p class="pc-retro__insight-line"><?= e($retroInsights['decada']['descricao']) ?></p>
+                            <?php if ($retroInsights['decada']['curiosidade'] !== ''): ?>
+                                <p class="pc-retro__insight-curio"><?= e($retroInsights['decada']['curiosidade']) ?></p>
+                            <?php endif; ?>
+
+                            <?php if ($retroInsights['decada']['marcos'] !== []): ?>
+                                <span class="pc-retro__insight-sublabel"><?= e(t('retro.insights.decada_marks')) ?></span>
+                                <div class="pc-filme-row pc-retro__marks">
+                                    <?php $filmeVariante = 'poster'; ?>
+                                    <?php foreach ($retroInsights['decada']['marcos'] as $filme): ?>
+                                        <?php require __DIR__ . '/../card-filme.php'; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
 
@@ -472,6 +510,17 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                                     'pct' => numero($retroInsights['secundario']['compatibilidade'], 0),
                                 ])) ?>
                             </p>
+                            <p class="pc-retro__insight-line"><?= e((string) $retroInsights['secundario']['descricao']) ?></p>
+
+                            <?php if (!empty($retroInsights['secundario']['polos'])): ?>
+                                <div class="pc-retro__traits">
+                                    <?php foreach ($retroInsights['secundario']['polos'] as $polo): ?>
+                                        <span class="pc-retro__trait" style="--trait:<?= e($polo['cor']) ?>">
+                                            <?= e($polo['eixo']) ?> · <?= e($polo['polo']) ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
 

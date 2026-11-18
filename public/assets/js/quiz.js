@@ -43,9 +43,20 @@
     eixo: document.querySelector('[data-q-axis]'),
     tag: document.querySelector('[data-q-tag]'),
     icone: document.querySelector('[data-q-axis-icon]'),
-    ajuda: document.querySelector('[data-q-help]'),
-    ajudaTexto: document.querySelector('[data-q-help-text]'),
-    ajudaBotao: document.querySelector('[data-help-toggle]'),
+    guiaBotao: document.querySelector('[data-guide-open]'),
+    guia: {
+      dialogo: document.querySelector('[data-guide]'),
+      kicker: document.querySelector('[data-guide-kicker]'),
+      icone: document.querySelector('[data-guide-icon]'),
+      titulo: document.querySelector('[data-guide-title]'),
+      resumo: document.querySelector('[data-guide-resumo]'),
+      polos: document.querySelector('[data-guide-poles]'),
+      prosa: document.querySelector('[data-guide-prose]'),
+      cenas: document.querySelector('[data-guide-scenes]'),
+      citacoes: document.querySelector('[data-guide-cites]'),
+      leitura: document.querySelector('[data-guide-leitura]'),
+      fechar: document.querySelectorAll('[data-guide-close]')
+    },
     respostas: document.querySelector('[data-answers]'),
     voltar: document.querySelector('[data-quiz-back]'),
     avancar: document.querySelector('[data-quiz-next]'),
@@ -360,18 +371,6 @@
       el.icone.innerHTML = pergunta.icone;
     }
 
-    if (el.ajudaTexto) {
-      el.ajudaTexto.textContent = pergunta.descricao || '';
-    }
-
-    if (el.ajuda) {
-      el.ajuda.classList.remove('is-open');
-    }
-
-    if (el.ajudaBotao) {
-      el.ajudaBotao.setAttribute('aria-expanded', 'false');
-    }
-
     renderizarMidia(pergunta);
 
     if (el.respostas) {
@@ -414,6 +413,188 @@
 
     el.erro.textContent = mensagem;
     el.erro.hidden = false;
+  }
+
+  /* ---------------------------- Guia do eixo ----------------------------- */
+  function criar(tag, classe, texto) {
+    var node = document.createElement(tag);
+
+    if (classe) {
+      node.className = classe;
+    }
+
+    if (texto !== undefined && texto !== null) {
+      node.textContent = String(texto);
+    }
+
+    return node;
+  }
+
+  function textoGuia(chave, padrao) {
+    return (config.textos && config.textos[chave]) || padrao;
+  }
+
+  function anoGuia(ano) {
+    var numero = Number(ano);
+
+    if (!isFinite(numero) || numero === 0) {
+      return '';
+    }
+
+    return numero < 0 ? 'c. ' + Math.abs(numero) + ' a.C.' : String(numero);
+  }
+
+  function guiaAtual() {
+    var pergunta = perguntas[indice];
+
+    if (!pergunta || !config.guias) {
+      return null;
+    }
+
+    return config.guias[pergunta.slug] || null;
+  }
+
+  function montarPolo(nome, cor) {
+    var item = criar('span', 'pc-guide__pole');
+    var ponto = criar('i');
+
+    ponto.style.background = cor;
+    item.appendChild(ponto);
+    item.appendChild(document.createTextNode(nome));
+
+    return item;
+  }
+
+  function preencherGuia(guia) {
+    var g = el.guia;
+
+    if (g.kicker) {
+      g.kicker.textContent = textoGuia('kicker', 'Guia do eixo') + ' · ' + guia.nome;
+    }
+
+    if (g.titulo) {
+      g.titulo.textContent = textoGuia('title', 'Entender {eixo}').replace('{eixo}', guia.nome);
+    }
+
+    if (g.icone) {
+      g.icone.innerHTML = guia.icone || '';
+    }
+
+    if (g.resumo) {
+      g.resumo.textContent = guia.resumo || '';
+    }
+
+    if (g.polos) {
+      g.polos.innerHTML = '';
+      g.polos.appendChild(montarPolo(guia.poloEsq, guia.corEsq));
+      g.polos.appendChild(criar('span', 'pc-guide__pole-arrow', '↔'));
+      g.polos.appendChild(montarPolo(guia.poloDir, guia.corDir));
+    }
+
+    if (g.prosa) {
+      g.prosa.innerHTML = '';
+
+      (guia.paragrafos || []).forEach(function (paragrafo) {
+        g.prosa.appendChild(criar('p', null, paragrafo));
+      });
+    }
+
+    if (g.cenas) {
+      g.cenas.innerHTML = '';
+
+      (guia.cenas || []).forEach(function (cena) {
+        var item = criar('li', 'pc-guide__scene');
+        var cabecalho = criar('div', 'pc-guide__scene-head');
+        var tipo = cena.tipo === 'série' ? textoGuia('series', 'Série') : textoGuia('film', 'Filme');
+
+        item.style.setProperty('--guide-polo', cena.polo === 'esq' ? guia.corEsq : guia.corDir);
+
+        cabecalho.appendChild(criar('span', 'pc-guide__scene-title', cena.obra));
+        cabecalho.appendChild(criar('span', 'pc-guide__scene-year', anoGuia(cena.ano)));
+        cabecalho.appendChild(criar('span', 'pc-guide__scene-tag', tipo));
+
+        item.appendChild(cabecalho);
+        item.appendChild(criar('p', null, cena.cena));
+        item.appendChild(criar('p', 'pc-guide__scene-why', cena.porque));
+        g.cenas.appendChild(item);
+      });
+    }
+
+    if (g.citacoes) {
+      g.citacoes.innerHTML = '';
+
+      (guia.citacoes || []).forEach(function (citacao) {
+        var item = criar('li', 'pc-guide__cite');
+        var fonte = criar('cite');
+        var obra = criar('i', null, citacao.obra);
+        var ano = anoGuia(citacao.ano);
+
+        fonte.appendChild(document.createTextNode(citacao.autor + ', '));
+        fonte.appendChild(obra);
+
+        if (ano) {
+          fonte.appendChild(document.createTextNode(' (' + ano + ')'));
+        }
+
+        item.appendChild(criar('p', null, citacao.ideia));
+        item.appendChild(fonte);
+        g.citacoes.appendChild(item);
+      });
+    }
+
+    if (g.leitura) {
+      g.leitura.innerHTML = '';
+
+      [
+        [guia.poloEsq, guia.leitura ? guia.leitura.esq : ''],
+        [guia.poloDir, guia.leitura ? guia.leitura.dir : '']
+      ].forEach(function (par) {
+        if (!par[1]) {
+          return;
+        }
+
+        var bloco = criar('div');
+
+        bloco.appendChild(criar('b', null, 'Perto de ' + par[0]));
+        bloco.appendChild(criar('span', null, par[1]));
+        g.leitura.appendChild(bloco);
+      });
+    }
+  }
+
+  function abrirGuia() {
+    var dialogo = el.guia.dialogo;
+    var guia = guiaAtual();
+
+    if (!dialogo || !guia) {
+      return;
+    }
+
+    preencherGuia(guia);
+
+    if (typeof dialogo.showModal === 'function') {
+      dialogo.showModal();
+    } else {
+      dialogo.setAttribute('open', '');
+    }
+
+    document.body.classList.add('pc-guide-open');
+  }
+
+  function fecharGuia() {
+    var dialogo = el.guia.dialogo;
+
+    if (!dialogo) {
+      return;
+    }
+
+    if (typeof dialogo.close === 'function') {
+      dialogo.close();
+    } else {
+      dialogo.removeAttribute('open');
+    }
+
+    document.body.classList.remove('pc-guide-open');
   }
 
   /* ------------------------------ Navegação ------------------------------ */
@@ -592,14 +773,31 @@
     });
   });
 
-  if (el.ajudaBotao) {
-    el.ajudaBotao.addEventListener('click', function () {
-      var aberto = el.ajuda.classList.toggle('is-open');
-      el.ajudaBotao.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  if (el.guiaBotao) {
+    el.guiaBotao.addEventListener('click', abrirGuia);
+  }
+
+  el.guia.fechar.forEach(function (botao) {
+    botao.addEventListener('click', fecharGuia);
+  });
+
+  if (el.guia.dialogo) {
+    el.guia.dialogo.addEventListener('close', function () {
+      document.body.classList.remove('pc-guide-open');
+    });
+
+    el.guia.dialogo.addEventListener('click', function (evento) {
+      if (evento.target === el.guia.dialogo) {
+        fecharGuia();
+      }
     });
   }
 
   document.addEventListener('keydown', function (evento) {
+    if (el.guia.dialogo && el.guia.dialogo.open) {
+      return;
+    }
+
     if (evento.target.matches('input, textarea, select')) {
       return;
     }

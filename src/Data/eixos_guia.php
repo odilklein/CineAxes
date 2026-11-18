@@ -1,0 +1,556 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Guia editorial dos 8 eixos.
+ *
+ * Alimenta o modal "Entender este eixo" durante o teste. Cada eixo traz uma
+ * explicação longa, o que significa ficar perto de cada polo, cenas de filmes e
+ * séries que tornam o eixo reconhecível e as leituras críticas que sustentam a
+ * régua (ver docs/EIXOS.md).
+ *
+ * As referências bibliográficas são paráfrases do argumento de cada autor, não
+ * citações literais: o objetivo é indicar onde a ideia aparece, não reproduzir
+ * o texto original.
+ *
+ * Chaves: slug do eixo (tabela `eixos`).
+ */
+
+return [
+    'estetica' => [
+        'resumo' => 'A pergunta por trás deste eixo é simples: o que você quer que a imagem faça — desaparecer a serviço da história ou se apresentar como linguagem?',
+        'paragrafos' => [
+            'No polo clássico, o cinema herdado de Hollywood esconde o próprio trabalho: decupagem invisível, continuidade de olhar, luz que só orienta a atenção. Você não vê o enquadramento, vê a cena. A imagem é um veículo.',
+            'No polo experimental, a imagem se exibe: montagem que quebra o raccord, textura, câmera que se assume, cor saturada, um plano que dura além do funcional. O prazer está no gesto formal, não apenas no que ele conta.',
+            'Nenhum dos lados é mais "cinema". Casablanca e Cidade dos Sonhos são igualmente rigorosos; o eixo só diz onde você se senta com mais conforto.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você pede que a forma seja transparente: história em primeiro plano, técnica a serviço dela.',
+            'dir' => 'Perto de 100, você pede que a forma se mostre: textura, ruptura e consciência do dispositivo fazem parte do prazer.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'Casablanca',
+                'ano' => 1942,
+                'tipo' => 'filme',
+                'cena' => 'A despedida no aeroporto: campo e contracampo limpos, luz de estúdio, nenhum plano chamando atenção para si.',
+                'porque' => 'É o padrão clássico levado ao ponto de invisibilidade: você chora a cena, não o enquadramento.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Cidade dos Sonhos',
+                'ano' => 2001,
+                'tipo' => 'filme',
+                'cena' => 'A sequência do Club Silencio, com Rebekah Del Rio cantando "Llorando" e o som continuando depois que ela desmaia.',
+                'porque' => 'A imagem assume que é imagem: som, playback e encenação viram o assunto da própria cena.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles',
+                'ano' => 1975,
+                'tipo' => 'filme',
+                'cena' => 'Planos fixos e longos de tarefas domésticas, sem decupagem que "explique" o que está acontecendo.',
+                'porque' => 'O enquadramento é a própria tese do filme: o tempo e o espaço da personagem não são ilustrados, são impostos.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Fleabag',
+                'ano' => 2016,
+                'tipo' => 'série',
+                'cena' => 'A protagonista olha para a câmera e comenta a própria cena no meio da ação.',
+                'porque' => 'O dispositivo exposto em cada episódio: a série negocia o tempo todo com o espectador sobre estar sendo vista.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'David Bordwell',
+                'obra' => 'Narration in the Fiction Film',
+                'ano' => 1985,
+                'ideia' => 'Bordwell descreve o "modo clássico de narração" como um sistema em que a técnica se apaga para deixar a fábula em primeiro plano: corte invisível, motivação clara, olhar guiado.',
+            ],
+            [
+                'autor' => 'André Bazin',
+                'obra' => 'What Is Cinema?',
+                'ano' => 1967,
+                'ideia' => 'Bazin desconfia da montagem que decide por você: a profundidade de campo e o plano longo devolveriam ao espectador a liberdade de escolher onde olhar.',
+            ],
+            [
+                'autor' => 'Susan Sontag',
+                'obra' => 'Against Interpretation',
+                'ano' => 1966,
+                'ideia' => 'Sontag pede uma "erótica da arte" no lugar de uma hermenêutica: responder à forma em vez de traduzi-la em sentido.',
+            ],
+        ],
+    ],
+
+    'tom' => [
+        'resumo' => 'Este eixo mede o clima que fica depois dos créditos: se você procura peso, silêncio e catarse triste ou leveza, riso e saída em estado de festa.',
+        'paragrafos' => [
+            'Melancólico não é sinônimo de triste. É o filme que aceita a perda como matéria, trabalha o silêncio, deixa a emoção decantar em vez de resolvê-la.',
+            'Eufórico é o registro da comédia, da música e da aventura: o corpo sai da sala mais leve e o riso faz parte do contrato com o espectador.',
+            'Quase todo grande filme mistura os dois — Manchester à Beira-Mar tem humor, O Grande Hotel Budapeste tem luto. O eixo mede a temperatura que predomina.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, o filme que te marca é o que dói: você aceita sair da sala com um nó na garganta.',
+            'dir' => 'Perto de 100, o filme que te marca é o que anima: você quer rir, cantar e sair com energia.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'Manchester à Beira-Mar',
+                'ano' => 2016,
+                'tipo' => 'filme',
+                'cena' => 'A cena na delegacia, quando Lee entende o que aconteceu: plano contido, silêncio e a interpretação de Casey Affleck no limite.',
+                'porque' => 'A tristeza não é explicada por diálogo; é sustentada pelo tempo e pelo não-dito.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'O Grande Hotel Budapeste',
+                'ano' => 2014,
+                'tipo' => 'filme',
+                'cena' => 'A fuga de trenó e a perseguição com as caixas de Mendl\'s no hotel.',
+                'porque' => 'Comédia pastelão e leveza visual mesmo quando a história é sobre um mundo que está acabando.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'BoJack Horseman',
+                'ano' => 2014,
+                'tipo' => 'série',
+                'cena' => 'O episódio "Fish Out of Water", quase sem diálogo, passado no fundo do mar.',
+                'porque' => 'Uma série de humor que constrói um episódio inteiro em torno da solidão e da dificuldade de se comunicar.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Ted Lasso',
+                'ano' => 2020,
+                'tipo' => 'série',
+                'cena' => 'Episódios sobre luto e fracasso que terminam em abraço, piada e otimismo explícito.',
+                'porque' => 'O eufórico como programa narrativo: a série decide, sempre, puxar o espectador para cima.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'Aristóteles',
+                'obra' => 'Poética',
+                'ano' => -335,
+                'ideia' => 'A catarse: a tragédia organiza o terror e a piedade até produzir alívio. A tristeza deixa de ser acidente e vira forma.',
+            ],
+            [
+                'autor' => 'Henri Bergson',
+                'obra' => 'O Riso',
+                'ano' => 1900,
+                'ideia' => 'Bergson trata o riso como gesto social: rimos do mecânico que se instala no vivo — o corpo que tropeça, o hábito que denuncia a pessoa.',
+            ],
+            [
+                'autor' => 'Susan Sontag',
+                'obra' => 'Against Interpretation',
+                'ano' => 1966,
+                'ideia' => 'Ao devolver o prazer ao primeiro plano, Sontag lembra que a arte também serve para sentir, não só para ser decifrada.',
+            ],
+        ],
+    ],
+
+    'universo' => [
+        'resumo' => 'Este eixo mede o grau de invenção do mundo: ruas e corpos plausíveis contra regras próprias, mitologias e cosmologias impossíveis.',
+        'paragrafos' => [
+            'Realista: o filme pede que você reconheça o mundo — geografia existente, conflitos sociais, causalidade próxima do cotidiano. A verossimilhança é o contrato.',
+            'Fantástico: o filme constrói regras próprias (magia, tecnologia, física alternativa) e pede que você as aprenda. O prazer é a coerência interna do impossível.',
+            'O eixo não mede escapismo. Cidade de Deus é tão estilizado quanto O Senhor dos Anéis; a diferença é se o mundo retratado poderia existir.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você se entrega quando reconhece o mundo: a esquina, o sotaque, a conta que não fecha.',
+            'dir' => 'Perto de 100, você se entrega quando precisa aprender um mundo: mapas, línguas, regras que só existem ali.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'Cidade de Deus',
+                'ano' => 2002,
+                'tipo' => 'filme',
+                'cena' => 'A apresentação do conjunto e dos personagens por blocos de tempo, com geografia e violência reconhecíveis.',
+                'porque' => 'O mundo não é inventado: é observado, mesmo quando a câmera é estilizada.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'O Senhor dos Anéis: A Sociedade do Anel',
+                'ano' => 2001,
+                'tipo' => 'filme',
+                'cena' => 'O prólogo e o Conselho de Elrond, que ensinam línguas, povos, eras e genealogias.',
+                'porque' => 'O filme começa alfabetizando você para um mundo com história própria.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Matrix',
+                'ano' => 1999,
+                'tipo' => 'filme',
+                'cena' => 'A pílula vermelha: o filme troca as regras do mundo diante de você.',
+                'porque' => 'A virada só funciona porque o novo mundo tem regras estáveis o suficiente para sustentar três filmes.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'The Wire',
+                'ano' => 2002,
+                'tipo' => 'série',
+                'cena' => 'Baltimore como personagem: portos, escolas, redações, burocracias e sotaques reais.',
+                'porque' => 'A série troca trama por sistema: o mundo é o argumento.',
+                'polo' => 'esq',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'André Bazin',
+                'obra' => 'What Is Cinema?',
+                'ano' => 1967,
+                'ideia' => 'Para Bazin, o cinema tem uma dívida com o real: o plano longo e a profundidade de campo preservam a ambiguidade do mundo em vez de interpretá-la.',
+            ],
+            [
+                'autor' => 'Siegfried Kracauer',
+                'obra' => 'Theory of Film',
+                'ano' => 1960,
+                'ideia' => 'Kracauer vê na vocação documental do cinema — ruas, rostos comuns, acaso — sua chance de redimir a realidade física.',
+            ],
+            [
+                'autor' => 'Georges Méliès',
+                'obra' => 'tradição do cinema de trucagem',
+                'ano' => 1902,
+                'ideia' => 'O lado oposto: o estúdio como laboratório, em que a imagem inventa o que a câmera nunca encontrou.',
+            ],
+        ],
+    ],
+
+    'ritmo' => [
+        'resumo' => 'Este eixo mede a experiência da duração: planos que respiram e temps morts contra corte rápido, perseguição e adrenalina.',
+        'paragrafos' => [
+            'Contemplativo: o filme confia no tempo. O plano dura além do necessário, o fora de campo trabalha, a espera é parte do sentido.',
+            'Frenético: o filme confia no impacto. Corte curto, câmera em movimento, som que empurra — cada segundo tem de render.',
+            'Não se trata de ser lento ou rápido por si. Existe lentidão vazia e aceleração precisa; o eixo mede onde você se sente em casa.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você gosta quando o filme respira: silêncios, planos longos e cenas que não têm pressa.',
+            'dir' => 'Perto de 100, você gosta quando o filme empurra: corte, movimento e som mantêm o corpo acelerado.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'Paris, Texas',
+                'ano' => 1984,
+                'tipo' => 'filme',
+                'cena' => 'O monólogo na cabine de peep show, em um plano longo quase sem corte.',
+                'porque' => 'A duração é a própria emoção: encurtar a cena destruiria o filme.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Mad Max: Estrada da Fúria',
+                'ano' => 2015,
+                'tipo' => 'filme',
+                'cena' => 'A perseguição contínua de quase quinze minutos, com enquadramento central e corte a cada poucos segundos.',
+                'porque' => 'Ritmo como arquitetura: a ação é coreografada como música, sem tempo morto.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Better Call Saul',
+                'ano' => 2015,
+                'tipo' => 'série',
+                'cena' => 'Episódios como "Chicanery", que constroem tensão em salas e corredores com planos que duram.',
+                'porque' => 'Uma série de TV que recusa a aceleração padrão do formato e deixa o desconforto durar.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'The Bear',
+                'ano' => 2022,
+                'tipo' => 'série',
+                'cena' => 'O episódio "Review", filmado em um único take de cerca de vinte minutos.',
+                'porque' => 'Ansiedade como forma: o plano não corta porque o personagem também não consegue sair dali.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'Gilles Deleuze',
+                'obra' => 'Cinema 2: A Imagem-Tempo',
+                'ano' => 1985,
+                'ideia' => 'Quando a ação cede lugar à duração, o cinema passa a mostrar o tempo diretamente — situações ópticas e sonoras puras.',
+            ],
+            [
+                'autor' => 'Andrei Tarkovsky',
+                'obra' => 'Esculpir o Tempo',
+                'ano' => 1986,
+                'ideia' => 'O plano é a unidade de tempo: a montagem não cria o ritmo, apenas organiza o tempo já inscrito na imagem.',
+            ],
+            [
+                'autor' => 'Orhan Emre Çağlayan',
+                'obra' => 'Screening Boredom',
+                'ano' => 2014,
+                'ideia' => 'No slow cinema, o tédio é produtivo: ele devolve ao espectador a experiência do tempo em vez de substituí-la por informação.',
+            ],
+        ],
+    ],
+
+    'moralidade' => [
+        'resumo' => 'Este eixo mede como o filme julga: zona cinzenta em que ninguém é inocente contra bem e mal bem demarcados.',
+        'paragrafos' => [
+            'Ambígua: o filme recusa o veredito. O protagonista faz o mal por razões que entendemos, e o antagonista tem argumento.',
+            'Clara: o filme distribui culpa e virtude com nitidez — herói e vilão são posições, não dilemas. Isso não é ingenuidade; é uma escolha de gênero, como a aventura, a fábula e o faroeste clássico.',
+            'O eixo não mede profundidade moral, mas o conforto do julgamento: quanto você gosta de saber de que lado ficar.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você prefere quando o filme embaralha o julgamento e ninguém sai limpo.',
+            'dir' => 'Perto de 100, você prefere quando o filme deixa claro quem é o herói e quem é o vilão.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'O Poderoso Chefão',
+                'ano' => 1972,
+                'tipo' => 'filme',
+                'cena' => 'O batismo de Michael montado com o massacre das outras famílias.',
+                'porque' => 'Sagrado e profano no mesmo plano, sem narração que diga o que condenar.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Indiana Jones e os Caçadores da Arca Perdida',
+                'ano' => 1981,
+                'tipo' => 'filme',
+                'cena' => 'Os nazistas como encarnação do mal diante de um herói imperfeito, mas inequívoco.',
+                'porque' => 'A série toda é construída sobre uma linha moral nítida, e funciona por isso.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Breaking Bad',
+                'ano' => 2008,
+                'tipo' => 'série',
+                'cena' => 'A transformação de Walter White, acompanhada de perto até o público perceber que torceu pelo vilão.',
+                'porque' => 'A série usa a simpatia do espectador como parte do dilema moral.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'The Good Place',
+                'ano' => 2016,
+                'tipo' => 'série',
+                'cena' => 'Uma sitcom em que certo e errado são discutidos em voz alta, como aula de filosofia.',
+                'porque' => 'A clareza moral é o próprio motor da comédia: as regras do jogo ético estão sempre à vista.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'V. F. Perkins',
+                'obra' => 'Film as Film',
+                'ano' => 1972,
+                'ideia' => 'A crítica moral é inseparável da forma: o filme julga pelo modo como organiza o olhar, não por um discurso sobre o bem.',
+            ],
+            [
+                'autor' => 'Robert Warshow',
+                'obra' => 'The Gangster as Tragic Hero',
+                'ano' => 1948,
+                'ideia' => 'O gângster é trágico porque encarna o sucesso que a sociedade promete e recusa; no noir, ninguém é inocente.',
+            ],
+            [
+                'autor' => 'Aristóteles',
+                'obra' => 'Ética a Nicômaco',
+                'ano' => -340,
+                'ideia' => 'A virtude como hábito e meio-termo: a tradição que sustenta a ideia de que o cinema também pode ensinar a julgar.',
+            ],
+        ],
+    ],
+
+    'estrutura' => [
+        'resumo' => 'Este eixo mede a arquitetura da história: causalidade e arco fechado contra quebra de tempo, camadas e realidades paralelas.',
+        'paragrafos' => [
+            'Linear: a ordem causa-efeito é a própria experiência. O flashback, quando aparece, serve de explicação.',
+            'Fragmentada: o filme organiza o enredo contra a cronologia — elipses, repetições, pontos de vista rivais, realidades paralelas.',
+            'Não é bagunça: a fragmentação é um sistema com regras. O prazer é montar o quebra-cabeça e perceber que ele tem desenho.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você gosta de acompanhar uma história do começo ao fim, na ordem certa.',
+            'dir' => 'Perto de 100, você gosta de montar o filme: tempos quebrados, camadas e versões que não fecham.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'Forrest Gump',
+                'ano' => 1994,
+                'tipo' => 'filme',
+                'cena' => 'A vida em ordem cronológica, com os eventos históricos funcionando como estações de uma linha.',
+                'porque' => 'A causalidade é o próprio prazer: cada escolha leva ao próximo episódio sem desvio.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Pulp Fiction',
+                'ano' => 1994,
+                'tipo' => 'filme',
+                'cena' => 'Os capítulos fora de ordem, com a maleta e o relógio voltando em pontos diferentes.',
+                'porque' => 'O filme só existe na ordem em que é contado: reorganizar os blocos mudaria o sentido.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Amnésia',
+                'ano' => 2000,
+                'tipo' => 'filme',
+                'cena' => 'A cronologia invertida, em que cada cena explica a anterior.',
+                'porque' => 'A estrutura encena a memória do protagonista: a forma é o diagnóstico.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Lost',
+                'ano' => 2004,
+                'tipo' => 'série',
+                'cena' => 'Flashbacks, flash-forwards e realidades alternativas como motor de cada temporada.',
+                'porque' => 'A série transforma a quebra de tempo em parte do mistério que o espectador precisa resolver.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'David Bordwell',
+                'obra' => 'The Classical Hollywood Cinema',
+                'ano' => 1985,
+                'ideia' => 'A distinção entre fábula (o que aconteceu) e syuzhet (a ordem em que se conta): o cinema clássico esconde a diferença, o moderno a expõe.',
+            ],
+            [
+                'autor' => 'Gérard Genette',
+                'obra' => 'Discurso da Narrativa',
+                'ano' => 1972,
+                'ideia' => 'Anacronias, focalização e níveis narrativos: as categorias que descrevem como um relato embaralha o tempo e a voz.',
+            ],
+            [
+                'autor' => 'Roland Barthes',
+                'obra' => 'A Morte do Autor',
+                'ano' => 1967,
+                'ideia' => 'O sentido não está no autor, mas na montagem que o leitor faz: a estrutura aberta convida a completar o texto.',
+            ],
+        ],
+    ],
+
+    'atmosfera' => [
+        'resumo' => 'Este eixo mede a escala do drama: quartos, closes e poucos personagens contra exércitos, planetas e tela grande.',
+        'paragrafos' => [
+            'Íntima: o drama cabe num quarto. O close-up é o plano decisivo e o rosto é a paisagem.',
+            'Épica: o drama é maior que os personagens — guerra, migração, multidão, horizonte. O plano geral é o plano decisivo.',
+            'Escala não é orçamento. 12 Homens e uma Sentença é pequeno no espaço e imenso na tensão; um blockbuster pode parecer minúsculo.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você prefere o drama de quarto: poucos personagens, closes e silêncios.',
+            'dir' => 'Perto de 100, você prefere o drama de horizonte: multidões, paisagens e proporções gigantes.',
+        ],
+        'cenas' => [
+            [
+                'obra' => '12 Homens e uma Sentença',
+                'ano' => 1957,
+                'tipo' => 'filme',
+                'cena' => 'Uma sala, doze homens, e a câmera que desce gradualmente dos planos gerais aos closes.',
+                'porque' => 'O espaço não cresce, mas a pressão sim: a intimidade é o próprio conflito.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Lawrence da Arábia',
+                'ano' => 1962,
+                'tipo' => 'filme',
+                'cena' => 'O deserto em 70 mm, com a figura humana reduzida a um ponto na paisagem.',
+                'porque' => 'A escala é o tema: o indivíduo diante do deserto e da história.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Succession',
+                'ano' => 2018,
+                'tipo' => 'série',
+                'cena' => 'Disputas de poder resolvidas em salas, elevadores e closês de rosto.',
+                'porque' => 'Uma série sobre impérios de mídia que escolhe contar tudo no tamanho de uma família.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Game of Thrones',
+                'ano' => 2011,
+                'tipo' => 'série',
+                'cena' => 'Batalhas com centenas de figurantes e dragões definindo o destino de continentes.',
+                'porque' => 'A épica como contrato: o drama só se resolve quando a escala do mundo entra em cena.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'Béla Balázs',
+                'obra' => 'O Homem Visível',
+                'ano' => 1924,
+                'ideia' => 'O close-up revela o rosto como território — a "paisagem" da fisionomia, que nenhuma outra arte mostra do mesmo jeito.',
+            ],
+            [
+                'autor' => 'André Bazin',
+                'obra' => 'A Evolução da Linguagem Cinematográfica',
+                'ano' => 1950,
+                'ideia' => 'O plano geral e a profundidade de campo colocam o homem dentro do espaço e devolvem ao espectador a escolha do que olhar.',
+            ],
+            [
+                'autor' => 'Susan Sontag',
+                'obra' => 'The Imagination of Disaster',
+                'ano' => 1965,
+                'ideia' => 'A ficção científica de catástrofe trabalha com a escala do desastre como forma de falar do presente.',
+            ],
+        ],
+    ],
+
+    'epoca' => [
+        'resumo' => 'Este eixo mede de onde o filme fala: memória, grão e passado contra neon, código e imaginação do amanhã.',
+        'paragrafos' => [
+            'Memória: o filme olha para trás — época reconstruída, grão, nostalgia, luto pelo que passou ou pelo que nunca houve.',
+            'Futuro: o filme especula — tecnologia, distopia, utopia, o amanhã como hipótese a ser testada.',
+            'Cuidado com a confusão: um filme de época pode ser futurista na forma, e um filme futurista pode viver de nostalgia. O eixo mede a orientação temporal do olhar, não o figurino.',
+        ],
+        'leitura' => [
+            'esq' => 'Perto de 0, você quer que o filme fale do passado: memória, textura de outra época, o que ficou.',
+            'dir' => 'Perto de 100, você quer que o filme fale do amanhã: tecnologia, especulação, o que ainda não existe.',
+        ],
+        'cenas' => [
+            [
+                'obra' => 'Cinema Paradiso',
+                'ano' => 1988,
+                'tipo' => 'filme',
+                'cena' => 'A sala de projeção, os beijos censurados e o retorno ao vilarejo no presente.',
+                'porque' => 'A memória é a matéria do filme: o passado é reconstruído pelo afeto de quem volta.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Blade Runner 2049',
+                'ano' => 2017,
+                'tipo' => 'filme',
+                'cena' => 'Los Angeles em 2049: neon, hologramas e ruínas de um futuro já desgastado.',
+                'porque' => 'O futuro é paisagem habitada, com história e decadência próprias.',
+                'polo' => 'dir',
+            ],
+            [
+                'obra' => 'Era Uma Vez em... Hollywood',
+                'ano' => 2019,
+                'tipo' => 'filme',
+                'cena' => '1969 reconstruído com rádio, letreiros e um final que reescreve a história real.',
+                'porque' => 'A nostalgia vira operação formal: o filme restaura o passado para poder corrigi-lo.',
+                'polo' => 'esq',
+            ],
+            [
+                'obra' => 'Black Mirror',
+                'ano' => 2011,
+                'tipo' => 'série',
+                'cena' => 'Cada episódio testa uma tecnologia próxima como hipótese sobre o amanhã.',
+                'porque' => 'A série é um laboratório de futuros: especulação como formato, não como cenário.',
+                'polo' => 'dir',
+            ],
+        ],
+        'citacoes' => [
+            [
+                'autor' => 'Gilles Deleuze',
+                'obra' => 'Cinema 2: A Imagem-Tempo',
+                'ano' => 1985,
+                'ideia' => 'O tempo deixa de ser cronologia e vira experiência: memória, virtualidade e passados que coexistem no presente.',
+            ],
+            [
+                'autor' => 'Svetlana Boym',
+                'obra' => 'The Future of Nostalgia',
+                'ano' => 2001,
+                'ideia' => 'A nostalgia restauradora quer reconstruir o passado; a reflexiva se demora na saudade e na ironia. O cinema faz as duas.',
+            ],
+            [
+                'autor' => 'Fredric Jameson',
+                'obra' => 'Pós-Modernismo: A Lógica Cultural do Capitalismo Tardio',
+                'ano' => 1991,
+                'ideia' => 'A nostalgia como modo estético: o passado vira estilo disponível, e o futuro é imaginado com peças do presente.',
+            ],
+        ],
+    ],
+];

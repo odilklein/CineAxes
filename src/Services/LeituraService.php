@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Services;
 
+use Models\FilmeCard;
+
 /**
  * Transforma os 8 eixos em leituras compreensíveis.
  *
@@ -109,13 +111,16 @@ final class LeituraService
             'slug'        => $slug,
             'eixo'        => $nome !== '' ? $nome : $slug,
             'polo'        => (string) ($ehDireita ? ($linha['rotulo_dir'] ?? '') : ($linha['rotulo_esq'] ?? '')),
+            'lado'        => $ehDireita ? 'dir' : 'esq',
+            'polo_esq'    => (string) ($linha['rotulo_esq'] ?? ''),
+            'polo_dir'    => (string) ($linha['rotulo_dir'] ?? ''),
             'pct'         => $pct,
             'intensidade' => (string) ($linha['intensidade'] ?? 'tendencia'),
             'forca'       => $this->rotuloForca($distancia),
             'cor'         => (string) ($linha['cor'] ?? ''),
             'manchete'    => (string) ($leitura['manchete'] ?? ''),
             'corpo'       => (string) ($leitura['corpo'] ?? ''),
-            'combina'     => array_slice((array) ($leitura['combina'] ?? []), 0, 3),
+            'combina'     => FilmeCard::enriquecer(array_slice((array) ($leitura['combina'] ?? []), 0, 3)),
             'cansa'       => (string) ($leitura['cansa'] ?? ''),
             'curto'       => (string) ($leitura['curto'] ?? ''),
             'espelho'     => $this->melhorEspelho($personagens, $indice, $ehDireita),
@@ -131,13 +136,16 @@ final class LeituraService
             'slug'        => 'neutro',
             'eixo'        => 'Seu perfil',
             'polo'        => 'Entre os lados',
+            'lado'        => 'esq',
+            'polo_esq'    => 'Entre os lados',
+            'polo_dir'    => 'Entre os lados',
             'pct'         => null,
             'intensidade' => 'equilibrado',
             'forca'       => 'perfil de trânsito',
             'cor'         => '#8A6A45',
             'manchete'    => (string) ($neutra['manchete'] ?? ''),
             'corpo'       => (string) ($neutra['corpo'] ?? ''),
-            'combina'     => array_slice((array) ($neutra['combina'] ?? []), 0, 3),
+            'combina'     => FilmeCard::enriquecer(array_slice((array) ($neutra['combina'] ?? []), 0, 3)),
             'cansa'       => (string) ($neutra['cansa'] ?? ''),
             'curto'       => (string) ($neutra['curto'] ?? 'Entre os lados'),
             'espelho'     => null,

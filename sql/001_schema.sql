@@ -230,6 +230,7 @@ CREATE TABLE retratos (
     codigo_unico  CHAR(8) NOT NULL,
     idioma        VARCHAR(5) NOT NULL DEFAULT 'pt-BR',
     texto         MEDIUMTEXT NOT NULL,
+    frase         VARCHAR(280) NULL,
     modelo        VARCHAR(80) NOT NULL,
     prompt_versao VARCHAR(20) NOT NULL,
     tokens        INT UNSIGNED NULL,

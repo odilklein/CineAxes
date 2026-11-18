@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Controllers;
 
 use Models\Arquetipo;
+use Models\Decada;
 use Models\Eixo;
 use Models\EntidadeMatch;
+use Models\FilmeCard;
 use Models\Obra;
 use Models\Retrato;
 use Core\Vetor;
@@ -103,15 +105,46 @@ final class PerfilController
 
         foreach ($personagens as &$personagem) {
             $personagem['obras'] = $obras[(int) $personagem['id']] ?? [];
+            $personagem['polos'] = entidade_polos($personagem, $eixos);
         }
         unset($personagem);
 
         foreach ([&$diretor, &$estudio] as &$ancora) {
             if ($ancora !== null) {
                 $ancora['obras'] = $obras[(int) $ancora['id']] ?? [];
+                $ancora['polos'] = entidade_polos($ancora, $eixos);
             }
         }
         unset($ancora);
+
+        // Atores dos espelhos: a mesma pessoa interpreta um personagem, mas o
+        // perfil também quer saber quem é o intérprete.
+        $atores = [];
+        $atoresVistos = [];
+
+        foreach ($personagens as $personagem) {
+            $nomeAtor = trim((string) ($personagem['ator_nome'] ?? ''));
+            $chaveAtor = mb_strtolower($nomeAtor);
+
+            if ($nomeAtor === '' || isset($atoresVistos[$chaveAtor])) {
+                continue;
+            }
+
+            $atoresVistos[$chaveAtor] = true;
+
+            $atores[] = [
+                'nome'        => $nomeAtor,
+                'foto'        => $personagem['ator_foto_url'] ?? null,
+                'nascimento'  => $personagem['nascimento'] ?? null,
+                'pais'        => $personagem['pais'] ?? null,
+                'tmdb'        => $personagem['ator_tmdb_id'] ?? null,
+                'personagem'  => (string) $personagem['nome'],
+                'obra'        => (string) $personagem['obra_origem'],
+                'ano'         => $personagem['ano'] ?? null,
+                'filme_tmdb'  => $personagem['tmdb_id'] ?? null,
+                'afinidade'   => $personagem['afinidade'] ?? null,
+            ];
+        }
 
         $linhas = $this->linhasEixos($eixos, $vetor);
 
@@ -147,6 +180,7 @@ final class PerfilController
             'resolucao'       => $resolucao,
             'neutro'          => $arquetipo === null,
             'personagens'     => $personagens,
+            'atores'          => $atores,
             'diretor'         => $diretor,
             'estudio'         => $estudio,
             'estante'         => $estante,
@@ -375,15 +409,41 @@ final class PerfilController
         }
 
         $top10 = [];
+        $topAncoras = [];
 
-        foreach (array_slice($ranqueadas, 0, 10) as $item) {
-            $top10[] = [
-                'nome' => $item['nome'],
-                'tipo' => $item['tipo'],
-                'obra' => $item['obra_origem'],
-                'imagem' => $item['imagem_url'],
-                'afinidade' => $item['afinidade'],
-            ];
+        foreach ($ranqueadas as $item) {
+            if ($item['tipo'] === 'personagem') {
+                if (count($top10) >= 10) {
+                    continue;
+                }
+
+                $top10[] = [
+                    'nome' => $item['nome'],
+                    'tipo' => $item['tipo'],
+                    'obra' => $item['obra_origem'],
+                    'imagem' => $item['ator_foto_url'] ?: $item['imagem_url'],
+                    'afinidade' => $item['afinidade'],
+                ];
+
+                continue;
+            }
+
+            if (count($topAncoras) < 6) {
+                $topAncoras[] = [
+                    'nome' => $item['nome'],
+                    'tipo' => $item['tipo'],
+                    'obra' => $item['obra_origem'],
+                    'imagem' => $item['imagem_url'],
+                    'afinidade' => $item['afinidade'],
+                    'bio' => $item['bio'],
+                ];
+            }
+        }
+
+        $eixosPorId = [];
+
+        foreach ($linhas as $linha) {
+            $eixosPorId[(int) ($linha['eixo']['id'] ?? 0)] = $linha;
         }
 
         $secundario = null;
@@ -400,14 +460,41 @@ final class PerfilController
 
             $nota = $this->matcher->compatibilidade($vetor, $candidato['vetor']);
 
-            if ($nota > $melhorNota) {
-                $melhorNota = $nota;
-                $secundario = [
-                    'titulo' => $candidato['titulo'],
-                    'compatibilidade' => $nota,
-                    'descricao' => $candidato['descricao'],
+            if ($nota <= $melhorNota) {
+                continue;
+            }
+
+            $melhorNota = $nota;
+            $polos = [];
+
+            foreach ([
+                [(int) ($candidato['eixo_dominante_1'] ?? 0), (string) ($candidato['polo_1'] ?? '')],
+                [(int) ($candidato['eixo_dominante_2'] ?? 0), (string) ($candidato['polo_2'] ?? '')],
+            ] as [$idEixo, $polo]) {
+                $linha = $eixosPorId[$idEixo] ?? null;
+
+                if ($linha === null || $idEixo <= 0) {
+                    continue;
+                }
+
+                $direita = $polo === 'D';
+                $pct = $direita ? (float) $candidato['vetor'][$idEixo - 1] : 100 - (float) $candidato['vetor'][$idEixo - 1];
+
+                $polos[] = [
+                    'eixo' => eixo_nome($linha['eixo']),
+                    'polo' => $direita ? $linha['rotulo_dir'] : $linha['rotulo_esq'],
+                    'pct' => round($pct, 0),
+                    'cor' => $direita ? (string) $linha['eixo']['cor_dir'] : (string) $linha['eixo']['cor_esq'],
                 ];
             }
+
+            $secundario = [
+                'titulo' => $candidato['titulo'],
+                'compatibilidade' => $nota,
+                'descricao' => $candidato['descricao'],
+                'ritual' => $candidato['ritual_cinema'],
+                'polos' => $polos,
+            ];
         }
 
         $anos = [];
@@ -424,27 +511,28 @@ final class PerfilController
             sort($anos);
             $mediana = $anos[intdiv(count($anos), 2)];
             $anoDecada = max(1900, min(2020, (int) (floor($mediana / 10) * 10)));
-            $descricoes = [
-                1900 => 'A invenção da linguagem clássica, o estúdio e o melodrama.',
-                1910 => 'A consolidação do longa-metragem e das estrelas.',
-                1920 => 'O expressionismo, o burlesco e a montagem soviética.',
-                1930 => 'O som, a comédia sofisticada e o star system.',
-                1940 => 'O noir, o melodrama de guerra e o estúdio em plena forma.',
-                1950 => 'O classicismo maduro, o widescreen e o melodrama.',
-                1960 => 'A modernidade, a nouvelle vague e o cinema de autor.',
-                1970 => 'O New Hollywood, a paranoia e a violência urbana.',
-                1980 => 'O blockbuster, o VHS e a trilha sintetizada.',
-                1990 => 'O indie, o digital nascente e a ironia.',
-                2000 => 'A expansão do digital, o épico e o cinema de festival.',
-                2010 => 'O streaming, o autor de prestígio e a série como cinema.',
-                2020 => 'O multiverso, o neon e a tela vertical.',
-            ];
+            $guia = Decada::porAno($anoDecada);
+
+            // Obras do próprio espelho que caem nessa década.
+            $obrasDecada = [];
+
+            foreach ($estante as $obra) {
+                $anoObra = isset($obra['ano']) ? (int) $obra['ano'] : 0;
+
+                if ($anoObra >= $anoDecada && $anoObra < $anoDecada + 10) {
+                    $obrasDecada[] = $obra;
+                }
+            }
 
             $decada = [
-                'ano' => $anoDecada,
-                'label' => 'Anos ' . $anoDecada,
-                'descricao' => $descricoes[$anoDecada] ?? 'Um repertório que atravessa décadas.',
-                'amostra' => count($anos),
+                'ano'         => $anoDecada,
+                'label'       => 'Anos ' . $anoDecada,
+                'epiteto'     => (string) ($guia['epiteto'] ?? ''),
+                'descricao'   => (string) ($guia['descricao'] ?? 'Um repertório que atravessa décadas.'),
+                'curiosidade' => (string) ($guia['curiosidade'] ?? ''),
+                'marcos'      => FilmeCard::enriquecer((array) ($guia['marcos'] ?? [])),
+                'obras'       => FilmeCard::enriquecer(array_slice($obrasDecada, 0, 4)),
+                'amostra'     => count($anos),
             ];
         }
 
@@ -453,6 +541,7 @@ final class PerfilController
             'tipico' => $tipico,
             'oposto' => $oposto,
             'top10' => $top10,
+            'top_ancoras' => $topAncoras,
             'secundario' => $secundario,
             'decada' => $decada,
             'base_total' => $total,

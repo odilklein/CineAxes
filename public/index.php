@@ -317,7 +317,7 @@ require __DIR__ . '/partials/header.php';
 
         <div class="pc-formats">
             <article class="pc-format reveal">
-                <span class="pc-format__label"><?= e(t('home.formats.quick.label')) ?></span>
+                <h3 class="pc-format__label"><?= e(t('home.formats.quick.label')) ?></h3>
                 <div class="pc-format__count">
                     <b><?= e(t('home.formats.quick.count')) ?></b>
                     <span><?= e(t('home.formats.quick.unit')) ?></span>
@@ -329,14 +329,14 @@ require __DIR__ . '/partials/header.php';
                     <?= e(t('home.formats.quick.time')) ?>
                 </div>
                 <a class="pc-btn pc-btn--ghost" href="<?= url('quiz.php', ['modo' => 'rapido']) ?>">
-                    <?= e(t('home.formats.quick.cta')) ?>
+                    <span class="pc-btn__label"><?= e(t('home.formats.quick.cta')) ?></span>
                     <?= icon('arrow-right', 17) ?>
                 </a>
             </article>
 
             <article class="pc-format pc-format--featured reveal">
                 <span class="pc-format__recommended"><?= e(t('home.formats.recommended')) ?></span>
-                <span class="pc-format__label"><?= e(t('home.formats.full.label')) ?></span>
+                <h3 class="pc-format__label"><?= e(t('home.formats.full.label')) ?></h3>
                 <div class="pc-format__count">
                     <b><?= e(t('home.formats.full.count')) ?></b>
                     <span><?= e(t('home.formats.full.unit')) ?></span>
@@ -348,13 +348,13 @@ require __DIR__ . '/partials/header.php';
                     <?= e(t('home.formats.full.time')) ?>
                 </div>
                 <a class="pc-btn pc-btn--light" href="<?= url('quiz.php', ['modo' => 'completo']) ?>">
-                    <?= e(t('home.formats.full.cta')) ?>
+                    <span class="pc-btn__label"><?= e(t('home.formats.full.cta')) ?></span>
                     <?= icon('arrow-right', 17) ?>
                 </a>
             </article>
 
             <article class="pc-format reveal">
-                <span class="pc-format__label"><?= e(t('home.formats.extreme.label')) ?></span>
+                <h3 class="pc-format__label"><?= e(t('home.formats.extreme.label')) ?></h3>
                 <div class="pc-format__count">
                     <b><?= e(t('home.formats.extreme.count')) ?></b>
                     <span><?= e(t('home.formats.extreme.unit')) ?></span>
@@ -366,7 +366,7 @@ require __DIR__ . '/partials/header.php';
                     <?= e(t('home.formats.extreme.time')) ?>
                 </div>
                 <a class="pc-btn pc-btn--ghost" href="<?= url('quiz.php', ['modo' => 'extremo']) ?>">
-                    <?= e(t('home.formats.extreme.cta')) ?>
+                    <span class="pc-btn__label"><?= e(t('home.formats.extreme.cta')) ?></span>
                     <?= icon('arrow-right', 17) ?>
                 </a>
             </article>
