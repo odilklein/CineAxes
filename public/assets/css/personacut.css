@@ -5480,3 +5480,76 @@ body.pc-qv-open {
 .pc-readings__grid--single {
   grid-template-columns: 1fr;
 }
+
+/* --------------------- 38. Exemplo de leituras (landing) ------------------ */
+.pc-example__readings {
+  display: grid;
+  gap: 0;
+}
+
+.pc-example__reading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--pc-line);
+}
+
+.pc-example__reading:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pc-example__reading-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid var(--reading);
+  border-radius: 50%;
+  color: var(--pc-ink);
+  font-family: var(--pc-mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.pc-example__reading b {
+  display: block;
+  font-family: var(--pc-serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.pc-example__reading small {
+  display: block;
+  margin-top: 2px;
+  color: var(--pc-ink-2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.pc-example__reading-forca {
+  padding: 2px 7px;
+  border: 1px solid var(--pc-line);
+  border-radius: 999px;
+  color: var(--pc-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .pc-example__reading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pc-example__reading-forca {
+    display: none;
+  }
+}

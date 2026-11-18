@@ -53,11 +53,7 @@ $exemplo = [
     'titulo' => 'O Espectador Neutro',
     'descricao' => 'Um perfil equilibrado, que transita entre os dois polos de cada eixo.',
     'afinidade' => 0.0,
-    'barras' => [],
-    'marcas' => [],
-    'espelhos' => [],
-    'linhas' => [],
-    // Dados do card 9:16 (mesmo parcial usado no resultado do questionário).
+    // Dados usados pelo card 9:16 e pelo painel de leituras.
     'personagens' => [],
     'leituras' => [],
     'estante' => [],
@@ -89,14 +85,6 @@ try {
 
         if ($perfilExemplo !== null) {
             $arquetipoExemplo = $perfilExemplo['arquetipo'];
-            $linhasExemplo = $perfilExemplo['linhas'];
-
-            // Os três eixos que mais afastam este perfil do neutro.
-            usort($linhasExemplo, static function (array $a, array $b): int {
-                return abs((float) $b['pct_dir'] - 50) <=> abs((float) $a['pct_dir'] - 50);
-            });
-
-            $destacadas = array_slice($linhasExemplo, 0, 3);
 
             $exemplo = [
                 'codigo' => (string) $codigoExemplo,
@@ -109,45 +97,6 @@ try {
                 'estante' => $perfilExemplo['estante'] ?? [],
                 'diretor' => $perfilExemplo['diretor'] ?? null,
                 'estudio' => $perfilExemplo['estudio'] ?? null,
-                'barras' => array_map(
-                    static fn (array $linha): array => [
-                        'rotulo' => eixo_nome($linha['eixo']),
-                        'polo'   => $linha['polo'] === 'D' ? $linha['rotulo_dir'] : $linha['rotulo_esq'],
-                        'valor'  => round($linha['pct_dir'], 0),
-                        'pct'    => (float) max($linha['pct_esq'], $linha['pct_dir']),
-                        'cor'    => $linha['cor'],
-                    ],
-                    $destacadas
-                ),
-                'marcas' => array_map(
-                    static fn (array $leitura): array => [
-                        'curto' => (string) $leitura['curto'],
-                        'cor'   => (string) $leitura['cor'],
-                    ],
-                    $perfilExemplo['leituras']
-                ),
-                'espelhos' => array_map(
-                    static fn (array $p): array => [
-                        'nome'      => nome_curto((string) $p['nome']),
-                        'obra'      => (string) $p['obra_origem'],
-                        'foto'      => (string) ($p['ator_foto_url'] ?: $p['imagem_url']),
-                        'afinidade' => (float) $p['afinidade'],
-                    ],
-                    array_slice($perfilExemplo['personagens'], 0, 3)
-                ),
-                'linhas' => array_map(
-                    static fn (array $linha): array => [
-                        'nome'  => eixo_nome($linha['eixo']),
-                        'esq'   => $linha['rotulo_esq'],
-                        'dir'   => $linha['rotulo_dir'],
-                        'pct_e' => (float) $linha['pct_esq'],
-                        'pct_d' => (float) $linha['pct_dir'],
-                        'cor_e' => (string) $linha['cor_esq'],
-                        'cor_d' => (string) $linha['cor_dir'],
-                        'nivel' => $linha['intensidade'],
-                    ],
-                    $destacadas
-                ),
             ];
         }
     }
@@ -270,28 +219,24 @@ require __DIR__ . '/partials/header.php';
                         <?php endif; ?>
                     </div>
 
-                    <?php if ($exemplo['linhas'] === []): ?>
+                    <?php if ($exemplo['leituras'] === []): ?>
                         <p class="pc-text-muted" style="font-size:13px">
                             Rode o seed para ver um perfil de exemplo montado com dados reais.
                         </p>
                     <?php endif; ?>
 
-                    <?php foreach ($exemplo['linhas'] as $linha): ?>
-                        <div class="pc-axis-line">
-                            <div class="pc-axis-line__top">
-                                <span class="pc-axis-line__name"><?= e($linha['nome']) ?></span>
-                                <span class="pc-axis-line__intensity" data-level="<?= e($linha['nivel']) ?>"><?= e(t('resultado.intensity.' . $linha['nivel'])) ?></span>
+                    <div class="pc-example__readings">
+                        <?php foreach ($exemplo['leituras'] as $indice => $leitura): ?>
+                            <div class="pc-example__reading" style="--reading:<?= e($leitura['cor']) ?>">
+                                <span class="pc-example__reading-num"><?= str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                                <div>
+                                    <b><?= e($leitura['curto']) ?></b>
+                                    <small><?= e($leitura['manchete']) ?></small>
+                                </div>
+                                <span class="pc-example__reading-forca"><?= e($leitura['forca']) ?></span>
                             </div>
-                            <div class="pc-dual">
-                                <span class="pc-dual__pole"><b><?= pct($linha['pct_e']) ?></b> <?= e($linha['esq']) ?></span>
-                                <span class="pc-dual__track">
-                                    <span class="pc-dual__esq" style="width: <?= num_css($linha['pct_e']) ?>%; background: <?= e($linha['cor_e']) ?>"></span>
-                                    <span class="pc-dual__dir" style="width: <?= num_css($linha['pct_d']) ?>%; background: <?= e($linha['cor_d']) ?>"></span>
-                                </span>
-                                <span class="pc-dual__pole pc-dual__pole--dir"><?= e($linha['dir']) ?> <b><?= pct($linha['pct_d']) ?></b></span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
 
                     <?php if ($exemplo['codigo'] !== ''): ?>
                         <a class="pc-link-arrow" style="margin-top:18px" href="<?= url('resultado.php', ['codigo' => $exemplo['codigo']]) ?>">
