@@ -205,6 +205,14 @@ do banco.
 - Regeneração de sessão no login.
 - Senhas com `password_hash` / `password_verify`.
 - IP nunca é gravado em claro: apenas `sha256(ip + salt)` para abuso.
+- Rate limit por IP em `src/Core/RateLimit.php`: 12 envios/minuto no quiz e
+  8 tentativas/10 minutos no login (arquivo em `storage/cache/ratelimit`,
+  *fail-open* se não for gravável).
+- `public/.htaccess` envia CSP, `nosniff`, `Referrer-Policy`, `X-Frame-Options`,
+  `Permissions-Policy`, oculta o `X-Powered-By` e aceita só `GET`, `POST` e
+  `HEAD`.
+- No Docker, `ServerTokens Prod` e `expose_php=Off` (`docker/apache-security.conf`
+  e `docker/php-security.ini`).
 - Admin com `noindex, nofollow` e checagem em toda página.
 - Chaves de API (TMDB) ficam no servidor; o navegador só conversa com `/api/*`.
 

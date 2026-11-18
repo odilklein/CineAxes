@@ -524,7 +524,7 @@ require __DIR__ . '/partials/head.php';
     <?php endif; ?>
 
     <?php if ((int) $editando['id'] > 0): ?>
-        <form id="form-excluir" method="post" action="<?= url('admin/perguntas.php') ?>" onsubmit="return confirm('<?= e(t('admin.confirm_delete')) ?>')">
+        <form id="form-excluir" method="post" action="<?= url('admin/perguntas.php') ?>" data-confirm="<?= e(t('admin.confirm_delete')) ?>">
             <?= Csrf::campo() ?>
             <input type="hidden" name="acao" value="excluir">
             <input type="hidden" name="id" value="<?= (int) $editando['id'] ?>">

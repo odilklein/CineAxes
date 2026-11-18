@@ -56,7 +56,6 @@ $vendorScripts = $vendorScripts ?? [];
 </footer>
 <?php endif; ?>
 
-<script src="<?= asset('vendor/vuexy/bootstrap.bundle.js') ?>"></script>
 <?php foreach ($vendorScripts as $vendor): ?>
 <script src="<?= asset('vendor/' . $vendor) ?>"></script>
 <?php endforeach; ?>

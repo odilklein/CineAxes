@@ -1,0 +1,33 @@
+# =============================================================================
+# PersonaCut — configuração do DocumentRoot (public/)
+#
+# Este arquivo vale no Apache local (Docker) e em hospedagem compartilhada
+# (InfinityFree), desde que o DocumentRoot efetivo seja public/.
+# =============================================================================
+
+Options -Indexes
+
+<IfModule mod_headers.c>
+    # Não anuncia a versão do PHP.
+    Header always unset X-Powered-By
+
+    # Cabeçalhos de segurança.
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data: https://image.tmdb.org; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+
+    # Ative quando o site estiver publicado em HTTPS.
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# A aplicação só usa GET, POST e HEAD. Qualquer outro método é recusado.
+<LimitExcept GET POST HEAD>
+    Require all denied
+</LimitExcept>
+
+# Nunca servir arquivos ocultos (.env, .git, .htaccess...).
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

@@ -15,6 +15,7 @@ use Controllers\QuizController;
 use Core\Csrf;
 use Core\Database;
 use Core\Http;
+use Core\RateLimit;
 use Services\LikertCalculatorService;
 use Services\MatcherService;
 
@@ -28,6 +29,15 @@ $token = $corpo['csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
 
 if (!Csrf::validar(is_string($token) ? $token : null)) {
     Http::erro(t('erros.csrf'), 403);
+}
+
+// Um visitante legítimo envia o quiz uma única vez. O limite barra scripts
+// que criem resultados em série (e o ruído na base de raridade).
+$limite = RateLimit::permitir('quiz:' . (Http::ipHash() ?? 'anon'), 12, 60);
+
+if (!$limite['ok']) {
+    header('Retry-After: ' . $limite['espera']);
+    Http::erro(t('erros.rate_limit', ['segundos' => $limite['espera']]), 429);
 }
 
 $modo = is_string($corpo['modo'] ?? null) ? (string) $corpo['modo'] : 'completo';

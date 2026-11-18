@@ -144,6 +144,21 @@
     });
   });
 
+  /* ------------------ Confirmação de ações destrutivas -------------------- */
+  document.addEventListener('submit', function (evento) {
+    var formulario = evento.target.closest('[data-confirm]');
+
+    if (!formulario) {
+      return;
+    }
+
+    var mensagem = formulario.getAttribute('data-confirm') || 'Confirmar?';
+
+    if (!window.confirm(mensagem)) {
+      evento.preventDefault();
+    }
+  });
+
   /* -------------------------- Utilidades de tema -------------------------- */
   function cores() {
     var estilo = getComputedStyle(root);

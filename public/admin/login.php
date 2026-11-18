@@ -24,15 +24,7 @@ $erro = Session::flash('erro');
     <meta name="robots" content="noindex, nofollow">
     <title><?= e(t('admin.login_title')) ?> — PersonaCut</title>
     <link rel="icon" href="<?= asset('img/favicon.svg') ?>" type="image/svg+xml">
-    <script>
-        (function () {
-            document.documentElement.classList.add('js');
-            try {
-                var salvo = localStorage.getItem('pc-theme');
-                document.documentElement.setAttribute('data-theme', salvo === 'dark' ? 'dark' : 'light');
-            } catch (e) {}
-        }());
-    </script>
+    <script src="<?= asset('js/theme.js') ?>"></script>
     <link rel="stylesheet" href="<?= asset('vendor/vuexy/core.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/personacut.css') ?>">
 </head>

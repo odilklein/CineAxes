@@ -25,3 +25,6 @@ Thumbs.db
 
 # Playwright / capturas locais de referência
 .playwright-mcp/
+
+# Configuração local do OpenCode (MCP do HexStrike aponta para caminhos da máquina)
+opencode.json

@@ -29,17 +29,7 @@ $estilosExtras   = $estilosExtras ?? [];
     <link rel="icon" href="<?= asset('img/favicon.svg') ?>" type="image/svg+xml">
     <link rel="preload" href="<?= asset('fonts/public-sans-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
 
-    <script>
-        // Marca que o JS está ativo (as animações de reveal só escondem
-        // conteúdo quando esta classe existe) e aplica o tema antes do paint.
-        (function () {
-            document.documentElement.classList.add('js');
-            try {
-                var salvo = localStorage.getItem('pc-theme');
-                document.documentElement.setAttribute('data-theme', salvo === 'dark' ? 'dark' : 'light');
-            } catch (e) { /* modo privado */ }
-        }());
-    </script>
+    <script src="<?= asset('js/theme.js') ?>"></script>
 
     <link rel="stylesheet" href="<?= asset('vendor/vuexy/core.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/personacut.css') ?>">

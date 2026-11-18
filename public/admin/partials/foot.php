@@ -4,7 +4,6 @@ declare(strict_types=1);
 ?>
 </main>
 
-<script src="<?= asset('vendor/vuexy/bootstrap.bundle.js') ?>"></script>
 <script src="<?= asset('js/app.js') ?>"></script>
 </body>
 </html>
