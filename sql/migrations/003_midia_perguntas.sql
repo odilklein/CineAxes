@@ -9,7 +9,7 @@
 --     < sql/migrations/003_midia_perguntas.sql
 -- =============================================================================
 
-SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Reexecutável: só adiciona as colunas se ainda não existirem.
 SET @tem_midia := (

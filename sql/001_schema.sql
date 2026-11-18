@@ -4,7 +4,7 @@
 -- Reexecutável: derruba as tabelas na ordem inversa das dependências.
 -- =============================================================================
 
-SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS cache_tmdb;
@@ -29,7 +29,7 @@ CREATE TABLE usuarios_admin (
     perfil       ENUM('admin', 'editor') NOT NULL DEFAULT 'editor',
     criado_em    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_usuarios_admin_usuario (usuario)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Os 8 eixos. `polo_*_key` é a chave de tradução; as cores e ícones alimentam
@@ -57,7 +57,7 @@ CREATE TABLE eixos (
     tmdb_keywords_dir  VARCHAR(255) NOT NULL DEFAULT '',
     UNIQUE KEY uq_eixos_slug (slug),
     UNIQUE KEY uq_eixos_ordem (ordem)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Perguntas Likert.
@@ -89,7 +89,7 @@ CREATE TABLE perguntas (
     KEY idx_perguntas_eixo (eixo_id),
     KEY idx_perguntas_modo (modo_rapido, ordem),
     KEY idx_perguntas_tmdb (tmdb_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Entidades do matcher: personagens, diretores, estúdios/escolas e filmes.
@@ -132,7 +132,7 @@ CREATE TABLE entidades_match (
     CONSTRAINT chk_ent_e8 CHECK (eixo_8 BETWEEN 0 AND 100),
     UNIQUE KEY uq_entidades_tipo_nome (tipo, nome),
     KEY idx_entidades_tipo (tipo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Obras essenciais de diretores e estúdios (a "estante" do perfil).
@@ -150,7 +150,7 @@ CREATE TABLE entidades_obras (
     CONSTRAINT fk_obras_entidade FOREIGN KEY (entidade_id) REFERENCES entidades_match (id) ON DELETE CASCADE,
     UNIQUE KEY uq_obras_entidade_titulo (entidade_id, titulo),
     KEY idx_obras_entidade (entidade_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Arquétipos: um por (eixo dominante, polo) = 16 linhas.
@@ -181,7 +181,7 @@ CREATE TABLE arquetipos (
     CONSTRAINT fk_arq_eixo2 FOREIGN KEY (eixo_dominante_2) REFERENCES eixos (id) ON DELETE SET NULL,
     UNIQUE KEY uq_arquetipos_dominante (eixo_dominante_1, polo_1),
     UNIQUE KEY uq_arquetipos_titulo_key (titulo_key)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Resultados. `codigo_unico` é o identificador público e compartilhável.
@@ -220,7 +220,7 @@ CREATE TABLE resultados_usuarios (
     CONSTRAINT chk_res_e6 CHECK (eixo_6 BETWEEN 0 AND 100),
     CONSTRAINT chk_res_e7 CHECK (eixo_7 BETWEEN 0 AND 100),
     CONSTRAINT chk_res_e8 CHECK (eixo_8 BETWEEN 0 AND 100)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Retrato redigido por IA (uma vez por resultado; nunca altera a nota).
@@ -237,7 +237,7 @@ CREATE TABLE retratos (
     UNIQUE KEY uq_retratos_codigo (codigo_unico),
     CONSTRAINT fk_retratos_resultado FOREIGN KEY (codigo_unico)
         REFERENCES resultados_usuarios (codigo_unico) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Cache das respostas da TMDB (TTL de 24h, ver src/Services/TmdbService.php).
@@ -249,4 +249,4 @@ CREATE TABLE cache_tmdb (
     expires_at   DATETIME NOT NULL,
     created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_cache_expires (expires_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

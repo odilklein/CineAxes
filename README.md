@@ -23,6 +23,7 @@
 - [Prints](#prints)
 - [Stack](#stack)
 - [Como executar](#como-executar)
+- [Deploy no InfinityFree](#deploy-no-infinityfree-sem-docker)
 - [Os 8 eixos](#os-8-eixos)
 - [Três modos de teste](#três-modos-de-teste)
 - [Como o perfil é calculado](#como-o-perfil-é-calculado)
@@ -147,6 +148,21 @@ docker compose exec app php tests/run.php
 docker compose down      # mantém o banco
 docker compose down -v   # apaga o banco
 ```
+
+## Deploy no InfinityFree (sem Docker)
+
+O pacote `deploy/infinityfree/` tem o necessário para subir em hospedagem
+compartilhada (PHP + MariaDB), sem Docker:
+
+- `personacut.sql` — banco completo, já com `utf8mb4_unicode_ci` (MariaDB);
+- `htdocs/.htaccess` — encaminha a raiz para `public/` e bloqueia `src/`,
+  `config/`, `storage/`, `sql/` e dotfiles;
+- `config/env.example.php` — modelo do `config/env.php` (o `.env` do Docker não
+  é lido pelo PHP);
+- `README.md` — passo a passo de banco, upload, permissões e teste.
+
+O site precisa ficar na raiz do domínio/subdomínio, porque o app usa URLs
+absolutas (`/quiz.php`, `/assets/...`).
 
 ## Os 8 eixos
 
@@ -375,7 +391,8 @@ done
 | `usuarios_admin` | acesso ao painel |
 
 A base tem ainda **400 perfis sintéticos** para o Índice de Raridade — a interface
-declara isso explicitamente.
+declara isso explicitamente. O schema usa `utf8mb4_unicode_ci`, compatível com
+MySQL 8 e MariaDB 10.6+ (o pacote de deploy já vem com essa collation).
 
 ## Testes
 

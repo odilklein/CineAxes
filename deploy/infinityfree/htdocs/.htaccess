@@ -1,0 +1,28 @@
+# =============================================================================
+# PersonaCut no InfinityFree
+#
+# Copie este arquivo para htdocs/.htaccess.
+# A raiz do site (htdocs) encaminha tudo para public/, mas mantém src/, config/,
+# lang/ e storage/ fora do acesso HTTP.
+#
+# Se você instalar em um subdiretório, troque RewriteBase / pelo caminho dele.
+# =============================================================================
+
+RewriteEngine On
+RewriteBase /
+
+# Nunca servir código, configuração, banco ou arquivos internos.
+RewriteRule ^(src|config|lang|sql|tests|bin|storage|uploads|docs|deploy)(/|$) - [F,L,NC]
+
+# Nunca servir dotfiles e arquivos de build.
+<FilesMatch "^(\.env.*|\.git.*|Dockerfile|docker-compose\.yml|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+
+# Evita a URL duplicada /public/...
+RewriteCond %{THE_REQUEST} \s/+public/([^\s?]*) [NC]
+RewriteRule ^public/(.*)$ /$1 [R=301,L]
+
+# Todo o resto vai para public/.
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]

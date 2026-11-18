@@ -7,7 +7,7 @@
 -- Reexecutável: só cria a coluna/índice se faltarem e só preenche IDs vazios.
 -- =============================================================================
 
-SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 SET @tem_tmdb := (
     SELECT COUNT(*)

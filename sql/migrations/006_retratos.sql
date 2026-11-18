@@ -1,6 +1,6 @@
 -- Migração para bancos criados antes do retrato por IA.
 -- Executável mais de uma vez.
-SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS retratos (
     id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS retratos (
     UNIQUE KEY uq_retratos_codigo (codigo_unico),
     CONSTRAINT fk_retratos_resultado FOREIGN KEY (codigo_unico)
         REFERENCES resultados_usuarios (codigo_unico) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

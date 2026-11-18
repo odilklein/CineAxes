@@ -4,7 +4,7 @@
 -- Fonte: bin/midia_export.php (não edite à mão)
 -- =============================================================================
 
-SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 START TRANSACTION;
 
