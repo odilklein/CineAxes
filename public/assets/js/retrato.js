@@ -23,7 +23,7 @@
   function jaTemTexto(secao) {
     var alvo = caixa(secao);
 
-    return !!alvo && !alvo.querySelector('.pc-critico__loading');
+    return !!alvo && !alvo.querySelector('.pc-critico__loading, .pc-retro__loading');
   }
 
   function preencher(secao, texto) {

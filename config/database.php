@@ -10,10 +10,10 @@ declare(strict_types=1);
  * Fora do Docker, copie config/env.example.php para config/env.php e ajuste lá.
  */
 return [
-    'host'    => getenv('DB_HOST') ?: '127.0.0.1',
-    'port'    => getenv('DB_PORT') ?: '3306',
-    'dbname'  => getenv('DB_NAME') ?: 'personacut',
-    'user'    => getenv('DB_USER') ?: 'personacut',
-    'pass'    => getenv('DB_PASS') ?: 'personacut123',
+    'host'    => \Core\Env::texto('DB_HOST', '127.0.0.1'),
+    'port'    => \Core\Env::texto('DB_PORT', '3306'),
+    'dbname'  => \Core\Env::texto('DB_NAME', 'personacut'),
+    'user'    => \Core\Env::texto('DB_USER', 'personacut'),
+    'pass'    => \Core\Env::texto('DB_PASS', 'personacut123'),
     'charset' => 'utf8mb4',
 ];

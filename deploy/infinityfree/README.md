@@ -11,6 +11,10 @@ deploy/infinityfree/
 └── README.md
 ```
 
+> O `Core\Env` lê o `config/env.php` para um mapa estático. Ele não depende de
+> `putenv()`, que é desabilitado em várias hospedagens compartilhadas (incluindo
+> o InfinityFree).
+
 ## 1. Banco de dados
 
 1. No painel do InfinityFree, abra **MySQL Databases** e crie um banco.

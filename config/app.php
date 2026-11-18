@@ -20,7 +20,7 @@ return [
         'es'    => 'Español',
     ],
 
-    'debug' => filter_var(getenv('APP_DEBUG') ?: 'true', FILTER_VALIDATE_BOOL),
+    'debug' => \Core\Env::booleano('APP_DEBUG', true),
 
     // Regras do índice de raridade (ver docs/EIXOS.md).
     'raridade' => [
@@ -38,7 +38,7 @@ return [
 
     // Integração TMDB (usada a partir da v1.5; o MVP funciona offline).
     'tmdb' => [
-        'api_key'   => getenv('TMDB_API_KEY') ?: '',
+        'api_key'   => \Core\Env::texto('TMDB_API_KEY'),
         'base_url'  => 'https://api.themoviedb.org/3',
         'image_url' => 'https://image.tmdb.org/t/p',
         'language'  => 'pt-BR',
@@ -48,13 +48,13 @@ return [
 
     // Retrato redigido por IA (Groq). A chave fica só no servidor.
     'groq' => [
-        'api_key'        => getenv('GROQ_API_KEY') ?: '',
-        'model'          => getenv('GROQ_MODEL') ?: 'qwen/qwen3.8-27b',
+        'api_key'        => \Core\Env::texto('GROQ_API_KEY'),
+        'model'          => \Core\Env::texto('GROQ_MODEL', 'qwen/qwen3.8-27b'),
         'base_url'       => 'https://api.groq.com/openai/v1',
         'timeout'        => 30,
         'max_tokens'     => 900,
         'temperature'    => 0.75,
-        'enabled'        => filter_var(getenv('GROQ_ENABLED') ?: 'true', FILTER_VALIDATE_BOOL),
+        'enabled'        => \Core\Env::booleano('GROQ_ENABLED', true),
         'prompt_versao'  => 'retrato-v1',
     ],
 
