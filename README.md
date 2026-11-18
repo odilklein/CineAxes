@@ -1,86 +1,143 @@
-# 🎬 PersonaCut
+<div align="center">
+  <img src="docs/prints/home.jpg" alt="PersonaCut — página inicial" width="100%">
 
-**Seu perfil cinéfilo em 8 eixos — com quatro leituras em linguagem clara, arquétipo, espelhos no catálogo, retrato escrito por IA e um card 9:16 para os stories.**
+  <h1>PersonaCut</h1>
 
-<p>
-<img alt="PHP" src="https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white">
-<img alt="MySQL" src="https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white">
-<img alt="Bootstrap" src="https://img.shields.io/badge/Bootstrap-5-7952B3?logo=bootstrap&logoColor=white">
-<img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white">
-<img alt="Testes" src="https://img.shields.io/badge/testes-59%20passando-2F7D4F">
-<img alt="DW2" src="https://img.shields.io/badge/DW2-projeto%20acad%C3%AAmico-8F2B1F">
-</p>
+  <p><strong>Seu perfil cinéfilo em 8 eixos.</strong><br>
+  Responda de 36 a 240 afirmações e receba um retrato do seu gosto: quatro leituras em
+  linguagem clara, um arquétipo, seis espelhos no catálogo e um card 9:16 para os stories.</p>
 
-| Início | Card de story (1080 × 1920) |
-| --- | --- |
-| ![Início](docs/prints/home.jpg) | ![Card de story](docs/prints/story-card.jpg) |
+  <p>
+    <img alt="PHP 8.2" src="https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white">
+    <img alt="MySQL 8.4" src="https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white">
+    <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white">
+    <img alt="Testes" src="https://img.shields.io/badge/testes-75%20passando-2F7D4F">
+    <img alt="Auditoria" src="https://img.shields.io/badge/seguran%C3%A7a-auditada-8F2B1F">
+    <img alt="DW2" src="https://img.shields.io/badge/DW2-FATEC-B8863B">
+  </p>
+</div>
+
+> Projeto da disciplina **Desenvolvimento Web 2 (DW2)**. Back-end em PHP puro
+> (Orientação a Objetos, PDO e prepared statements), banco MySQL, front-end em
+> HTML/CSS/JS sem framework de SPA — e uma camada de IA opcional usada só para
+> redigir o retrato do perfil.
 
 ---
 
 ## Sumário
 
 - [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
 - [Prints](#prints)
+- [Funcionalidades](#funcionalidades)
 - [Stack](#stack)
-- [Como executar](#como-executar)
-- [Deploy no InfinityFree](#deploy-no-infinityfree-sem-docker)
-- [Os 8 eixos](#os-8-eixos)
-- [Três modos de teste](#três-modos-de-teste)
-- [Como o perfil é calculado](#como-o-perfil-é-calculado)
-- [O que o resultado entrega](#o-que-o-resultado-entrega)
-- [Retrato por IA (Groq)](#retrato-por-ia-groq)
-- [TMDB e cenas do quiz](#tmdb-e-cenas-do-quiz)
-- [Estrutura do projeto](#estrutura-do-projeto)
-- [Banco de dados](#banco-de-dados)
+- [Rodando local](#rodando-local)
+- [Auditoria de segurança](#auditoria-de-segurança)
 - [Testes](#testes)
-- [Roadmap](#roadmap)
+- [Estrutura](#estrutura)
+- [Deploy no InfinityFree](#deploy-no-infinityfree-sem-docker)
+- [Documentação](#documentação)
 - [Créditos](#créditos)
 
 ## O que é
 
-PersonaCut é uma aplicação web de análise de personalidade cinematográfica. Você
-responde a afirmações de gosto (Likert de 5 pontos) e o sistema posiciona o seu
-perfil em **oito eixos bipolares** — imagem, emoção, mundo, ritmo, ética, história,
-tamanho e época. A partir desse vetor, ele traduz o conjunto em **quatro leituras
-em linguagem clara** (o que você procura, o que te afasta e dois filmes), busca no
-catálogo os personagens, o diretor e o estúdio mais próximos e redige um retrato.
+O PersonaCut transforma gosto de cinema em dados. O visitante responde a um
+questionário Likert de 5 pontos e o sistema posiciona o perfil em **oito eixos
+bipolares**. A partir desse vetor, ele traduz o resultado em consequência: o que
+você procura na tela, o que te afasta, e quais personagens, diretor e escola
+compartilham a sua assinatura.
 
-- **100% em pt-BR**, interface em "cinema analógico": papel envelhecido, vinho de
-  cartaz, dourado de letreiro, Bodoni Moda para display e Public Sans para texto.
-- **Sem cadastro**: o resultado é acessível por um código público de 8 caracteres.
-- **Determinístico**: arquétipo, afinidade e raridade nunca dependem de IA — o
-  modelo de linguagem só acrescenta redação.
-- **Projeto da disciplina de Desenvolvimento Web 2 (DW2)**.
+- **Sem cadastro.** O resultado vira um código público de 8 caracteres.
+- **Determinístico.** Arquétipo, afinidade e raridade nunca dependem de IA; o
+  modelo de linguagem só escreve o retrato (e pode ser desligado).
+- **Completo no celular.** Quiz, resultado, retrospectiva e card 9:16.
+- **Projeto acadêmico.** Feito para apresentar em sala, mas com decisões de
+  produto e de engenharia de um projeto real.
+
+## Como funciona
+
+1. **Questionário.** 36, 60 ou 240 afirmações, sempre equilibradas entre os 8
+   eixos e entre os dois polos de cada eixo.
+2. **Vetor de 8 eixos.** Cada resposta vale de `-2` a `+2` e é ponderada por
+   direção e peso:
+   `pct_dir = 50 + 50 · Σ(resposta · direção · peso) / (2 · Σpeso)`.
+3. **Leituras.** Os eixos mais extremos viram textos em linguagem clara — o que
+   você busca, o que te cansa e exemplos de filmes para reconhecer aquilo.
+4. **Resultado.** Arquétipo, seis personagens espelho, diretor, escola, estante
+   de filmes, retrato, retrospectiva em capítulos e card para compartilhar.
+
+| # | Eixo | Polo esquerdo | Polo direito | O que mede |
+| --- | --- | --- | --- | --- |
+| 1 | **Imagem** | Clássica | Experimental | linguagem visual: transparência vs. ruptura formal |
+| 2 | **Emoção** | Melancólica | Eufórica | registro emocional: peso vs. leveza |
+| 3 | **Mundo** | Realista | Fantástico | grau de invenção do mundo |
+| 4 | **Ritmo** | Contemplativo | Frenético | experiência da duração |
+| 5 | **Ética** | Ambígua | Clara | posição moral: zona cinzenta vs. lados demarcados |
+| 6 | **História** | Linear | Fragmentada | arquitetura da narrativa |
+| 7 | **Tamanho** | Íntima | Épica | escala do drama |
+| 8 | **Época** | Memória | Futuro | orientação no tempo |
+
+Definições operacionais, base crítica e fórmula completa em
+[docs/EIXOS.md](docs/EIXOS.md).
 
 ## Prints
 
-| Início | Os 8 eixos |
+| Quiz em uma tela | Entender o eixo (modal) |
 | --- | --- |
-| ![Início](docs/prints/home.jpg) | ![Os 8 eixos](docs/prints/eixos.jpg) |
+| ![Quiz](docs/prints/quiz.jpg) | ![Modal do eixo](docs/prints/guia.jpg) |
 
-| Três formatos | Quiz com cena do filme |
+| Resultado | Suas leituras |
 | --- | --- |
-| ![Formatos](docs/prints/formatos.jpg) | ![Quiz](docs/prints/quiz.jpg) |
+| ![Resultado](docs/prints/resultado.jpg) | ![Leituras](docs/prints/leituras.jpg) |
 
-| Resultado | Além do espelho |
+| Retrospectiva | Ficha de personagem |
 | --- | --- |
-| ![Resultado](docs/prints/resultado.jpg) | ![Insights](docs/prints/insights.jpg) |
+| ![Retrospectiva](docs/prints/retro.jpg) | ![Ficha](docs/prints/quickview.jpg) |
 
-| A crítica do perfil | Card 9:16 exportado |
+| Além do espelho | Modo Sinergia |
 | --- | --- |
-| ![Crítica](docs/prints/critica.jpg) | ![Card](docs/prints/story-card.jpg) |
+| ![Insights](docs/prints/insights.jpg) | ![Sinergia](docs/prints/sinergia.jpg) |
 
-| Card no celular | Tema escuro |
+| Os 8 eixos | Três formatos de teste |
 | --- | --- |
-| ![Card no mobile](docs/prints/story-mobile.jpg) | ![Tema escuro](docs/prints/insights-dark.jpg) |
+| ![Eixos](docs/prints/eixos.jpg) | ![Formatos](docs/prints/formatos.jpg) |
 
-| Modo Sinergia | Ficha rápida (TMDB) |
+| Painel administrativo | Perguntas e mídia do quiz |
 | --- | --- |
-| ![Sinergia](docs/prints/sinergia.jpg) | ![Quick view](docs/prints/quickview.jpg) |
+| ![Admin](docs/prints/admin.jpg) | ![Perguntas no admin](docs/prints/admin-perguntas.jpg) |
 
-| Painel admin | Perguntas (240 no pool) |
-| --- | --- |
-| ![Admin](docs/prints/admin.jpg) | ![Admin perguntas](docs/prints/admin-perguntas.jpg) |
+<p align="center">
+  <img src="docs/prints/story-card.jpg" alt="Card 9:16 do perfil" width="300">
+  <br>
+  <sub>Card 9:16 gerado no servidor e exportado em PNG 1080 × 1920 com <code>html2canvas</code>.</sub>
+</p>
+
+## Funcionalidades
+
+**Quiz**
+- Três profundidades (36, 60 e 240 perguntas) com cotas iguais por eixo e por polo.
+- Cena do filme (TMDB), GIF ou clipe oficial do YouTube, com fachada de clique.
+- Atalhos de teclado (1–5), avanço automático opcional, rascunho em `localStorage`.
+- Layout de duas colunas no desktop que cabe na tela — sem rolar para responder.
+- Modal **Entender este eixo** com explicação longa, os dois polos, cenas de
+  filmes/séries e referências críticas.
+
+**Resultado**
+- Arquétipo (match do vetor completo), quatro leituras, radar SVG próprio e
+  raio-x dos 8 eixos.
+- Seis personagens espelho com frase icônica, intérprete e perfil de eixos;
+  diretor e estúdio/escola com obras essenciais.
+- Ficha rápida por tipo (personagem, ator, diretor, escola e filme), com
+  sinopse/elenco da TMDB e biografia do intérprete.
+- Cards de filme com pôster em todas as citações (leituras, década e guia).
+- **Combina com**, **Seu oposto**, **Arquétipo secundário** e a **década do
+  repertório** com curiosidades e filmes-marco.
+- Retrospectiva em capítulos (estilo stories) com swipe, teclado e progresso.
+- Card 9:16 (PNG 1080 × 1920) e modo Sinergia entre dois códigos.
+
+**Admin**
+- CRUD de eixos, perguntas (com cena ilustrativa), entidades, obras e arquétipos.
+- Dashboard com perfis reais, base total e arquétipos mais frequentes.
 
 ## Stack
 
@@ -88,16 +145,24 @@ catálogo os personagens, o diretor e o estúdio mais próximos e redige um retr
 | --- | --- |
 | Back-end | PHP 8.2 puro (POO, PSR-12, PDO com prepared statements) |
 | Banco | MySQL 8.4 (`utf8mb4`) |
-| Front-end | Bootstrap 5 (via Vuexy) + CSS customizado + JS ES6 (Fetch API) |
-| Gráficos | Radar bipolar em **SVG próprio** (sem biblioteca) |
-| Captura do card | `html2canvas` (vendorizado) + Web Share API |
-| IA | Groq (chat completion) — só para o retrato do perfil |
-| Ambiente | Docker + Docker Compose (Apache, MySQL e phpMyAdmin) |
+| Front-end | HTML + CSS próprio (design system "cinema analógico") + JS puro (Fetch) |
+| Gráficos | Radar bipolar em SVG gerado no servidor (sem biblioteca) |
+| Card | `html2canvas` vendorizado + Web Share API |
+| IA (opcional) | Groq — só para o retrato e a frase do perfil |
+| Catálogo | TMDB (pôsteres, retratos, logos e cenas), sempre no servidor |
+| Ambiente | Docker + Compose (Apache, MySQL e phpMyAdmin) |
 
-O design system fica em `public/assets/css/personacut.css`, com tokens de cor,
-tipografia didone, grão de filme, vinheta e tema escuro.
+O design system fica em `public/assets/css/personacut.css`: tokens de cor,
+Bodoni Moda para display, Public Sans para texto, grão de filme, vinheta e tema
+escuro. Não há framework de componentes no front.
 
-## Como executar
+<p align="center">
+  <img src="docs/prints/dark.jpg" alt="PersonaCut no tema escuro" width="92%">
+  <br>
+  <sub>A mesma interface no tema escuro, com preferência salva no navegador.</sub>
+</p>
+
+## Rodando local
 
 Requisitos: Docker com Docker Compose.
 
@@ -106,294 +171,150 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-O banco é criado e populado na primeira subida (schema + seed + enriquecimento
-versionado). Se você já tinha um volume antigo, rode `docker compose down -v`
-antes.
+O banco é criado e populado na primeira subida (schema + seed + enriquecimento).
+Se você já tinha um volume antigo, use `docker compose down -v` antes.
 
 | Serviço | Endereço |
 | --- | --- |
-| Aplicação | http://localhost:8090 |
-| Painel administrativo | http://localhost:8090/admin/ |
-| phpMyAdmin | http://localhost:8091 |
+| Aplicação | <http://localhost:8090> |
+| Painel administrativo | <http://localhost:8090/admin/> |
+| phpMyAdmin | <http://localhost:8091> |
 | MySQL | `localhost:3308` |
 
-Credenciais padrão:
-
-| Acesso | Valor |
+| Acesso | Credenciais |
 | --- | --- |
 | Banco | `personacut` / `personacut123` / database `personacut` |
 | Admin | `admin` / `admin123` |
 
-Chaves opcionais no `.env` (o site funciona sem elas, com fallbacks):
+Chaves opcionais (o site funciona sem elas, com fallbacks):
 
 ```bash
-# Retrato redigido por IA
+# Retrato e frase do perfil redigidos por IA
 GROQ_API_KEY=
 GROQ_MODEL=                      # padrão: qwen/qwen3.8-27b
-GROQ_TRANSCRIPTION_MODEL=whisper-large-v3-turbo
 
-# Catálogo (pôsteres, retratos, logotipos e cenas)
+# Pôsteres, retratos, logos e cenas do quiz
 TMDB_API_KEY=
 ```
 
-**Testes dos serviços** (não precisam de banco):
-
 ```bash
-docker compose exec app php tests/run.php
+docker compose exec app php tests/run.php   # testes (não precisam de banco)
+docker compose down                          # para os serviços (mantém o banco)
+docker compose down -v                       # para e apaga o banco
 ```
 
-**Parar os serviços**
+## Auditoria de segurança
 
-```bash
-docker compose down      # mantém o banco
-docker compose down -v   # apaga o banco
-```
+Teste de intrusão feito em **18/11/2026** na instância local
+(`http://127.0.0.1:8090`), pelo autor do projeto e restrito a esse alvo. Nenhum
+host externo foi testado. O objetivo era duplo: encontrar problemas reais e
+documentar o processo como parte da entrega da disciplina.
 
-## Deploy no InfinityFree (sem Docker)
+### Ferramentas
 
-O pacote `deploy/infinityfree/` tem o necessário para subir em hospedagem
-compartilhada (PHP + MariaDB), sem Docker:
+- **[HexStrike AI](https://github.com/0x4m4/hexstrike-ai)** como servidor MCP no
+  OpenCode, orquestrando as ferramentas dentro de um container Kali isolado.
+- **nmap** (portas/serviços/headers), **nikto** (misconfigurações),
+  **nuclei** (CVEs, exposições, misconfig), **sqlmap** (SQL injection),
+  **ffuf** (descoberta de conteúdo), **wafw00f** (WAF), **curl** (testes manuais
+  de CSRF, XSS, SSRF, métodos e payloads).
+- O alvo não foi alterado: só leitura. Resultados de teste criados no banco
+  foram removidos ao final.
 
-- `personacut.sql` — banco completo, já com `utf8mb4_unicode_ci` (MariaDB);
-- `htdocs/.htaccess` — encaminha a raiz para `public/` e bloqueia `src/`,
-  `config/`, `storage/`, `sql/` e dotfiles;
-- `config/env.example.php` — modelo do `config/env.php` (o `.env` do Docker não
-  é lido pelo PHP);
-- `README.md` — passo a passo de banco, upload, permissões e teste.
+### Resultado
 
-O site precisa ficar na raiz do domínio/subdomínio, porque o app usa URLs
-absolutas (`/quiz.php`, `/assets/...`).
+**5 achados — nenhum crítico, todos tratados.**
 
-## Os 8 eixos
-
-| # | Eixo | Polo esquerdo | Polo direito | O que mede |
-| --- | --- | --- | --- | --- |
-| 1 | **Forma** | Clássica | Experimental | linguagem visual: transparência e decupagem invisível contra ruptura formal |
-| 2 | **Tom** | Melancólico | Eufórico | registro emocional: peso e catarse triste contra leveza e festa |
-| 3 | **Realismo** | Realista | Fantástico | grau de invenção do mundo: ruas reconhecíveis contra cosmologias próprias |
-| 4 | **Tempo** | Contemplativo | Frenético | experiência da duração: planos que respiram contra corte rápido |
-| 5 | **Moral** | Ambígua | Maniqueísta | posição ética: zona cinzenta contra bem e mal demarcados |
-| 6 | **Narrativa** | Linear | Fragmentada | arquitetura da história: causalidade e arco contra quebra de tempo |
-| 7 | **Escala** | Íntima | Épica | medida do drama: quartos e closes contra exércitos e planetas |
-| 8 | **Temporalidade** | Memória | Futuro | orientação no tempo: grão e passado contra neon e amanhã |
-
-Cada eixo também mapeia gêneros e palavras-chave da TMDB, usados para escolher as
-cenas do quiz e para enriquecer o catálogo. Definições operacionais completas em
-[docs/EIXOS.md](docs/EIXOS.md).
-
-## Três modos de teste
-
-| Modo | Perguntas | Cota por eixo | Tempo |
+| # | Achado | Severidade | Status |
 | --- | --- | --- | --- |
-| `rapido` | **36** | 6, 6, 4, 4, 4, 4, 4, 4 | ~5 min |
-| `completo` | **60** | 8, 8, 8, 8, 8, 8, 6, 6 | ~9 min |
-| `extremo` | **240** | 30 em todos | ~35 min |
+| 1 | Sem limite de requisições no quiz anônimo e no login admin | **Média** | Corrigido |
+| 2 | Headers de segurança ausentes (CSP, `nosniff`, referrer, permissions, HSTS) | Baixa | Corrigido |
+| 3 | Fingerprint exposto (`X-Powered-By` e versão do Apache) | Baixa | Corrigido |
+| 4 | `PUT`/`DELETE`/`OPTIONS` respondendo 200 em vez de 405 | Baixa | Corrigido |
+| 5 | PHP 8.2.35 desatualizado | Baixa | Documentado |
 
-O pool tem **240 perguntas — 30 por eixo, 15 para cada polo**. As 32 primeiras
-(4 por eixo) são curadas e trazem cena da TMDB; as outras 208 foram escritas na
-curadoria e não têm mídia.
+### O que foi corrigido
 
-A cota é distribuída em **passos de 2** (`Pergunta::cotas`), então cada eixo recebe
-o mesmo número de afirmações dos dois polos, e cresce junto com o modo — o modo
-menor é sempre um subconjunto do maior. A exibição intercala os eixos (1ª de cada,
-2ª de cada, ...), então qualquer prefixo do teste já é equilibrado.
+**1. Rate limiting (quiz e login).** Novo `src/Core/RateLimit.php`, em arquivo
+(`storage/cache/ratelimit`, sem banco e sem dependência), aplicado em
+`public/api/quiz.php` (12 envios/minuto por IP) e em `public/admin/auth.php`
+(8 tentativas de login a cada 10 minutos por IP, zeradas no sucesso). Se o
+diretório não for gravável, o limitador libera a requisição — nunca derruba o
+site.
 
-## Como o perfil é calculado
+**2. Headers de segurança.** `public/.htaccess` passa a enviar CSP, `nosniff`,
+`Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy` e oculta o
+`X-Powered-By`. A CSP exigiu duas limpezas no front: o script de tema saiu do
+HTML inline e virou `assets/js/theme.js`, e os `onsubmit="confirm(...)"` do
+admin viraram `data-confirm` com um listener em `app.js`. Também removi o bundle
+morto `bootstrap.bundle.js` (327 KB por página) — ele usava `eval` e era o único
+bloqueio da política `script-src 'self'`.
 
+**3. Fingerprint.** No Docker, `docker/php-security.ini` (`expose_php=Off`) e
+`docker/apache-security.conf` (`ServerTokens Prod`, `ServerSignature Off`,
+`TraceEnable Off`). Em hospedagem compartilhada, o `Header unset X-Powered-By`
+do `.htaccess` resolve a parte do PHP.
+
+**4. Métodos HTTP.** `public/.htaccess` agora recusa qualquer método fora de
+`GET`, `POST` e `HEAD` com `403`.
+
+**5. PHP.** A imagem continua em 8.2 por compatibilidade com o seed e as
+extensões; o `Dockerfile` documenta a atualização como próximo passo.
+
+### Antes → depois
+
+```diff
+- Server: Apache/2.4.69 (Debian)
+- X-Powered-By: PHP/8.2.35
+- (sem CSP, sem nosniff, sem Referrer-Policy…)
+- PUT / → 200      DELETE / → 200      OPTIONS / → 200
+- nikto: 12 itens (headers ausentes, PHP desatualizado, métodos estranhos…)
+
++ Server: Apache
++ (sem X-Powered-By)
++ Content-Security-Policy: default-src 'self'; script-src 'self'; …
++ X-Content-Type-Options: nosniff
++ Referrer-Policy: strict-origin-when-cross-origin
++ PUT / → 403      DELETE / → 403      OPTIONS / → 403
++ nikto: 3 itens (HSTS*, falso positivo e página de login encontrada)
 ```
-pct_dir = 50 + 50 · Σ(resposta · direção · peso) / (2 · Σpeso)
-```
 
-`resposta` vai de `-2` a `+2`; `direção` é `+1` quando concordar empurra para o polo
-direito e `-1` quando empurra para o esquerdo. A fórmula é algebricamente
-equivalente à média ponderada de "esquerdice" usada pelo 12 Axes.
+\* HSTS fica comentado no `.htaccess` até o site ser publicado em HTTPS.
 
-| Métrica | Regra |
+### O que já estava certo
+
+| Teste | Resultado |
 | --- | --- |
-| **Arquétipo** | match do **vetor completo** contra 16 vetores de referência, com bônus de 8 pontos para o tipo cujo eixo dominante é o mais extremo do usuário. Perfis neutros recebem "O Espectador Neutro" |
-| **Afinidade** | score composto: 42% similaridade por eixo (com penalidade de lado oposto), 33% direção, 18% magnitude e 7% outlier |
-| **Espelhos** | top 6, sem repetir a mesma obra (dois do Star Wars não ocupam duas vagas) |
-| **Diretor e estúdio** | mesmo score composto, sobre pessoas e escolas do catálogo |
-| **Raridade** | percentual da base com diferença média ≤ 12 pontos por eixo; abaixo de 100 perfis o selo mostra "base inicial" |
-| **Radar** | posição real de 0 a 100 em cada eixo, com anel tracejado no neutro (50) |
+| SQL injection em `resultado.php?codigo=` (sqlmap) | não injetável |
+| XSS refletido em `codigo` e `sinergia.php` | payload não refletido |
+| CSRF no `POST /api/quiz.php` | 403 sem token; 422 com payload inválido |
+| SSRF em `api/imagem.php?u=` (localhost, metadata, `file://`) | 400 (allowlist) |
+| `.git/`, `.env`, `config/`, `storage/`, `sql/` | 404 (docroot é `public/`) |
+| Listagem de diretório | 403 |
+| Cookie de sessão | `HttpOnly`, `SameSite=Lax`, `Secure` sob HTTPS |
+| Nuclei (CVE, exposição, misconfig, login padrão, SSL) | 0 resultados |
 
-## O que o resultado entrega
+O alerta do nikto sobre **phpAuction/CVE-2002-0995** é falso positivo: a página
+de login responde igual (2742 bytes) para qualquer query string.
 
-- **Quatro leituras** em linguagem clara: o que você procura na tela, o que costuma
-  te afastar e dois filmes para reconhecer isso na prática.
-- **Arquétipo** com descrição e ritual de cinema; as duas marcas principais aparecem
-  como chips, sem percentual.
-- **Ficha do perfil**: afinidade média com os espelhos, marca principal e década do
-  repertório.
-- **6 personagens espelho** com pôster, biografia e intérprete, **diretor gêmeo**,
-  **estúdio/escola** e a **estante de obras**.
-- **Além do espelho**: a década do repertório (mediana das obras), o seu oposto no
-  catálogo como convite para o outro lado, o arquétipo secundário e os 10 perfis mais
-  próximos.
-- **Dados técnicos** (fechados por padrão): as 8 barras duplas, o radar SVG e os
-  percentuais que geraram as leituras.
-- **Retrato escrito por IA** (quando configurado).
-- **Card 9:16** para compartilhar, com as 4 marcas no lugar das 8 barras.
-- **Modo Sinergia**: compatibilidade entre dois códigos, radar duplo, convergências,
-  divergências e o espelho da dupla.
-- **Quick View**: clique em qualquer card para ver sinopse, duração, gêneros e elenco
-  (ou a ficha completa do diretor/escola), sem sair da página.
-
-### Card de story
-
-O card fica ao lado do arquétipo (`pc-profile-card__side`) e é montado no servidor
-com os mesmos dados do resultado: arquétipo, quatro marcas, 3 espelhos, diretor,
-estúdio e 3 pôsteres.
-
-`public/assets/js/storycard.js` captura o elemento com `html2canvas` em `scale: 4`
-(**PNG 1080 × 1920**) e:
-
-1. tenta `navigator.share` com o arquivo (stories no celular);
-2. sem suporte, baixa `personacut-<codigo>.png`.
-
-Imagens da TMDB não enviam cabeçalho CORS, o que contaminaria o canvas. Por isso
-retratos e pôsteres passam por `public/api/imagem.php` (mesma origem, cache local em
-`storage/cache/img`). O card usa `background-image` + `cover` em vez de `object-fit`,
-que o `html2canvas` não reproduz bem.
-
-### Retrato por IA (Groq)
-
-O retrato é redigido a partir do vetor, dos espelhos, do diretor, do estúdio e da
-estante, em linguagem simples (120 a 170 palavras, sem jargão). A chamada é feita
-**só no servidor**:
+### Como reproduzir
 
 ```bash
-# .env
-GROQ_API_KEY=sua_chave
-GROQ_MODEL=            # opcional; padrão qwen/qwen3.8-27b
+# 1. servidor HexStrike (uma vez) — Dockerfile em docs/security/hexstrike.Dockerfile
+git clone https://github.com/0x4m4/hexstrike-ai ~/tools/hexstrike-ai
+cp docs/security/hexstrike.Dockerfile ~/tools/hexstrike-ai/Dockerfile
+docker build -t hexstrike-ai:kali ~/tools/hexstrike-ai
+docker run -d --name hexstrike --network host hexstrike-ai:kali
+
+# 2. scans (via MCP no OpenCode ou direto no container)
+docker exec hexstrike nmap -sT -sV -Pn -p 8090 --script http-headers 127.0.0.1
+docker exec hexstrike nikto -h http://127.0.0.1:8090 -nointeractive
+docker exec hexstrike sqlmap -u 'http://127.0.0.1:8090/resultado.php?codigo=ABCD1234' --batch
+
+# 3. provas das correções
+curl -sI http://127.0.0.1:8090/ | grep -iE 'content-security|x-powered|server'
+for m in PUT DELETE OPTIONS; do curl -s -o /dev/null -w "$m %{http_code}\n" -X $m http://127.0.0.1:8090/; done
 ```
-
-- Gerado **uma vez por código** e guardado em `retratos` — recarregar a página não
-  gasta tokens.
-- `public/api/retrato.php` gera sob demanda; `retrato.js` troca o placeholder quando
-  o texto chega.
-- Falha de rede, chave inválida ou limite de taxa devolvem `503` e a página segue com
-  o retrato determinístico em duas frases. A interface avisa que o texto foi redigido
-  com IA.
-
-## TMDB e cenas do quiz
-
-1. Crie uma chave em <https://www.themoviedb.org/settings/api>.
-2. Coloque `TMDB_API_KEY=` no `.env` e rode `docker compose up -d`.
-
-A chave é usada **somente no servidor** para enriquecer o catálogo: pôster do filme
-que define cada personagem, retrato do intérprete, logo de estúdios, país, nascimento,
-popularidade e as cenas do quiz. Chaves v3 (32 caracteres) e tokens v4 (Bearer) são
-aceitos.
-
-```bash
-# preenche imagens e metadados das 52 entidades e das 32 obras
-docker compose exec app php bin/tmdb_sync.php
-
-# versiona o resultado para instalações novas
-docker compose exec -T app php bin/tmdb_export.php > sql/003_enriquecimento.sql
-```
-
-- Cache em `cache_tmdb` (TTL de 24h, chave `sha256` da query normalizada).
-- Sem a chave, o site funciona com textos, monogramas e as cores dos eixos.
-- Falha de rede/limite nunca quebra a página: o campo fica nulo e o fallback entra.
-- Atribuição exibida na página e nos cards: *This product uses the TMDB API but is
-  not endorsed or certified by TMDB.*
-
-### Cenas ilustrativas
-
-As 32 perguntas curadas do seed já vêm com um backdrop da TMDB em `perguntas.midia_*`.
-Três formatos usam o mesmo campo:
-
-| `midia_tipo` | `midia_url_ou_id` | `midia_meta` |
-| --- | --- | --- |
-| `imagem` | caminho TMDB (`/abc.jpg`) ou URL completa | `{ "legenda": "Matrix (1999)", "ano": 1999 }` |
-| `gif` | URL de um GIF no CDN (GIPHY ou outro) | legenda, ano e `poster` opcional |
-| `video_yt` | ID do YouTube ou URL | `{ "start": 142, "end": 149 }` |
-
-**24 perguntas usam clipes oficiais de cena** escolhidos automaticamente pela TMDB;
-as outras 8 mantêm o backdrop com um **Ken Burns** lento. A imagem 16:9 aparece em
-tamanho grande no card, a próxima cena é pré-carregada, o vídeo abre por clique e o
-GIF respeita `saveData` em conexões móveis.
-
-```bash
-# só mostra a tabela (não grava nada)
-docker compose exec -T app php bin/midia_autofill.php --dry-run
-
-# aplica as escolhas (cria backup em storage/backups/)
-docker compose exec -T app php bin/midia_autofill.php --apply
-```
-
-O script consulta `/movie/{tmdb_id}/videos`, descarta trailers e featurettes, pontua
-os clipes por palavra-chave do eixo e grava `video_yt` + `midia_meta`. O estado
-inicial das 24 cenas é versionado em `sql/004_cenas_video.sql`. **Não é preciso chave
-do YouTube** e nenhum vídeo é hospedado no projeto.
-
-No admin (`/admin/perguntas.php`), o bloco **Cena ilustrativa** permite trocar tipo,
-colar o caminho/ID e editar legenda, ano e recorte; o campo **TMDB ID do filme**
-alimenta o botão **Sugerir clipes da TMDB**.
-
-### Migrações para bancos antigos
-
-Podem ser reexecutadas sem apagar dados:
-
-```bash
-for m in 003_midia_perguntas 004_perguntas_tmdb_id 006_retratos 007_modo_extremo; do
-  docker compose exec -T db mysql -upersonacut -ppersonacut123 personacut \
-    < "sql/migrations/$m.sql"
-done
-```
-
-## Estrutura do projeto
-
-```
-.
-├── public/                     # DocumentRoot
-│   ├── index.php               # landing
-│   ├── quiz.php                # escolha de formato + questionário
-│   ├── resultado.php           # dashboard do perfil + card 9:16
-│   ├── sinergia.php            # comparação entre dois perfis
-│   ├── api/
-│   │   ├── quiz.php            # POST do questionário
-│   │   ├── quickview.php       # sinopse + elenco (cache TMDB)
-│   │   ├── retrato.php         # retrato por IA, uma vez por código
-│   │   └── imagem.php          # proxy same-origin das imagens TMDB
-│   ├── admin/                  # login, dashboard e CRUDs
-│   ├── partials/               # head, header e footer
-│   └── assets/                 # css, js, fontes, imagens e vendor
-├── src/
-│   ├── Core/                   # Database, Session, Csrf, Http, Translator, Vetor, Radar
-│   ├── Data/                   # eixos_guia.php (guia dos eixos) e decadas.php (retrato das décadas)
-│   ├── Models/                 # Eixo, EixoGuia, FilmeCard, Decada, Pergunta, EntidadeMatch, Obra, Arquetipo, Resultado, Retrato
-│   ├── Services/               # Likert, Matcher, Midia, Tmdb, Groq, Retrato
-│   ├── Controllers/            # QuizController, PerfilController
-│   └── bootstrap.php           # autoload, sessão, config e erros
-├── bin/                        # tmdb_sync/export, filmes_cards, midia_autofill/export, gerar_perguntas
-├── config/                     # app.php, database.php, midia.php, leituras.php, filmes_cards.php
-├── lang/                       # pt-BR.json (estrutura pronta para en/es)
-├── sql/                        # schema, seed, enriquecimento, cenas e migrations
-├── tests/                      # micro-framework + testes dos serviços
-├── storage/                    # cache, logs e backups (ignorados no git)
-└── docs/                       # EIXOS.md, ARQUITETURA.md, CRONOGRAMA.md, prints
-```
-
-## Banco de dados
-
-| Tabela | Conteúdo |
-| --- | --- |
-| `eixos` | 8 dimensões, polos, cores, ícones e mapeamento TMDB |
-| `perguntas` | **240 afirmações** com direção, peso, ordem, `tmdb_id` e a cena ilustrativa |
-| `entidades_match` | 36 personagens, 10 diretores e 6 escolas/estúdios, com vetor de 8 eixos, biografia, país, intérprete e foto |
-| `entidades_obras` | obras essenciais de diretores/escolas (a estante do perfil) |
-| `arquetipos` | 16 combinações de eixo dominante + polo |
-| `resultados_usuarios` | vetor, respostas JSON, código público, modo e origem (`real`/`sintetico`) |
-| `retratos` | retrato por IA, um por código |
-| `cache_tmdb` | cache de 24h das consultas à TMDB |
-| `usuarios_admin` | acesso ao painel |
-
-A base tem ainda **400 perfis sintéticos** para o Índice de Raridade — a interface
-declara isso explicitamente. O schema usa `utf8mb4_unicode_ci`, compatível com
-MySQL 8 e MariaDB 10.6+ (o pacote de deploy já vem com essa collation).
 
 ## Testes
 
@@ -401,34 +322,74 @@ MySQL 8 e MariaDB 10.6+ (o pacote de deploy já vem com essa collation).
 docker compose exec app php tests/run.php
 ```
 
-Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com 59 testes:
+Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com **75 testes**:
+Likert, matcher, raridade, sinergia, mídia, radar, leituras, cotas dos modos,
+guia dos eixos, cards de filme, décadas, retrato (separação frase/texto) e o
+limitador de requisições.
 
-| Arquivo | Cobre |
-| --- | --- |
-| `LikertTest.php` | normalização por eixo, polos, pesos e validação de respostas |
-| `MatcherTest.php` | arquétipo, afinidade composta, raridade e desempates |
-| `LeituraTest.php` | seleção das leituras, polo, força, perfil neutro e config |
-| `RadarTest.php` | SVG do radar, rótulos e clamp de valores |
-| `MidiaTest.php` | resolução de imagem, GIF e vídeo, com crédito e legenda |
-| `SceneTest.php` | escolha automática de clipes e recorte do YouTube |
-| `ModosTest.php` | cotas dos modos 36/60/240 e equilíbrio entre polos |
+## Estrutura
 
-## Roadmap
+```
+.
+├── public/                     # DocumentRoot (Apache aponta para cá)
+│   ├── index.php               # landing
+│   ├── quiz.php                # formatos + questionário
+│   ├── resultado.php           # dashboard + retrospectiva + card
+│   ├── sinergia.php            # comparação entre dois perfis
+│   ├── api/                    # quiz, quickview, retrato, imagem (proxy TMDB)
+│   ├── admin/                  # login e CRUDs
+│   ├── partials/               # head, header, footer, card de filme
+│   ├── assets/                 # css, js, fontes, imagens e vendor
+│   └── .htaccess               # headers, métodos HTTP e dotfiles
+├── src/
+│   ├── Core/                   # Database, Session, Csrf, Http, RateLimit, Vetor, Radar
+│   ├── Data/                   # eixos_guia.php, decadas.php
+│   ├── Models/                 # Eixo, EixoGuia, FilmeCard, Decada, Pergunta, EntidadeMatch…
+│   ├── Services/               # Likert, Matcher, Midia, Tmdb, Groq, Retrato
+│   ├── Controllers/            # QuizController, PerfilController
+│   └── bootstrap.php
+├── bin/                        # tmdb_sync/export, filmes_cards, midia_autofill…
+├── config/                     # app, database, midia, leituras, filmes_cards
+├── docker/                     # configuração de segurança do Apache/PHP
+├── lang/                       # pt-BR.json (pronto para en/es)
+├── sql/                        # schema, seed, enriquecimento, cenas, migrations
+├── tests/                      # micro-framework + testes
+├── storage/                    # cache, logs, backups e rate limit (ignorados)
+└── docs/                       # EIXOS.md, ARQUITETURA.md, CRONOGRAMA.md, prints
+```
 
-| Versão | Entrega |
-| --- | --- |
-| **v1** | Quiz com cenas, resultado com 6 espelhos e estante, sinergia e admin |
-| **v1.5** | Catálogo enriquecido pela TMDB (fotos, fichas, obras) |
-| **v2 (atual)** | Três modos (36/60/240), além do espelho, retrato por IA e card 9:16 |
-| **v2.1** | Card de exemplo real na landing, tema escuro revisado e imagens em alta |
-| v3 | GeoCinema (Overpass/OSM + CEP), inglês e espanhol |
+## Deploy no InfinityFree (sem Docker)
+
+O pacote `deploy/infinityfree/` tem o necessário para hospedagem compartilhada
+(PHP + MariaDB):
+
+- `personacut.sql` — banco completo em `utf8mb4_unicode_ci`;
+- `htdocs/.htaccess` — encaminha a raiz para `public/` e bloqueia código,
+  configuração e dotfiles;
+- `config/env.example.php` — modelo do `config/env.php` (o `.env` do Docker não é
+  lido pelo PHP);
+- `README.md` — passo a passo de banco, upload e permissões.
+
+O site precisa ficar na raiz do domínio/subdomínio, porque a aplicação usa URLs
+absolutas (`/quiz.php`, `/assets/...`). O `.htaccess` de `public/` também vale
+lá: headers, métodos e bloqueio de dotfiles continuam ativos.
+
+## Documentação
+
+- [docs/EIXOS.md](docs/EIXOS.md) — base crítica dos 8 eixos, fórmula e cotas.
+- [docs/ARQUITETURA.md](docs/ARQUITETURA.md) — fluxo do quiz, cálculo, quick view,
+  cards de filme, IA e layout.
+- [docs/security/relatorio-2026-11-18.md](docs/security/relatorio-2026-11-18.md) —
+  relatório completo da auditoria, com evidências e comandos de reprodução.
+- [docs/CRONOGRAMA.md](docs/CRONOGRAMA.md) — planejamento da disciplina.
+- [deploy/infinityfree/README.md](deploy/infinityfree/README.md) — deploy.
 
 ## Créditos
 
-- Estrutura visual inspirada na leitura editorial do [12 Axes](https://12axes.vercel.app/);
-  textos, eixos e catálogo são originais do PersonaCut.
-- Base de componentes e CSS: Vuexy Admin Template (licença do template).
-- Captura do card: [html2canvas](https://html2canvas.hertzen.com/) (MIT).
-- Filmes, personagens e diretores citados pertencem aos seus respectivos detentores.
-- Pôsteres, retratos, logos e backdrops: TMDB. GIFs e vídeos, quando cadastrados, são
-  servidos pelos CDNs do GIPHY/YouTube — nada é hospedado no projeto.
+- Catálogo, pôsteres e cenas: [TMDB](https://www.themoviedb.org/). *This product
+  uses the TMDB API but is not endorsed or certified by TMDB.*
+- Fontes: Bodoni Moda e Public Sans (Google Fonts, licença aberta).
+- Captura do card: [html2canvas](https://html2canvas.hertzen.com/).
+- Ícones: SVG próprios em `src/Core/helpers.php`.
+- Auditoria de segurança: HexStrike AI + nmap, nikto, nuclei, sqlmap, ffuf,
+  wafw00f.
