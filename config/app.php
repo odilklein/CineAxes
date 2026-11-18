@@ -11,7 +11,7 @@ declare(strict_types=1);
 return [
     'nome'    => 'PersonaCut',
     'tagline' => 'Seu perfil cinéfilo em 8 eixos',
-    'versao'  => '1.0.0-mvp',
+    'versao'  => '1.6.0',
 
     'locale'  => 'pt-BR',
     'locales' => [

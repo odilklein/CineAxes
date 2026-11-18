@@ -18,6 +18,9 @@
     ficha: 'Ficha rápida',
     sobre: 'Sobre',
     frase: 'Frase',
+    ondeAssistir: 'Onde assistir',
+    filme: 'Filme',
+    serie: 'Série',
     ator: 'Quem interpreta',
     elenco: 'Elenco',
     polos: 'Perfil do personagem',
@@ -102,6 +105,10 @@
 
     if (dados.tipo === 'ator') {
       return 'Ator';
+    }
+
+    if (dados.tipo === 'catalogo') {
+      return dados.serie ? TEXTOS.serie : TEXTOS.filme;
     }
 
     return 'Filme';
@@ -373,6 +380,18 @@
       if (dados.tipo && dados.tipo !== 'filme') {
         pedacos.push(tituloTipo(dados));
       }
+
+      if (dados.temporadas) {
+        pedacos.push(dados.temporadas + (dados.temporadas === 1 ? ' temporada' : ' temporadas'));
+      }
+
+      if (dados.generos && dados.generos.length) {
+        pedacos.push(dados.generos.slice(0, 3).join(', '));
+      }
+
+      if (dados.nota) {
+        pedacos.push('★ ' + dados.nota);
+      }
     }
 
     meta.textContent = pedacos.join(' · ');
@@ -397,6 +416,14 @@
 
     if (dados.bio) {
       mostrarSecao('[data-qv-bio]', true, dados.bio);
+    }
+
+    if (dados.sinopse) {
+      mostrarSecao('[data-qv-sinopse]', true, dados.sinopse);
+    }
+
+    if (dados.onde && dados.onde.length && (dados.tipo === 'catalogo' || dados.tipo === 'filme')) {
+      montarPlataformas(dados);
     }
 
     if (dados.frase) {
@@ -425,6 +452,10 @@
     if (dados.tipo === 'personagem' || dados.tipo === 'ator') {
       if (dados.obra && dados.tmdb) {
         montarOnde(dados);
+      }
+
+      if (dados.onde && dados.onde.length) {
+        anexarPlataformas(dados);
       }
     }
 
@@ -533,7 +564,9 @@
     var secao = dialog.querySelector('[data-qv-onde]');
     var corpo = secao.querySelector('.pc-qv__onde');
 
+    corpo.innerHTML = '';
     secao.hidden = false;
+    secao.querySelector('h3').textContent = TEXTOS.onde;
 
     var cartao = el('button', 'pc-qv__filmcard');
     cartao.type = 'button';
@@ -575,6 +608,51 @@
     }
 
     corpo.appendChild(cartao);
+  }
+
+  function chipsPlataformas(plataformas) {
+    var lista = el('div', 'pc-qv__providers');
+
+    plataformas.forEach(function (plataforma) {
+      var item = el('span', 'pc-qv__provider');
+      var src = imagemSegura(plataforma.logo);
+
+      if (src) {
+        var img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        img.loading = 'lazy';
+        item.appendChild(img);
+      }
+
+      item.appendChild(el('b', null, plataforma.nome));
+
+      if (plataforma.preco) {
+        item.appendChild(el('small', null, 'R$ ' + plataforma.preco.toFixed(2).replace('.', ',')));
+      }
+
+      lista.appendChild(item);
+    });
+
+    return lista;
+  }
+
+  function montarPlataformas(dados) {
+    var secao = dialog.querySelector('[data-qv-onde]');
+    var corpo = secao.querySelector('.pc-qv__onde');
+
+    corpo.innerHTML = '';
+    secao.hidden = false;
+    secao.querySelector('h3').textContent = TEXTOS.ondeAssistir;
+    corpo.appendChild(chipsPlataformas(dados.onde));
+  }
+
+  function anexarPlataformas(dados) {
+    var secao = dialog.querySelector('[data-qv-onde]');
+    var corpo = secao.querySelector('.pc-qv__onde');
+
+    secao.hidden = false;
+    corpo.appendChild(chipsPlataformas(dados.onde));
   }
 
   function buscarFilme(dados, pedido, carregando) {

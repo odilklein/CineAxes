@@ -20,6 +20,7 @@ require __DIR__ . '/LeituraTest.php';
 require __DIR__ . '/ModosTest.php';
 require __DIR__ . '/EixoGuiaTest.php';
 require __DIR__ . '/CatalogoTest.php';
+require __DIR__ . '/RecomendacaoTest.php';
 require __DIR__ . '/RateLimitTest.php';
 
 exit(resumoTestes());

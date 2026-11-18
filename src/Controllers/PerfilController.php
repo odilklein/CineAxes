@@ -5,19 +5,27 @@ declare(strict_types=1);
 namespace Controllers;
 
 use Models\Arquetipo;
+use Models\CatalogoCredito;
+use Models\CatalogoObra;
+use Models\CatalogoPessoa;
 use Models\Decada;
 use Models\Eixo;
 use Models\EntidadeMatch;
 use Models\FilmeCard;
 use Models\Obra;
+use Models\Plataforma;
 use Models\Retrato;
 use Core\Vetor;
 use Models\Resultado;
 use PDO;
+use Services\ElencoService;
 use Services\LikertCalculatorService;
 use Services\LeituraService;
 use Services\MatcherService;
+use Services\PlataformaRankingService;
+use Services\RecomendacaoService;
 use Services\RetratoService;
+use Services\TrilhaService;
 
 /**
  * Monta o "view model" do dashboard de perfil e da sinergia.
@@ -28,6 +36,11 @@ final class PerfilController
     /** @var array<string, mixed> */
     private readonly array $leiturasConfig;
 
+    /** @var array<string, mixed> */
+    private readonly array $recomendacaoConfig;
+
+    private readonly RecomendacaoService $recomendacao;
+
     public function __construct(
         private readonly PDO $pdo,
         private readonly MatcherService $matcher,
@@ -36,10 +49,16 @@ final class PerfilController
     ) {
         $base = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2);
         $this->leiturasConfig = require $base . '/config/leituras.php';
+        $this->recomendacaoConfig = require $base . '/config/recomendacao.php';
+        $this->recomendacao = new RecomendacaoService($this->recomendacaoConfig, $matcher);
     }
 
-    /** @return array<string, mixed>|null */
-    public function montar(string $codigo): ?array
+    /**
+     * @param bool $comCatalogo false na landing, no retrato e na sinergia:
+     *                          essas telas não usam ranking nem cards.
+     * @return array<string, mixed>|null
+     */
+    public function montar(string $codigo, bool $comCatalogo = true): ?array
     {
         $codigo = strtoupper(trim($codigo));
 
@@ -154,6 +173,10 @@ final class PerfilController
 
         $estante = $this->montarEstante($personagens, $diretor, $estudio);
 
+        $catalogo = $comCatalogo
+            ? $this->montarCatalogo($vetor, $estante, $personagens, $diretor, $estudio)
+            : ['ranking' => [], 'cards' => [], 'onde' => [], 'elenco' => [], 'decada_obras' => [], 'total' => 0, 'por_trilha' => []];
+
         $insights = $this->insights(
             $linhas,
             $vetor,
@@ -163,6 +186,34 @@ final class PerfilController
             $arquetipo,
             $estante
         );
+
+        if ($insights['decada'] !== null && ($catalogo['decada_obras'] ?? []) !== []) {
+            $obrasDecada = $catalogo['decada_obras'];
+            $vistos = [];
+
+            foreach ($obrasDecada as $obraDecada) {
+                $vistos[mb_strtolower(trim((string) $obraDecada['titulo']))] = true;
+            }
+
+            // Completa com a estante do espelho se o catálogo tiver menos de 6.
+            foreach ($insights['decada']['obras'] as $obraEstante) {
+                if (count($obrasDecada) >= 6) {
+                    break;
+                }
+
+                $chave = mb_strtolower(trim((string) ($obraEstante['titulo'] ?? '')));
+
+                if ($chave === '' || isset($vistos[$chave])) {
+                    continue;
+                }
+
+                $obrasDecada[] = $obraEstante;
+                $vistos[$chave] = true;
+            }
+
+            $insights['decada']['obras'] = array_slice($obrasDecada, 0, 8);
+            $insights['decada']['fonte'] = 'catalogo';
+        }
 
         $afinidadeMedia = $personagens !== []
             ? round(array_sum(array_column($personagens, 'afinidade')) / count($personagens), 0)
@@ -190,6 +241,16 @@ final class PerfilController
             'base_total'      => Resultado::total($this->pdo),
             'retrato_salvo'   => Retrato::porCodigo($this->pdo, $codigo, RetratoService::PROMPT_VERSAO),
             'insights'        => $insights,
+            'plataformas'     => $catalogo['ranking'],
+            'plataformas_trilha' => $catalogo['por_trilha'],
+            'trilhas'         => $catalogo['cards'],
+            'elenco'          => $catalogo['elenco'] ?? [],
+            'trilhas_nomes'   => array_map(
+                static fn (array $trilha): string => (string) ($trilha['nome'] ?? ''),
+                (array) ($this->recomendacaoConfig['trilhas'] ?? [])
+            ),
+            'catalogo_total'  => $catalogo['total'],
+            'onde_assistir'   => $catalogo['onde'],
         ];
     }
 
@@ -200,8 +261,8 @@ final class PerfilController
      */
     public function comparar(string $codigoA, string $codigoB): ?array
     {
-        $a = $this->montar($codigoA);
-        $b = $this->montar($codigoB);
+        $a = $this->montar($codigoA, false);
+        $b = $this->montar($codigoB, false);
 
         if ($a === null || $b === null) {
             return null;
@@ -222,6 +283,220 @@ final class PerfilController
                 'estudio'    => $this->matcher->topPorTipo($ranqueadas, 'estudio', 1)[0] ?? null,
             ],
         ];
+    }
+
+    /**
+     * Ranking de plataformas, cards de trilha e disponibilidade das obras que
+     * já aparecem no perfil.
+     *
+     * O catálogo é carregado uma vez (4 consultas) e pontuado em memória. Só
+     * entram títulos com pelo menos uma plataforma ativa: um card sem ação
+     * ("onde assistir") vira ruído.
+     *
+     * @param list<float> $vetor
+     * @param list<array<string, mixed>> $estante
+     * @param list<array<string, mixed>> $personagens
+     * @param array<string, mixed>|null $diretor
+     * @param array<string, mixed>|null $estudio
+     * @return array{ranking: list<array<string, mixed>>, por_trilha: array<string, array<string, mixed>>, cards: list<array<string, mixed>>, onde: array<int, list<array<string, mixed>>>, total: int}
+     */
+    private function montarCatalogo(
+        array $vetor,
+        array &$estante,
+        array &$personagens,
+        ?array &$diretor,
+        ?array &$estudio
+    ): array {
+        // Deploy seguro: se as tabelas do catálogo ainda não foram importadas,
+        // o perfil continua funcionando sem as seções novas.
+        try {
+            $this->enriquecerOnde($estante, $personagens, $diretor, $estudio);
+
+            $obras = CatalogoObra::todos($this->pdo, true);
+            $plataformas = Plataforma::todas($this->pdo, true);
+        } catch (\Throwable $erro) {
+            error_log('[PersonaCut][catalogo] ' . $erro->getMessage());
+
+            return [
+                'ranking'      => [],
+                'por_trilha'   => [],
+                'cards'        => [],
+                'onde'         => [],
+                'elenco'       => [],
+                'decada_obras' => [],
+                'total'        => 0,
+            ];
+        }
+
+        if ($obras === [] || $plataformas === []) {
+            return [
+                'ranking'    => [],
+                'por_trilha' => [],
+                'cards'      => [],
+                'onde'       => [],
+                'elenco'     => [],
+                'total'      => count($obras),
+            ];
+        }
+
+        $ranqueadas = $this->recomendacao->rankear($vetor, $obras);
+
+        foreach ($ranqueadas as &$obra) {
+            $obra['trilha'] = $this->recomendacao->trilhaDe($obra);
+        }
+        unset($obra);
+
+        $ranking = (new PlataformaRankingService($this->recomendacaoConfig))
+            ->ranquear($ranqueadas, $plataformas);
+        $cards = (new TrilhaService($this->recomendacaoConfig))
+            ->montar($ranqueadas, $ranking['onde']);
+
+        // 250 obras: garante elenco mesmo quando parte dos melhores títulos
+        // ainda não tem créditos ingeridos. O serviço pondera pela afinidade.
+        $topElenco = array_slice($ranqueadas, 0, 250);
+        $creditos = CatalogoCredito::porObras($this->pdo, array_column($topElenco, 'id'));
+        $pessoaIds = [];
+
+        foreach ($creditos as $listaCreditos) {
+            foreach ($listaCreditos as $credito) {
+                $pessoaIds[] = (int) $credito['pessoa_id'];
+            }
+        }
+
+        $elenco = (new ElencoService())->relevantes(
+            $topElenco,
+            $creditos,
+            CatalogoPessoa::porIds($this->pdo, $pessoaIds),
+            8
+        );
+
+        // Obras do catálogo na década do repertório. A estante do espelho
+        // costuma ter só uma ou duas; o catálogo garante uma prateleira cheia.
+        $decadaObras = [];
+        $anoDecada = $this->anoDecadaDaEstante($estante);
+
+        if ($anoDecada !== null) {
+            foreach ($ranqueadas as $obra) {
+                if (empty($obra['plataformas'])) {
+                    continue;
+                }
+
+                $anoObra = (int) ($obra['ano'] ?? 0);
+
+                if ($anoObra < $anoDecada || $anoObra >= $anoDecada + 10) {
+                    continue;
+                }
+
+                $poster = tmdb_img($obra['poster_path'] ?? null, 'w342');
+                $trilhaSlug = (string) ($obra['trilha'] ?? '');
+
+                $decadaObras[] = [
+                    'titulo'     => (string) $obra['titulo'],
+                    'ano'        => $anoObra,
+                    'tmdb'       => (int) $obra['tmdb_id'],
+                    'poster'     => $poster !== '' ? $poster : null,
+                    'origem'     => (string) ($this->recomendacaoConfig['trilhas'][$trilhaSlug]['nome'] ?? 'Catálogo'),
+                    'afinidade'  => (float) $obra['afinidade'],
+                ];
+
+                if (count($decadaObras) >= 8) {
+                    break;
+                }
+            }
+        }
+
+        return [
+            'ranking'     => $ranking['geral'],
+            'por_trilha'  => $ranking['por_trilha'],
+            'cards'       => $cards,
+            'onde'        => $ranking['onde'],
+            'elenco'      => $elenco,
+            'decada_obras' => $decadaObras,
+            'total'       => count($obras),
+        ];
+    }
+
+    /**
+     * Acrescenta `onde` (plataformas ativas) às obras já exibidas no perfil,
+     * por tmdb_id. Não carrega o catálogo inteiro: consulta só os ids usados.
+     *
+     * @param list<array<string, mixed>> $estante
+     * @param list<array<string, mixed>> $personagens
+     * @param array<string, mixed>|null $diretor
+     * @param array<string, mixed>|null $estudio
+     */
+    private function enriquecerOnde(
+        array &$estante,
+        array &$personagens,
+        ?array &$diretor,
+        ?array &$estudio
+    ): void {
+        $ids = [];
+
+        foreach ($estante as $obra) {
+            if (!empty($obra['tmdb'])) {
+                $ids[] = (int) $obra['tmdb'];
+            }
+        }
+
+        foreach ($personagens as $personagem) {
+            if (!empty($personagem['tmdb_id'])) {
+                $ids[] = (int) $personagem['tmdb_id'];
+            }
+
+            foreach ((array) ($personagem['obras'] ?? []) as $obra) {
+                if (!empty($obra['tmdb_id'])) {
+                    $ids[] = (int) $obra['tmdb_id'];
+                }
+            }
+        }
+
+        foreach ([$diretor, $estudio] as $ancora) {
+            if ($ancora === null) {
+                continue;
+            }
+
+            foreach ((array) ($ancora['obras'] ?? []) as $obra) {
+                if (!empty($obra['tmdb_id'])) {
+                    $ids[] = (int) $obra['tmdb_id'];
+                }
+            }
+        }
+
+        $mapa = CatalogoObra::plataformasPorTmdb($this->pdo, $ids);
+
+        $aplicar = static function (array &$item, ?int $tmdbId) use ($mapa): void {
+            if ($tmdbId !== null && isset($mapa[$tmdbId])) {
+                $item['onde'] = $mapa[$tmdbId];
+            }
+        };
+
+        foreach ($estante as &$obra) {
+            $aplicar($obra, isset($obra['tmdb']) ? (int) $obra['tmdb'] : null);
+        }
+        unset($obra);
+
+        foreach ($personagens as &$personagem) {
+            $aplicar($personagem, isset($personagem['tmdb_id']) ? (int) $personagem['tmdb_id'] : null);
+
+            foreach ($personagem['obras'] as &$obra) {
+                $aplicar($obra, isset($obra['tmdb_id']) ? (int) $obra['tmdb_id'] : null);
+            }
+            unset($obra);
+        }
+        unset($personagem);
+
+        foreach ([&$diretor, &$estudio] as &$ancora) {
+            if ($ancora === null) {
+                continue;
+            }
+
+            foreach ($ancora['obras'] as &$obra) {
+                $aplicar($obra, isset($obra['tmdb_id']) ? (int) $obra['tmdb_id'] : null);
+            }
+            unset($obra);
+        }
+        unset($ancora);
     }
 
     /**
@@ -312,6 +587,31 @@ final class PerfilController
         }
 
         return $itens;
+    }
+
+    /**
+     * Década mediana do repertório do espelho (1900–2020).
+     *
+     * @param list<array<string, mixed>> $estante
+     */
+    private function anoDecadaDaEstante(array $estante): ?int
+    {
+        $anos = [];
+
+        foreach ($estante as $obra) {
+            if (isset($obra['ano']) && (int) $obra['ano'] >= 1900) {
+                $anos[] = (int) $obra['ano'];
+            }
+        }
+
+        if ($anos === []) {
+            return null;
+        }
+
+        sort($anos);
+        $mediana = $anos[intdiv(count($anos), 2)];
+
+        return max(1900, min(2020, (int) (floor($mediana / 10) * 10)));
     }
 
     /**
@@ -497,6 +797,8 @@ final class PerfilController
             ];
         }
 
+        $decada = null;
+        $anoDecada = $this->anoDecadaDaEstante($estante);
         $anos = [];
 
         foreach ($estante as $obra) {
@@ -505,12 +807,7 @@ final class PerfilController
             }
         }
 
-        $decada = null;
-
-        if ($anos !== []) {
-            sort($anos);
-            $mediana = $anos[intdiv(count($anos), 2)];
-            $anoDecada = max(1900, min(2020, (int) (floor($mediana / 10) * 10)));
+        if ($anoDecada !== null) {
             $guia = Decada::porAno($anoDecada);
 
             // Obras do próprio espelho que caem nessa década.

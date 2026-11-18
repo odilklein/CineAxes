@@ -81,7 +81,7 @@ try {
             ),
             new Services\LikertCalculatorService(),
             $config
-        ))->montar($codigoExemplo);
+        ))->montar($codigoExemplo, false);
 
         if ($perfilExemplo !== null) {
             $arquetipoExemplo = $perfilExemplo['arquetipo'];

@@ -7,7 +7,9 @@ seguintes entregam sinergia, i18n, TMDB e GeoCinema.
 > correspondente ao definir o início do semestre.
 >
 > **Status atual:** semanas 1–10 implementadas e o catálogo ampliado/enriquecido
-> pela TMDB. Faltam GeoCinema, inglês e o acabamento da semana 12.
+> pela TMDB. A entrega extra de catálogo audiovisual trouxe ~4 mil filmes e
+> séries, ranking de plataformas, trilhas de curadoria e elenco. Faltam
+> GeoCinema, inglês e o acabamento da semana 12.
 
 ## Divisão de trabalho
 

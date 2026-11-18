@@ -1670,3 +1670,97 @@ body.pc-story-open .pc-result {
 }
 
 .pc-retro__marks { margin-top: 2px; }
+
+/* ---------------------------- Capítulo "lugar" --------------------------- */
+
+.pc-retro__place {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pc-retro__place-card {
+  display: grid;
+  gap: 6px;
+  padding: 15px 16px;
+  border: 1px solid var(--retro-line);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.pc-retro__place-label {
+  color: var(--retro-muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.pc-retro__place-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.pc-retro__place-brand img {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.pc-retro__place-brand b {
+  color: var(--retro-ink);
+  font-family: var(--pc-serif);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.pc-retro__place-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--trilha, #e0b96d) 22%, transparent);
+  color: var(--trilha, var(--retro-gold));
+}
+
+.pc-retro__place-score {
+  color: var(--retro-gold-2);
+  font-family: var(--pc-serif);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.pc-retro__place-line {
+  color: var(--retro-ink-2);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.pc-retro__place-films {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.pc-retro__place-film {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 68px;
+  overflow: hidden;
+  border: 1px solid var(--retro-line);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.35) center / cover no-repeat;
+}
+
+.pc-retro__place-film i {
+  padding: 3px;
+  color: var(--retro-muted);
+  font-family: var(--pc-serif);
+  font-size: 8px;
+  font-style: normal;
+  text-align: center;
+}

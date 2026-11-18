@@ -35,12 +35,28 @@ $quickEntidade = static function (array $entidade): array {
         'atorPais'       => origem_curta($entidade['pais'] ?? null),
         'polos'          => $entidade['polos'] ?? [],
         'afinidade'      => $entidade['afinidade'] ?? null,
+        'onde'           => array_map(
+            static fn (array $p): array => [
+                'nome'  => (string) ($p['nome'] ?? ''),
+                'logo'  => tmdb_logo($p['logo'] ?? null),
+                'preco' => $p['preco'] ?? null,
+            ],
+            (array) ($entidade['onde'] ?? [])
+        ),
         'obras'          => array_map(
             static fn (array $obra): array => [
                 'titulo' => $obra['titulo'],
                 'ano'    => $obra['ano'],
                 'tmdb'   => $obra['tmdb_id'] ?? null,
                 'poster' => $obra['poster_url'] ?? null,
+                'onde'   => array_map(
+                    static fn (array $p): array => [
+                        'nome'  => (string) ($p['nome'] ?? ''),
+                        'logo'  => tmdb_logo($p['logo'] ?? null),
+                        'preco' => $p['preco'] ?? null,
+                    ],
+                    (array) ($obra['onde'] ?? [])
+                ),
             ],
             $tipo === 'personagem' ? [] : ($entidade['obras'] ?? [])
         ),
@@ -427,7 +443,7 @@ $quickEntidade = static function (array $entidade): array {
                             </div>
                         </div>
 
-                        <div class="pc-filme-grid">
+                        <div class="pc-filme-grid pc-filme-grid--decade">
                             <?php $filmeVariante = 'card'; ?>
                             <?php foreach ($ins['decada']['obras'] as $filme): ?>
                                 <?php require __DIR__ . '/../card-filme.php'; ?>
@@ -510,6 +526,8 @@ $quickEntidade = static function (array $entidade): array {
                     </section>
                 <?php endif; ?>
             </section>
+
+            <?php require __DIR__ . '/streaming.php'; ?>
 
             <section class="pc-section" id="espelhos">
                 <div class="pc-section__head">
@@ -720,6 +738,8 @@ $quickEntidade = static function (array $entidade): array {
                 </section>
             <?php endif; ?>
 
+            <?php require __DIR__ . '/elenco.php'; ?>
+
             <?php if ($perfil['estante'] !== []): ?>
                 <section class="pc-section" id="estante">
                     <div class="pc-section__head">
@@ -741,6 +761,14 @@ $quickEntidade = static function (array $entidade): array {
                                 'poster' => $obra['poster'],
                                 'origem' => $obra['origem'],
                                 'personagem' => $obra['personagem'],
+                                'onde' => array_map(
+                                    static fn (array $p): array => [
+                                        'nome'  => (string) ($p['nome'] ?? ''),
+                                        'logo'  => tmdb_logo($p['logo'] ?? null),
+                                        'preco' => $p['preco'] ?? null,
+                                    ],
+                                    (array) ($obra['onde'] ?? [])
+                                ),
                             ];
                             ?>
                             <article class="pc-shelf__item"
@@ -762,6 +790,8 @@ $quickEntidade = static function (array $entidade): array {
                     </div>
                 </section>
             <?php endif; ?>
+
+            <?php require __DIR__ . '/trilhas.php'; ?>
 
             <div class="pc-share">
                 <section class="pc-share__box">

@@ -196,6 +196,70 @@ que significa ficar perto de cada polo, cenas de filmes e séries e as leituras
 críticas que sustentam a régua. O conteúdo é estático e versionado — não depende
 do banco.
 
+## Catálogo, recomendação e streaming
+
+Até a v1.5 o "catálogo" era editorial: 52 entidades do matcher, 32 obras curadas
+e uma lista de filmes em PHP. A v1.6 adiciona um catálogo audiovisual de verdade,
+ingerido da TMDB **fora do request** e persistido no MySQL.
+
+### Tabelas
+
+- `catalogo_obras` — filme ou série, com gêneros, países, idioma, ano, pôster e
+  um vetor de 8 eixos (`eixo_1..8`) + `confianca`.
+- `catalogo_generos` / `catalogo_obra_generos`, `catalogo_paises` /
+  `catalogo_obra_paises` — normalização para filtro e índice.
+- `catalogo_plataformas` / `catalogo_obra_plataformas` — disponibilidade por
+  região e oferta (`flatrate`, `free`, `ads`). O preço é editorial (admin).
+- `catalogo_pessoas` / `catalogo_creditos` — elenco (top 10) e direção.
+
+### Ingestão
+
+`bin/catalogo_sync.php` percorre as trilhas de `config/recomendacao.php` com
+`/discover` (país + gênero + tipo), complementa plataformas de nicho com
+`with_watch_providers` e busca o detalhe de cada título com
+`append_to_response=watch/providers`. É retomável, idempotente e revalida o que
+passou de 90 dias. `--creditos` busca elenco/direção; `--recalcular` refaz apenas
+os vetores quando as regras editoriais mudam.
+
+`bin/catalogo_export.php` gera `sql/010_catalogo_seed.sql`; `bin/deploy_pacote.php`
+monta o pacote do InfinityFree (schema separado do snapshot para caber no limite
+de 10 MB por arquivo).
+
+### Vetor de uma obra
+
+`RecomendacaoService::construir()` soma desvios editoriais de gênero (peso 1),
+país (0,75), idioma (0,5) e década (0,35), e calcula `confianca` pelo número de
+sinais. A afinidade usa o mesmo `MatcherService::compatibilidade()` dos espelhos,
+encolhida em direção a 50 quando a confiança é baixa: uma obra com um único
+gênero não compete com uma obra rica em metadados.
+
+### Ranking de plataformas
+
+`PlataformaRankingService` considera apenas assinatura inclusa (`flatrate`) na
+região BR e títulos com afinidade mínima:
+
+```
+nota = 0,40·relevância + 0,25·acervo(log) + 0,15·exclusivos
+     + 0,10·variedade de trilhas + 0,10·preço
+```
+
+Relevância soma a força dos 25 melhores títulos; acervo entra em log para volume
+bruto não decidir sozinho; exclusivos consideram apenas o conjunto de plataformas
+candidatas. O resultado é explicável ("N títulos do seu gosto, M exclusivos,
+melhor para doramas").
+
+### Trilhas e elenco
+
+`TrilhaService` cruza as regras de `config/recomendacao.php` com as obras
+pontuadas, exige mínimo de títulos disponíveis e limita a seis cards. `ElencoService`
+agrega créditos das 80 melhores obras, ponderando posição no crédito e força do
+título; direção não entra na lista de atores.
+
+Nada disso chama rede no request: o perfil executa quatro consultas de catálogo
+(obras, gêneros, países, plataformas) e calcula em memória. O quick view usa
+sinopse/gêneros/plataformas locais para títulos do catálogo e só consulta a TMDB
+quando a ficha é de um filme fora dele.
+
 ## Segurança
 
 - 100% das queries com prepared statements e `ATTR_EMULATE_PREPARES = false`.
@@ -229,7 +293,7 @@ do banco.
 
 ## Testes
 
-`tests/_assert.php` é um micro-framework (sem PHPUnit). `run.php` executa
-`LikertTest.php`, `MatcherTest.php`, `MidiaTest.php`, `SceneTest.php`,
-`RadarTest.php` e `ModosTest.php` (cotas dos três modos) e retorna código de saída
-diferente de zero em falha, o que permite usar em CI futuramente.
+`tests/_assert.php` é um micro-framework (sem PHPUnit). `run.php` executa os
+testes de Likert, matcher, mídia, cena, radar, leituras, modos, guia, catálogo,
+recomendação, ranking de plataformas, trilhas, elenco e rate limit. Retorna
+código de saída diferente de zero em falha, o que permite usar em CI futuramente.

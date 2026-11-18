@@ -5,7 +5,8 @@ O que está aqui:
 
 ```
 deploy/infinityfree/
-├── personacut.sql              ← banco completo (schema + seed + enriquecimento + rótulos)
+├── personacut.sql              ← schema + seed + enriquecimento + rótulos + tabelas do catálogo
+├── catalogo.sql                ← snapshot do catálogo (obras, gêneros, países, elenco e streaming)
 ├── htdocs/.htaccess            ← roteia a raiz para public/ e bloqueia arquivos internos
 ├── config/env.example.php      ← modelo do config/env.php
 └── README.md
@@ -23,12 +24,17 @@ deploy/infinityfree/
    - **nome do banco**: `if0_XXXXXXXX_personacut`;
    - **usuário**: `if0_XXXXXXXX`;
    - **senha**.
-3. Abra o **phpMyAdmin** desse banco e importe `personacut.sql`.
+3. Abra o **phpMyAdmin** desse banco e importe **nesta ordem**:
+   1. `personacut.sql` — schema, seed, enriquecimento, rótulos e tabelas do catálogo;
+   2. `catalogo.sql` — obras, gêneros, países, elenco e disponibilidade.
    - O arquivo já está com `utf8mb4_unicode_ci`, compatível com a MariaDB do
      InfinityFree. Se você importar um dump antigo do Docker, troque
      `utf8mb4_0900_ai_ci` por `utf8mb4_unicode_ci` antes.
    - Se o phpMyAdmin reclamar de tamanho, importe os arquivos de `sql/` na ordem
-     `001` → `005` (o pacote é a concatenação deles).
+     `001` → `005`, depois `009` e `010` (o pacote é a concatenação deles).
+   - O limite de arquivo do InfinityFree é **10 MB**. `bin/deploy_pacote.php`
+     avisa quando o snapshot passar do limite; nesse caso divida `catalogo.sql`
+     em partes (uma por tabela ou por faixa de ids) e importe em sequência.
 
 ## 2. Upload dos arquivos
 
@@ -115,7 +121,23 @@ absolutas (`/quiz.php`, `/assets/...`). Se instalar em subpasta, troque
   cópia em `public/`.
 - O `.env` local não deve ser enviado.
 
-## 7. Serviços externos
+## 7. Catálogo e streaming
+
+O ranking de plataformas e os cards de trilha leem **apenas o MySQL**. A
+disponibilidade não é consultada em tempo de request: ela vem de
+`bin/catalogo_sync.php` (na sua máquina) e do snapshot `catalogo.sql`.
+
+- A cada **90 dias**, rode de novo o sync para atualizar disponibilidade e
+  metadados (os termos da TMDB limitam o cache a 6 meses; o dado de
+  disponibilidade é do JustWatch e exige atribuição).
+- Preços das plataformas são editoriais: ajuste em **Painel → Plataformas**.
+- Para ampliar o catálogo, edite `config/recomendacao.php` (trilhas e limites)
+  e rode `php bin/catalogo_sync.php`; depois `php bin/catalogo_sync.php --creditos`
+  (elenco), `php bin/catalogo_status.php` (cobertura), `php bin/catalogo_export.php`
+  e `php bin/deploy_pacote.php`.
+- A seção "Onde assistir" credita TMDB e JustWatch. Mantenha esse crédito.
+
+## 8. Serviços externos
 
 O InfinityFree libera cURL externo nas portas 80/443, então TMDB e Groq devem
 funcionar. Alguns serviços são bloqueados por política da hospedagem; se o Groq
@@ -125,7 +147,7 @@ falhar, o retrato por IA cai no fallback. Se as imagens da TMDB falharem:
 - você pode subir o conteúdo de `storage/cache/img` do seu ambiente local para
   pré-popular o cache.
 
-## 8. Teste rápido
+## 9. Teste rápido
 
 1. `https://seu-site/` → landing.
 2. `https://seu-site/quiz.php` → quiz.

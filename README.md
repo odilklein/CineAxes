@@ -32,6 +32,7 @@
 - [Funcionalidades](#funcionalidades)
 - [Stack](#stack)
 - [Rodando local](#rodando-local)
+- [Catálogo e streaming](#catálogo-e-streaming)
 - [Auditoria de segurança](#auditoria-de-segurança)
 - [Testes](#testes)
 - [Estrutura](#estrutura)
@@ -51,6 +52,10 @@ compartilham a sua assinatura.
 - **Determinístico.** Arquétipo, afinidade e raridade nunca dependem de IA; o
   modelo de linguagem só escreve o retrato (e pode ser desligado).
 - **Completo no celular.** Quiz, resultado, retrospectiva e card 9:16.
+- **Além de Hollywood.** Cards de doramas, cinema coreano, indiano, japonês,
+  brasileiro e latino-americano escolhidos pelo perfil, não pela vitrine global.
+- **Onde assistir.** Ranking de plataformas por afinidade real com o seu vetor
+  (Netflix, Prime Video, Disney+, Max, MUBI, Crunchyroll e outras).
 - **Projeto acadêmico.** Feito para apresentar em sala, mas com decisões de
   produto e de engenharia de um projeto real.
 
@@ -132,11 +137,20 @@ Definições operacionais, base crítica e fórmula completa em
 - Cards de filme com pôster em todas as citações (leituras, década e guia).
 - **Combina com**, **Seu oposto**, **Arquétipo secundário** e a **década do
   repertório** com curiosidades e filmes-marco.
-- Retrospectiva em capítulos (estilo stories) com swipe, teclado e progresso.
+- **Onde assistir**: pódio de plataformas por afinidade, exclusividade, acervo,
+  variedade e preço, com justificativa e "melhor para cada trilha".
+- **Além de Hollywood**: até seis cards de curadoria (doramas, cinema coreano,
+  indiano, japonês, chinês, brasileiro, francês, sul-europeu, latino-americano
+  e África/Ásia Ocidental) com títulos do catálogo e onde assistir.
+- **Elenco do seu repertório**: atores dos títulos mais próximos, ponderados
+  pela posição no crédito e pela afinidade da obra.
+- Retrospectiva em capítulos (estilo stories) com swipe, teclado e progresso,
+  incluindo um capítulo "Onde o seu cinema mora".
 - Card 9:16 (PNG 1080 × 1920) e modo Sinergia entre dois códigos.
 
 **Admin**
 - CRUD de eixos, perguntas (com cena ilustrativa), entidades, obras e arquétipos.
+- Plataformas: preço editorial, data da conferência, ordem e quais entram no ranking.
 - Dashboard com perfis reais, base total e arquétipos mais frequentes.
 
 ## Stack
@@ -149,7 +163,8 @@ Definições operacionais, base crítica e fórmula completa em
 | Gráficos | Radar bipolar em SVG gerado no servidor (sem biblioteca) |
 | Card | `html2canvas` vendorizado + Web Share API |
 | IA (opcional) | Groq — só para o retrato e a frase do perfil |
-| Catálogo | TMDB (pôsteres, retratos, logos e cenas), sempre no servidor |
+| Catálogo | TMDB (pôsteres, retratos, logos, elenco e cenas), sempre no servidor |
+| Streaming | Disponibilidade do TMDB/JustWatch, ingerida offline para o MySQL |
 | Ambiente | Docker + Compose (Apache, MySQL e phpMyAdmin) |
 
 O design system fica em `public/assets/css/personacut.css`: tokens de cor,
@@ -171,8 +186,9 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-O banco é criado e populado na primeira subida (schema + seed + enriquecimento).
-Se você já tinha um volume antigo, use `docker compose down -v` antes.
+O banco é criado e populado na primeira subida (schema + seed + enriquecimento +
+catálogo versionado em `sql/010_catalogo_seed.sql`). Se você já tinha um volume
+antigo, use `docker compose down -v` antes.
 
 | Serviço | Endereço |
 | --- | --- |
@@ -202,6 +218,39 @@ docker compose exec app php tests/run.php   # testes (não precisam de banco)
 docker compose down                          # para os serviços (mantém o banco)
 docker compose down -v                       # para e apaga o banco
 ```
+
+## Catálogo e streaming
+
+O catálogo é ingerido **offline** e vive no MySQL; o site publicado não faz
+chamadas de rede para montar cards, trilhas ou ranking. Com o ambiente no ar:
+
+```bash
+# 1. piloto de uma trilha (rápido, sem disponibilidade)
+docker compose exec app php bin/catalogo_sync.php --piloto
+
+# 2. catálogo completo + disponibilidade (TMDB, ~30 min na primeira vez)
+docker compose exec app php bin/catalogo_sync.php
+
+# 3. elenco e direção dos títulos mais populares
+docker compose exec app php bin/catalogo_sync.php --creditos
+
+# 4. diagnóstico de cobertura por trilha e plataforma
+docker compose exec app php bin/catalogo_status.php
+
+# 5. snapshot para o deploy e pacote do InfinityFree
+docker compose exec app php bin/catalogo_export.php
+docker compose exec app php bin/deploy_pacote.php
+
+# 6. o cache da TMDB guarda payloads grandes; limpe quando terminar
+docker compose exec app php bin/cache_limpar.php --tudo
+```
+
+Para ampliar a base, edite `limite` em `config/recomendacao.php` (por trilha) e
+repita os passos 2 a 5. Regras de gosto (gênero, país, idioma, década) também
+ficam nesse arquivo; depois de alterá-las, rode
+`php bin/catalogo_sync.php --recalcular` para refazer os vetores sem baixar nada.
+A disponibilidade e os metadados são revalidados a cada 90 dias
+(`--force` força agora), respeitando o limite de 6 meses da TMDB.
 
 ## Auditoria de segurança
 
@@ -322,10 +371,11 @@ for m in PUT DELETE OPTIONS; do curl -s -o /dev/null -w "$m %{http_code}\n" -X $
 docker compose exec app php tests/run.php
 ```
 
-Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com **75 testes**:
+Micro-framework próprio (sem PHPUnit) em `tests/_assert.php`, com **90 testes**:
 Likert, matcher, raridade, sinergia, mídia, radar, leituras, cotas dos modos,
-guia dos eixos, cards de filme, décadas, retrato (separação frase/texto) e o
-limitador de requisições.
+guia dos eixos, cards de filme, décadas, retrato (separação frase/texto),
+recomendação (vetor de obra, confiança, trilhas), ranking de plataformas,
+cards de trilha, elenco e o limitador de requisições.
 
 ## Estrutura
 
@@ -344,11 +394,11 @@ limitador de requisições.
 ├── src/
 │   ├── Core/                   # Database, Session, Csrf, Http, RateLimit, Vetor, Radar
 │   ├── Data/                   # eixos_guia.php, decadas.php
-│   ├── Models/                 # Eixo, EixoGuia, FilmeCard, Decada, Pergunta, EntidadeMatch…
-│   ├── Services/               # Likert, Matcher, Midia, Tmdb, Groq, Retrato
+│   ├── Models/                 # Eixo, CatalogoObra, Plataforma, CatalogoPessoa, Resultado…
+│   ├── Services/               # Likert, Matcher, Recomendacao, PlataformaRanking, Trilha, Elenco
 │   ├── Controllers/            # QuizController, PerfilController
 │   └── bootstrap.php
-├── bin/                        # tmdb_sync/export, filmes_cards, midia_autofill…
+├── bin/                        # catalogo_sync/export, deploy_pacote, tmdb_sync, midia_autofill…
 ├── config/                     # app, database, midia, leituras, filmes_cards
 ├── docker/                     # configuração de segurança do Apache/PHP
 ├── lang/                       # pt-BR.json (pronto para en/es)
@@ -363,7 +413,9 @@ limitador de requisições.
 O pacote `deploy/infinityfree/` tem o necessário para hospedagem compartilhada
 (PHP + MariaDB):
 
-- `personacut.sql` — banco completo em `utf8mb4_unicode_ci`;
+- `personacut.sql` — schema, seed e enriquecimento em `utf8mb4_unicode_ci`;
+- `catalogo.sql` — snapshot do catálogo (obras, gêneros, países, elenco e
+  disponibilidade), importado depois do schema;
 - `htdocs/.htaccess` — encaminha a raiz para `public/` e bloqueia código,
   configuração e dotfiles;
 - `config/env.example.php` — modelo do `config/env.php` (o `.env` do Docker não é
@@ -378,7 +430,9 @@ lá: headers, métodos e bloqueio de dotfiles continuam ativos.
 
 - [docs/EIXOS.md](docs/EIXOS.md) — base crítica dos 8 eixos, fórmula e cotas.
 - [docs/ARQUITETURA.md](docs/ARQUITETURA.md) — fluxo do quiz, cálculo, quick view,
-  cards de filme, IA e layout.
+  cards de filme, catálogo, IA e layout.
+- [docs/RECOMENDACAO.md](docs/RECOMENDACAO.md) — vetor de obra, confiança,
+  trilhas, ranking de plataformas, elenco e como ampliar a base.
 - [docs/security/relatorio-2026-11-18.md](docs/security/relatorio-2026-11-18.md) —
   relatório completo da auditoria, com evidências e comandos de reprodução.
 - [docs/CRONOGRAMA.md](docs/CRONOGRAMA.md) — planejamento da disciplina.
@@ -386,8 +440,10 @@ lá: headers, métodos e bloqueio de dotfiles continuam ativos.
 
 ## Créditos
 
-- Catálogo, pôsteres e cenas: [TMDB](https://www.themoviedb.org/). *This product
-  uses the TMDB API but is not endorsed or certified by TMDB.*
+- Catálogo, pôsteres, elenco e cenas: [TMDB](https://www.themoviedb.org/). *This
+  product uses the TMDB API but is not endorsed or certified by TMDB.*
+- Disponibilidade de streaming: [JustWatch](https://www.justwatch.com/), via
+  TMDB. Os preços são referência editorial, editáveis no painel.
 - Fontes: Bodoni Moda e Public Sans (Google Fonts, licença aberta).
 - Captura do card: [html2canvas](https://html2canvas.hertzen.com/).
 - Ícones: SVG próprios em `src/Core/helpers.php`.

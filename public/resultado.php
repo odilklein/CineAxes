@@ -40,7 +40,7 @@ $paginaTitulo = $perfil !== null
     ? $tituloPerfil . ' — PersonaCut'
     : t('resultado.title') . ' — PersonaCut';
 
-$scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js'];
+$scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js', 'trilhas.js'];
 $vendorScripts = ['html2canvas.min.js'];
 $temGroq = trim((string) ($config['groq']['api_key'] ?? '')) !== ''
     && (bool) ($config['groq']['enabled'] ?? false);

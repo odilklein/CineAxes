@@ -79,6 +79,31 @@ function num_css(float|int $valor): string
     return $texto === '' ? '0' : $texto;
 }
 
+/**
+ * URL absoluta de uma imagem/pôster a partir do caminho da TMDB.
+ * O catálogo guarda apenas o caminho (ex.: /abc.jpg), nunca a URL completa.
+ */
+function tmdb_img(?string $caminho, string $tamanho = 'w342'): string
+{
+    $caminho = trim((string) $caminho);
+
+    if ($caminho === '') {
+        return '';
+    }
+
+    if (str_starts_with($caminho, 'https://') || str_starts_with($caminho, '/assets/')) {
+        return $caminho;
+    }
+
+    return 'https://image.tmdb.org/t/p/' . trim($tamanho, '/') . '/' . ltrim($caminho, '/');
+}
+
+/** URL de logo de plataforma a partir do caminho da TMDB. */
+function tmdb_logo(?string $caminho): string
+{
+    return tmdb_img($caminho, 'w92');
+}
+
 /** URL de imagem TMDB via proxy same-origin (para html2canvas). */
 function img_proxy(?string $url): string
 {

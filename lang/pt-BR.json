@@ -403,7 +403,7 @@
       "decada_text": "{descricao}",
       "decada_sample": "Mediana de {n} obras do seu espelho.",
       "decade_works_title": "Obras suas dos {decada}",
-      "decade_works_sub": "Filmes do seu espelho que caem nessa década.",
+      "decade_works_sub": "Títulos do catálogo que caem nessa década e combinam com você.",
       "decade_marks": "Para reconhecer a época",
       "oposto_title": "Seu oposto",
       "oposto_text": "{tipo} de {obra}, com {pct}% de afinidade. É o perfil mais distante do seu no catálogo.",
@@ -434,7 +434,9 @@
     "ficha_affinity": "Afinidade com os espelhos",
     "ficha_reading": "Marca principal",
     "ficha_rarity": "Raridade do perfil",
-    "ficha_decade": "Década do repertório"
+    "ficha_decade": "Década do repertório",
+    "story_platform": "Sua plataforma: {nome}",
+    "story_trilha": "Trilha: {nome}"
   },
   "retro": {
     "aria": "Retrospectiva do perfil",
@@ -524,6 +526,16 @@
       "retake": "Refazer o teste",
       "code": "Seu código",
       "downloaded": "Card salvo em PNG."
+    },
+    "place": {
+      "eyebrow": "Seu mapa",
+      "title": "Onde o seu cinema mora",
+      "lead": "A plataforma que mais combina com o seu perfil e a trilha que você deveria explorar primeiro.",
+      "platform": "Melhor plataforma",
+      "trilha": "Sua trilha",
+      "titles": "{n} títulos do seu gosto",
+      "cta": "Ver a análise completa",
+      "empty": "O catálogo ainda está sendo montado para o seu perfil."
     }
   },
   "sinergia": {
@@ -588,7 +600,22 @@
     "logged_out": "Sessão encerrada.",
     "public_results": "Perguntas",
     "too_many_attempts": "Muitas tentativas de login. Tente novamente em {minutos} minuto(s).",
-    "made_with": "Feito com PHP 8, MySQL 8 e CSS próprio"
+    "made_with": "Feito com PHP 8, MySQL 8 e CSS próprio",
+    "platforms": "Plataformas",
+    "platforms_help": "Preço editorial, ordem e quais entram no ranking. A disponibilidade dos títulos vem da TMDB/JustWatch.",
+    "platforms_coverage": "títulos com disponibilidade",
+    "platforms_name": "Plataforma",
+    "platforms_price": "Preço (R$/mês)",
+    "platforms_checked": "Preço conferido em",
+    "platforms_order": "Ordem",
+    "platforms_active": "Ativa",
+    "platforms_catalog": "Títulos",
+    "platforms_note": "O preço não vem da TMDB: é referência editorial. Atualize a data a cada conferência para que o ranking mostre a informação com transparência. Desmarcar \"Ativa\" tira a plataforma do pódio e dos cards sem apagar o histórico de disponibilidade.",
+    "catalog": "Catálogo",
+    "catalog_available": "Com streaming",
+    "catalog_people": "Pessoas",
+    "catalog_updated": "Catálogo atualizado em {data}",
+    "platforms_missing": "As tabelas do catálogo ainda não foram importadas neste banco. Importe sql/009_catalogo.sql e sql/010_catalogo_seed.sql no phpMyAdmin para habilitar o ranking, as trilhas e o elenco. Enquanto isso, o site continua funcionando sem essas seções."
   },
   "erros": {
     "generic": "Algo saiu do projetor. Tente novamente.",
@@ -634,5 +661,50 @@
       "e": "Você sente o tempo no material: grão, figurino e memória.",
       "d": "Você quer o amanhã: neon, código e cidades impossíveis."
     }
+  },
+  "streaming": {
+    "eyebrow": "Onde assistir",
+    "title": "A melhor plataforma para o seu perfil",
+    "subtitle": "Cruzamos o seu vetor com {n} títulos disponíveis no Brasil — só assinatura inclusa, sem aluguel.",
+    "score": "encaixe",
+    "titles": "{n} títulos do seu gosto",
+    "exclusive": "{n} exclusivos",
+    "exclusive_label": "Exclusivos do seu gosto:",
+    "avg": "{pct} de afinidade média",
+    "price": "R$ {preco}/mês",
+    "price_unknown": "preço não informado",
+    "best_title": "O melhor de cada trilha",
+    "best_meta": "{n} títulos · {esp} do acervo · {pct} de afinidade",
+    "parts": {
+      "relevancia": "Relevância",
+      "cobertura": "Acervo",
+      "exclusividade": "Exclusivos",
+      "diversidade": "Variedade",
+      "preco": "Preço"
+    },
+    "note": "Disponibilidade fornecida por JustWatch via TMDB. Preços são referência editorial e podem mudar — confira no site da plataforma.",
+    "price_checked": " Preços conferidos em {data}.",
+    "subscribe": "Assinar",
+    "best_sub": "A plataforma que melhor cobre cada nicho do seu repertório, considerando especialização no acervo.",
+    "best_titles": "títulos do seu gosto",
+    "affinity_short": "de afinidade",
+    "acervo_short": "do acervo"
+  },
+  "trilhas": {
+    "eyebrow": "Além de Hollywood",
+    "title": "Trilhas para o seu repertório",
+    "subtitle": "Cinema da Coreia, Índia, Japão, Brasil e de outros lugares — escolhido pelo seu perfil, não pela vitrine global.",
+    "note": "De {n} títulos com disponibilidade no Brasil. Abra a ficha para ver sinopse e onde assistir.",
+    "fit": "{pct} de encaixe",
+    "prev": "Voltar",
+    "next": "Avançar"
+  },
+  "elenco": {
+    "eyebrow": "Elenco",
+    "title": "Atores que combinam com você",
+    "subtitle": "Quem aparece nos títulos mais próximos do seu perfil — do catálogo, não só dos espelhos.",
+    "titles": "{n} títulos do seu gosto",
+    "note": "A ordem considera a posição no crédito e a afinidade do título. Toque em um ator para ver a trajetória.",
+    "titles_one": "{n} título do seu gosto"
   }
 }

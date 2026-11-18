@@ -19,6 +19,23 @@ $porArquetipo = Resultado::contarPorArquetipo($pdo);
 $ultimos = Resultado::ultimos($pdo, 8);
 $totalEntidades = (int) $pdo->query('SELECT COUNT(*) FROM entidades_match')->fetchColumn();
 $totalPerguntas = (int) $pdo->query('SELECT COUNT(*) FROM perguntas')->fetchColumn();
+$temCatalogo = false;
+
+try {
+    $temCatalogo = (bool) $pdo->query("SHOW TABLES LIKE 'catalogo_obras'")->fetchColumn();
+} catch (Throwable $erro) {
+    $temCatalogo = false;
+}
+
+$totalCatalogo = $temCatalogo
+    ? (int) $pdo->query('SELECT COUNT(*) FROM catalogo_obras WHERE ativo = 1')->fetchColumn()
+    : 0;
+$totalDisponiveis = $temCatalogo
+    ? (int) $pdo->query('SELECT COUNT(DISTINCT obra_id) FROM catalogo_obra_plataformas')->fetchColumn()
+    : 0;
+$totalPessoas = $temCatalogo
+    ? (int) $pdo->query('SELECT COUNT(*) FROM catalogo_pessoas')->fetchColumn()
+    : 0;
 
 $tituloPorId = [];
 
@@ -58,6 +75,18 @@ require __DIR__ . '/partials/head.php';
     <div class="pc-stat">
         <span><?= e(t('admin.entities')) ?></span>
         <b><?= numero($totalEntidades, 0) ?></b>
+    </div>
+    <div class="pc-stat">
+        <span><?= e(t('admin.catalog')) ?></span>
+        <b><?= numero($totalCatalogo, 0) ?></b>
+    </div>
+    <div class="pc-stat">
+        <span><?= e(t('admin.catalog_available')) ?></span>
+        <b><?= numero($totalDisponiveis, 0) ?></b>
+    </div>
+    <div class="pc-stat">
+        <span><?= e(t('admin.catalog_people')) ?></span>
+        <b><?= numero($totalPessoas, 0) ?></b>
     </div>
 </section>
 

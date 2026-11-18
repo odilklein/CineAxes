@@ -14,6 +14,8 @@ $storyChars = array_slice($perfil['personagens'], 0, 3);
 $storyFilms = array_slice($perfil['estante'], 0, 3);
 $storyMarks = array_slice($perfil['leituras'] ?? [], 0, 4);
 $storyTotalMarcas = count($perfil['leituras'] ?? []);
+$storyPlataforma = $perfil['plataformas'][0] ?? null;
+$storyTrilha = $perfil['trilhas'][0] ?? null;
 ?>
 <div class="pc-story" data-story data-codigo="<?= e($codigo) ?>">
     <div class="pc-story__top">
@@ -40,6 +42,17 @@ $storyTotalMarcas = count($perfil['leituras'] ?? []);
         <?= pct($perfil['afinidade_media']) ?> <?= e(t('resultado.affinity')) ?>
         · <?= e($codigo) ?>
     </p>
+
+    <?php if ($storyPlataforma !== null || $storyTrilha !== null): ?>
+        <p class="pc-story__where">
+            <?php if ($storyPlataforma !== null): ?>
+                <span><?= e(t('resultado.story_platform', ['nome' => (string) $storyPlataforma['nome']])) ?></span>
+            <?php endif; ?>
+            <?php if ($storyTrilha !== null): ?>
+                <span><?= e(t('resultado.story_trilha', ['nome' => (string) $storyTrilha['nome']])) ?></span>
+            <?php endif; ?>
+        </p>
+    <?php endif; ?>
 
     <div class="pc-story__actors">
         <?php foreach ($storyChars as $personagem): ?>

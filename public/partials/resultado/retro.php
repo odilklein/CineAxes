@@ -23,7 +23,10 @@ $retroDiretor = $perfil['diretor'];
 $retroEstudio = $perfil['estudio'];
 $retroInsights = $perfil['insights'];
 $retroTextoSalvo = trim((string) ($perfil['retrato_salvo']['texto'] ?? ''));
-$retroTotal = 9 + count($retroLeituras);
+$retroPlataforma = $perfil['plataformas'][0] ?? null;
+$retroTrilha = $perfil['trilhas'][0] ?? null;
+$retroTemLugar = $retroPlataforma !== null || $retroTrilha !== null;
+$retroTotal = 9 + count($retroLeituras) + ($retroTemLugar ? 1 : 0);
 $retroCap = 0;
 
 $retroUrlCompleta = url('resultado.php', ['codigo' => $codigo, 'modo' => 'completo']);
@@ -46,6 +49,14 @@ $retroQuickPersonagem = static function (array $entidade): array {
         'atorPais'       => origem_curta($entidade['pais'] ?? null),
         'polos'          => $entidade['polos'] ?? [],
         'afinidade'      => $entidade['afinidade'],
+        'onde'           => array_map(
+            static fn (array $p): array => [
+                'nome'  => (string) ($p['nome'] ?? ''),
+                'logo'  => tmdb_logo($p['logo'] ?? null),
+                'preco' => $p['preco'] ?? null,
+            ],
+            (array) ($entidade['onde'] ?? [])
+        ),
     ];
 };
 
@@ -63,6 +74,14 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                 'ano'    => $obra['ano'],
                 'tmdb'   => $obra['tmdb_id'] ?? null,
                 'poster' => $obra['poster_url'] ?? null,
+                'onde'   => array_map(
+                    static fn (array $p): array => [
+                        'nome'  => (string) ($p['nome'] ?? ''),
+                        'logo'  => tmdb_logo($p['logo'] ?? null),
+                        'preco' => $p['preco'] ?? null,
+                    ],
+                    (array) ($obra['onde'] ?? [])
+                ),
             ],
             $item['obras'] ?? []
         ),
@@ -399,6 +418,83 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                     <p class="pc-retro__lead" data-reveal style="--d:.2s"><?= e(t('admin.no_data')) ?></p>
                 <?php endif; ?>
             </article>
+
+            <?php if ($retroTemLugar): ?>
+                <?php $c = $retroCap++; ?>
+                <article class="pc-retro__chapter" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
+                         aria-labelledby="retro-titulo-lugar" hidden>
+                    <span class="pc-retro__ghost" aria-hidden="true"><?= str_pad((string) ($c + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                    <span class="pc-retro__eyebrow" data-reveal><?= e(t('retro.place.eyebrow')) ?></span>
+                    <h2 class="pc-retro__display" id="retro-titulo-lugar" data-reveal style="--d:.06s">
+                        <?= e(t('retro.place.title')) ?>
+                    </h2>
+                    <p class="pc-retro__lead" data-reveal style="--d:.14s"><?= e(t('retro.place.lead')) ?></p>
+
+                    <div class="pc-retro__place">
+                        <?php if ($retroPlataforma !== null): ?>
+                            <?php $retroLogo = tmdb_logo($retroPlataforma['logo_path'] ?? null); ?>
+                            <div class="pc-retro__place-card" data-reveal style="--d:.2s">
+                                <span class="pc-retro__place-label"><?= e(t('retro.place.platform')) ?></span>
+
+                                <div class="pc-retro__place-brand">
+                                    <?php if ($retroLogo !== ''): ?>
+                                        <img src="<?= e($retroLogo) ?>" alt="" width="42" height="42" loading="lazy" decoding="async">
+                                    <?php endif; ?>
+                                    <b><?= e($retroPlataforma['nome']) ?></b>
+                                </div>
+
+                                <span class="pc-retro__place-score"><?= pct((float) $retroPlataforma['nota']) ?></span>
+                                <p class="pc-retro__place-line">
+                                    <?= e(t('retro.place.titles', ['n' => numero((int) $retroPlataforma['titulos'], 0)])) ?>
+                                    · <?= e(t('streaming.exclusive', ['n' => numero((int) $retroPlataforma['exclusivos'], 0)])) ?>
+                                </p>
+
+                                <?php if (!empty($retroPlataforma['melhores'])): ?>
+                                    <div class="pc-retro__place-films">
+                                        <?php foreach (array_slice($retroPlataforma['melhores'], 0, 3) as $obraPlace): ?>
+                                            <?php $posterPlace = tmdb_img($obraPlace['poster_path'] ?? null, 'w185'); ?>
+                                            <span class="pc-retro__place-film<?= $posterPlace !== '' ? ' has-poster' : '' ?>"
+                                                  <?php if ($posterPlace !== ''): ?>style="background-image:url('<?= e($posterPlace) ?>')" aria-hidden="true"<?php endif; ?>></span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($retroTrilha !== null): ?>
+                            <div class="pc-retro__place-card" data-reveal style="--d:.28s;--trilha:<?= e($retroTrilha['cor']) ?>">
+                                <span class="pc-retro__place-label"><?= e(t('retro.place.trilha')) ?></span>
+
+                                <div class="pc-retro__place-brand">
+                                    <span class="pc-retro__place-icon"><?= icon((string) $retroTrilha['icone'], 20) ?></span>
+                                    <b><?= e($retroTrilha['nome']) ?></b>
+                                </div>
+
+                                <p class="pc-retro__place-line"><?= e($retroTrilha['descricao']) ?></p>
+
+                                <?php if (!empty($retroTrilha['titulos'])): ?>
+                                    <div class="pc-retro__place-films">
+                                        <?php foreach (array_slice($retroTrilha['titulos'], 0, 4) as $obraPlace): ?>
+                                            <?php $posterPlace = tmdb_img($obraPlace['poster_path'] ?? null, 'w185'); ?>
+                                            <span class="pc-retro__place-film<?= $posterPlace !== '' ? ' has-poster' : '' ?>"
+                                                  <?php if ($posterPlace !== ''): ?>style="background-image:url('<?= e($posterPlace) ?>')" aria-hidden="true"<?php endif; ?>>
+                                                <?php if ($posterPlace === ''): ?>
+                                                    <i><?= e(mb_substr((string) $obraPlace['titulo'], 0, 12)) ?></i>
+                                                <?php endif; ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <a class="pc-retro__start" href="<?= e($retroUrlCompleta) ?>#onde-assistir" data-reveal style="--d:.36s">
+                        <?= icon('arrow-right', 16) ?>
+                        <span><?= e(t('retro.place.cta')) ?></span>
+                    </a>
+                </article>
+            <?php endif; ?>
 
             <?php $c = $retroCap++; ?>
             <article class="pc-retro__chapter pc-retro__chapter--scroll" data-chapter="<?= $c ?>" data-retro-critic

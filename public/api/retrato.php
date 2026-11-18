@@ -71,7 +71,7 @@ try {
         ),
         new LikertCalculatorService(),
         $config
-    ))->montar($codigo);
+    ))->montar($codigo, false);
 
     if ($perfil === null) {
         Http::erro(t('erros.not_found'), 404);
