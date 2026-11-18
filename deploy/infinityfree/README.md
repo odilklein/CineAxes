@@ -36,6 +36,20 @@ deploy/infinityfree/
      avisa quando o snapshot passar do limite; nesse caso divida `catalogo.sql`
      em partes (uma por tabela ou por faixa de ids) e importe em sequência.
 
+### Atualizando um banco que já está no ar
+
+Não importe `personacut.sql` em um banco existente: as tabelas já existem e o
+script falharia no primeiro `CREATE TABLE`. Para habilitar o catálogo:
+
+1. importe `sql/009_catalogo.sql` (cria as tabelas e as plataformas; pode rodar
+   mais de uma vez);
+2. importe `sql/010_catalogo_seed.sql` (obras, gêneros, países, elenco e
+   disponibilidade).
+
+O site continua funcionando entre os dois passos: as seções de streaming,
+trilhas e elenco simplesmente não aparecem enquanto as tabelas não existirem.
+Depois do passo 2, elas passam a ser renderizadas sem precisar de novo deploy.
+
 ## 2. Upload dos arquivos
 
 Envie o projeto para dentro de `htdocs/` **mantendo a pasta `public/`**. A raiz
