@@ -122,6 +122,9 @@ final class CatalogoObra
                 static fn (array $plataforma): int => (int) $plataforma['id'],
                 $obra['plataformas']
             )));
+            // A amplitude depende de país/idioma/década/gênero, que só estão
+            // disponíveis depois dos joins acima.
+            $obra['vetor'][5] = self::amplitude($obra);
         }
         unset($obra);
 
@@ -213,12 +216,62 @@ final class CatalogoObra
         $linha['popularidade'] = (float) $linha['popularidade'];
         $linha['confianca'] = (int) $linha['confianca'];
         $linha['ativo'] = (int) $linha['ativo'] === 1;
-        $linha['vetor'] = Vetor::daLinha($linha);
+        $linha['vetor_legado'] = Vetor::daLinhaLegado($linha);
+        $linha['vetor'] = Vetor::projetar6($linha['vetor_legado']);
 
-        for ($i = 1; $i <= Vetor::EIXOS; $i++) {
+        for ($i = 1; $i <= Vetor::EIXOS_LEGADO; $i++) {
             unset($linha['eixo_' . $i]);
         }
 
         return $linha;
+    }
+
+    /**
+     * Escore heurístico de amplitude de uma obra (0 = circunscrita, 100 = omnívora).
+     *
+     * Não é uma medida do usuário: é um atributo da obra. Serve para o motor de
+     * descoberta saber o quanto um título sai do circuito familiar (EUA/Brasil,
+     * recente, gênero mainstream).
+     */
+    private static function amplitude(array $obra): float
+    {
+        $valor = 50.0;
+        $paises = array_map(
+            static fn (array $pais): string => strtoupper((string) ($pais['codigo'] ?? '')),
+            (array) ($obra['paises'] ?? [])
+        );
+        $temEUA = in_array('US', $paises, true);
+        $temBrasil = in_array('BR', $paises, true);
+
+        if ($paises !== [] && !$temEUA && !$temBrasil) {
+            $valor += 15;
+        } elseif ($paises !== [] && !$temEUA) {
+            $valor += 8;
+        }
+
+        $ano = (int) ($obra['ano'] ?? 0);
+
+        if ($ano > 0 && $ano < 1980) {
+            $valor += 12;
+        } elseif ($ano > 0 && $ano < 2000) {
+            $valor += 6;
+        }
+
+        $generos = array_map(
+            static fn (array $genero): int => (int) ($genero['id'] ?? 0),
+            (array) ($obra['generos'] ?? [])
+        );
+
+        if (array_intersect($generos, [99, 36, 10752, 37, 27]) !== []) {
+            $valor += 8;
+        }
+
+        $idioma = strtolower((string) ($obra['idioma_original'] ?? ''));
+
+        if ($idioma !== '' && !in_array($idioma, ['en', 'pt', 'es'], true)) {
+            $valor += 5;
+        }
+
+        return round(max(0.0, min(100.0, $valor)), 2);
     }
 }

@@ -6,18 +6,18 @@ use Core\Radar;
 
 require_once __DIR__ . '/_assert.php';
 
-$rotulos = ['Estética', 'Tom', 'Universo', 'Ritmo', 'Moralidade', 'Estrutura', 'Atmosfera', 'Época'];
-$valores = [20, 80, 50, 40, 90, 10, 60, 30];
+$rotulos = ['Estética', 'Tom', 'Mundo', 'Ritmo', 'Escala', 'Amplitude'];
+$valores = [20, 80, 50, 40, 90, 10];
 
-teste('radar gera um svg com oito eixos', function () use ($rotulos, $valores): void {
+teste('radar gera um svg com seis eixos', function () use ($rotulos, $valores): void {
     $svg = Radar::render($rotulos, [
         ['nome' => 'Seu perfil', 'valores' => $valores, 'cor' => '#53201c'],
     ]);
 
     afirmar(str_contains($svg, '<svg'), 'svg ausente');
-    igual(8, substr_count($svg, 'class="pc-radar-label"'), 'rótulos');
-    igual(8, substr_count($svg, 'class="pc-radar-ponto"'), 'pontos');
-    afirmar(substr_count($svg, 'pc-radar-raio') === 8, 'raios');
+    igual(6, substr_count($svg, 'class="pc-radar-label"'), 'rótulos');
+    igual(6, substr_count($svg, 'class="pc-radar-ponto"'), 'pontos');
+    afirmar(substr_count($svg, 'pc-radar-raio') === 6, 'raios');
     afirmar(str_contains($svg, 'pc-radar-anel--neutro'), 'anel neutro');
 });
 

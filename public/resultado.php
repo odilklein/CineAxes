@@ -7,16 +7,25 @@ declare(strict_types=1);
 $config = require dirname(__DIR__) . '/src/bootstrap.php';
 
 use Controllers\PerfilController;
+use Core\Auth;
 use Core\Database;
 use Core\Radar;
+use Models\Bookmark;
 use Services\LikertCalculatorService;
 use Services\MatcherService;
 
 $codigoParam = $_GET['codigo'] ?? '';
 $codigo = is_string($codigoParam) ? strtoupper(trim($codigoParam)) : '';
 
+$mixParam = $_GET['mix'] ?? 'misturado';
+$mix = is_string($mixParam) && in_array($mixParam, ['classicos', 'misturado', 'descobertas'], true)
+    ? $mixParam
+    : 'misturado';
+
 $perfil = null;
 $erro = null;
+$bookmarks = [];
+$authLogado = Auth::logado();
 
 if ($codigo !== '') {
     try {
@@ -27,9 +36,74 @@ if ($codigo !== '') {
         );
 
         $perfil = (new PerfilController($pdo, $matcher, new LikertCalculatorService(), $config))
-            ->montar($codigo);
+            ->montar($codigo, true, $mix);
+        $bookmarks = Bookmark::mapa($pdo, Auth::id());
     } catch (Throwable $erroCapturado) {
         $erro = $erroCapturado;
+    }
+}
+
+$narrativaSalva = $perfil['retrato_salvo']['narrativa'] ?? null;
+
+$filmesMapa = [];
+$addFilme = static function (array $filme) use (&$filmesMapa): void {
+    $titulo = trim((string) ($filme['titulo'] ?? ''));
+
+    if ($titulo === '') {
+        return;
+    }
+
+    $tmdb = (int) ($filme['tmdb'] ?? $filme['tmdb_id'] ?? 0);
+    $poster = $filme['poster'] ?? $filme['poster_url'] ?? null;
+
+    if (($poster === null || $poster === '') && !empty($filme['poster_path'])) {
+        $poster = tmdb_img($filme['poster_path'], 'w342');
+    }
+
+    $item = [
+        'tipo' => 'catalogo',
+        'serie' => (string) ($filme['tipo'] ?? 'filme') === 'serie',
+        'titulo' => $titulo,
+        'ano' => $filme['ano'] ?? null,
+        'poster' => $poster !== '' ? $poster : null,
+        'tmdb' => $tmdb,
+    ];
+
+    $chaves = [mb_strtolower($titulo)];
+    $curto = preg_split('/\s*[:\-–—]\s*/u', $titulo)[0] ?? '';
+
+    if (mb_strlen($curto) >= 5 && $curto !== $titulo) {
+        $chaves[] = mb_strtolower($curto);
+    }
+
+    foreach ($chaves as $chave) {
+        if (!isset($filmesMapa[$chave])) {
+            $filmesMapa[$chave] = $item;
+        }
+    }
+};
+
+foreach ((array) ($perfil['filmes_top'] ?? []) as $filme) {
+    $addFilme($filme);
+}
+
+foreach ((array) ($perfil['descobertas'] ?? []) as $filme) {
+    $addFilme($filme);
+}
+
+foreach ((array) ($perfil['estante'] ?? []) as $filme) {
+    $addFilme($filme);
+}
+
+foreach (['diretor', 'estudio'] as $ancora) {
+    foreach ((array) ($perfil[$ancora]['obras'] ?? []) as $filme) {
+        $addFilme($filme);
+    }
+}
+
+foreach ((array) ($perfil['leituras'] ?? []) as $leitura) {
+    foreach ((array) ($leitura['combina'] ?? []) as $filme) {
+        $addFilme($filme);
     }
 }
 
@@ -40,8 +114,9 @@ $paginaTitulo = $perfil !== null
     ? $tituloPerfil . ' — PersonaCut'
     : t('resultado.title') . ' — PersonaCut';
 
-$scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js', 'trilhas.js'];
-$vendorScripts = ['html2canvas.min.js'];
+$vendorStyles = ['swiper/swiper-bundle.min.css'];
+$scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js', 'carrossel.js', 'bookmark.js', 'filmes-links.js'];
+$vendorScripts = ['swiper/swiper-bundle.min.js', 'html2canvas.min.js'];
 $temGroq = trim((string) ($config['groq']['api_key'] ?? '')) !== ''
     && (bool) ($config['groq']['enabled'] ?? false);
 
@@ -49,12 +124,14 @@ $temGroq = trim((string) ($config['groq']['api_key'] ?? '')) !== ''
 // A retrospectiva só entra quando o pacote dela está completo no disco; assim a
 // página nunca cai num 404 de CSS/JS nem num layout sem estilo.
 $modoParam = $_GET['modo'] ?? '';
-$modoCompleto = is_string($modoParam) && mb_strtolower(trim($modoParam)) === 'completo';
+// A análise é a página padrão; a retrospectiva é opt-in (?modo=retro).
+$modoRetro = is_string($modoParam) && mb_strtolower(trim($modoParam)) === 'retro';
+$modoCompleto = !$modoRetro;
 $temRetro = is_file(__DIR__ . '/partials/resultado/retro.php')
     && is_file(dirname(__DIR__) . '/public/assets/css/retro.css')
     && is_file(dirname(__DIR__) . '/public/assets/js/retro.js');
 
-if ($perfil !== null && !$modoCompleto && $temRetro) {
+if ($perfil !== null && $modoRetro && $temRetro) {
     $scriptsExtras[] = 'retro.js';
     $estilosExtras = ['retro.css'];
     $bodyClass = 'pc-story-open';
@@ -86,6 +163,13 @@ if ($perfil !== null) {
 require __DIR__ . '/partials/head.php';
 require __DIR__ . '/partials/header.php';
 ?>
+
+<?php if (is_array($narrativaSalva)): ?>
+    <script type="application/json" data-narrativa-salva><?= json_encode($narrativaSalva, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+<?php endif; ?>
+<?php if ($filmesMapa !== []): ?>
+    <script type="application/json" data-filmes-mapa><?= json_encode($filmesMapa, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+<?php endif; ?>
 
 <?php if ($erro !== null): ?>
     <section class="pc-section">
@@ -119,7 +203,7 @@ require __DIR__ . '/partials/header.php';
         </div>
     </section>
 <?php else: ?>
-    <?php if (!$modoCompleto && $temRetro): ?>
+    <?php if ($modoRetro && $temRetro): ?>
         <?php require __DIR__ . '/partials/resultado/retro.php'; ?>
     <?php endif; ?>
     <?php require __DIR__ . '/partials/resultado/analise.php'; ?>

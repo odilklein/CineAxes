@@ -10,14 +10,12 @@ require_once __DIR__ . '/_assert.php';
 function linhasDeTeste(array $pcts, array $polos = []): array
 {
     $eixos = [
-        ['slug' => 'estetica', 'nome' => 'Imagem'],
-        ['slug' => 'tom', 'nome' => 'Emoção'],
-        ['slug' => 'universo', 'nome' => 'Mundo'],
+        ['slug' => 'estetica', 'nome' => 'Estética'],
+        ['slug' => 'tom', 'nome' => 'Tom'],
+        ['slug' => 'mundo', 'nome' => 'Mundo'],
         ['slug' => 'ritmo', 'nome' => 'Ritmo'],
-        ['slug' => 'moralidade', 'nome' => 'Ética'],
-        ['slug' => 'estrutura', 'nome' => 'História'],
-        ['slug' => 'atmosfera', 'nome' => 'Tamanho'],
-        ['slug' => 'epoca', 'nome' => 'Época'],
+        ['slug' => 'escala', 'nome' => 'Escala'],
+        ['slug' => 'amplitude', 'nome' => 'Amplitude'],
     ];
 
     $linhas = [];
@@ -25,13 +23,14 @@ function linhasDeTeste(array $pcts, array $polos = []): array
     foreach ($eixos as $indice => $eixo) {
         $pctDir = (float) ($pcts[$indice] ?? 50);
         $polo = $polos[$indice] ?? ($pctDir >= 50 ? 'D' : 'E');
+        $distancia = abs($pctDir - 50);
 
         $linhas[] = [
             'eixo' => $eixo,
             'pct_dir' => $pctDir,
             'pct_esq' => 100 - $pctDir,
             'polo' => $polo,
-            'intensidade' => abs($pctDir - 50) >= 20 ? 'purista' : (abs($pctDir - 50) >= 8 ? 'tendencia' : 'equilibrado'),
+            'intensidade' => $distancia >= 20 ? 'purista' : ($distancia >= 8 ? 'tendencia' : 'equilibrado'),
             'cor' => '#8A6A45',
             'cor_esq' => '#8A6A45',
             'cor_dir' => '#5E7F6A',
@@ -47,28 +46,28 @@ $config = require dirname(__DIR__) . '/config/leituras.php';
 $service = new LeituraService($config);
 
 teste('leitura escolhe os quatro eixos mais distantes do neutro', function () use ($service): void {
-    $linhas = linhasDeTeste([50, 52, 55, 48, 70, 90, 60, 50]);
+    $linhas = linhasDeTeste([50, 60, 55, 48, 70, 90]);
     $leituras = $service->selecionar($linhas);
 
     igual(4, count($leituras));
-    igual('estrutura', $leituras[0]['slug']);
-    igual('moralidade', $leituras[1]['slug']);
-    igual('atmosfera', $leituras[2]['slug']);
-    igual('universo', $leituras[3]['slug']);
+    igual('amplitude', $leituras[0]['slug']);
+    igual('escala', $leituras[1]['slug']);
+    igual('tom', $leituras[2]['slug']);
+    igual('mundo', $leituras[3]['slug']);
 });
 
 teste('leitura usa o polo real do eixo', function () use ($service): void {
-    $linhas = linhasDeTeste([50, 50, 50, 50, 50, 67, 50, 50]);
+    $linhas = linhasDeTeste([50, 50, 50, 50, 50, 67]);
     $leitura = $service->selecionar($linhas)[0];
 
-    igual('História', $leitura['eixo']);
+    igual('Amplitude', $leitura['eixo']);
     igual('Direita', $leitura['polo']);
-    igual('Você não quer que a história entregue tudo pronto.', $leitura['manchete']);
+    igual('Você busca o que ainda não viu.', $leitura['manchete']);
     proximo(67.0, (float) $leitura['pct']);
 });
 
 teste('perfil de trânsito recebe a leitura neutra', function () use ($service): void {
-    $linhas = linhasDeTeste([50, 51, 49, 50, 52, 48, 51, 49]);
+    $linhas = linhasDeTeste([50, 51, 49, 50, 52, 48]);
     $leituras = $service->selecionar($linhas);
 
     igual(1, count($leituras));
@@ -77,27 +76,27 @@ teste('perfil de trânsito recebe a leitura neutra', function () use ($service):
 });
 
 teste('força acompanha a distância do centro', function () use ($service): void {
-    $leituras = $service->selecionar(linhasDeTeste([50, 50, 50, 50, 50, 90, 50, 50]));
+    $leituras = $service->selecionar(linhasDeTeste([50, 50, 50, 50, 50, 90]));
     igual('traço forte', $leituras[0]['forca']);
 
-    $leituras = $service->selecionar(linhasDeTeste([50, 50, 50, 50, 50, 62, 50, 50]));
+    $leituras = $service->selecionar(linhasDeTeste([50, 50, 50, 50, 50, 62]));
     igual('traço claro', $leituras[0]['forca']);
 });
 
 teste('espelho é escolhido no mesmo lado do eixo', function () use ($service): void {
     $personagens = [
-        ['nome' => 'Do lado direito', 'obra_origem' => 'Filme A', 'ano' => 2001, 'vetor' => [50, 50, 50, 50, 50, 88, 50, 50]],
-        ['nome' => 'Do lado esquerdo', 'obra_origem' => 'Filme B', 'ano' => 1999, 'vetor' => [50, 50, 50, 50, 50, 12, 50, 50]],
-        ['nome' => 'No meio', 'obra_origem' => 'Filme C', 'ano' => 2010, 'vetor' => array_fill(0, 8, 50.0)],
+        ['nome' => 'Do lado direito', 'obra_origem' => 'Filme A', 'ano' => 2001, 'vetor' => [50, 50, 50, 50, 50, 88]],
+        ['nome' => 'Do lado esquerdo', 'obra_origem' => 'Filme B', 'ano' => 1999, 'vetor' => [50, 50, 50, 50, 50, 12]],
+        ['nome' => 'No meio', 'obra_origem' => 'Filme C', 'ano' => 2010, 'vetor' => array_fill(0, 6, 50.0)],
     ];
 
-    $leitura = $service->selecionar(linhasDeTeste([50, 50, 50, 50, 50, 80, 50, 50]), $personagens)[0];
+    $leitura = $service->selecionar(linhasDeTeste([50, 50, 50, 50, 50, 80]), $personagens)[0];
 
     igual('Do lado direito', $leitura['espelho']['nome']);
 });
 
-teste('config cobre os oito eixos com conteúdo completo', function () use ($config): void {
-    igual(8, count($config['eixos']));
+teste('config cobre os seis eixos com conteúdo completo', function () use ($config): void {
+    igual(6, count($config['eixos']));
 
     foreach ($config['eixos'] as $slug => $polos) {
         foreach (['e', 'd'] as $polo) {

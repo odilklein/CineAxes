@@ -82,6 +82,7 @@ final class QuizController
             'idioma'        => 'pt-BR',
             'modo'          => $modo,
             'respostas_json' => json_encode($limpas, JSON_UNESCAPED_UNICODE),
+            'questionario_versao' => Pergunta::VERSAO,
             'vetor'         => $vetor,
             'arquetipo_id'  => $resolucao['arquetipo']['id'] ?? null,
             'origem'        => 'real',

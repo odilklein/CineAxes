@@ -1,3 +1,7 @@
+> **Nota v2.** O ETL do catálogo ainda grava o vetor editorial de **8 eixos**;
+> o app projeta para os **6 eixos ativos** (`Core\Vetor::projetar6`) ao carregar
+> as obras. A descoberta usa piso de qualidade, mistura 60/40 e diversidade.
+
 # Recomendação, trilhas e streaming
 
 Este documento explica como o PersonaCut transforma o vetor de 8 eixos em
@@ -39,7 +43,11 @@ Abaixo de `confianca_minima` (25) a obra não entra no ranking de plataformas.
 
 A afinidade usa `MatcherService::compatibilidade()`, a mesma régua dos espelhos.
 Ela é generosa com obras perto do centro: quase todo título moderado fica em
-torno de 75%.
+torno de 75%. Por isso a afinidade **não é exibida como porcentagem**: ela serve
+para ordenar, e o corte usado no catálogo é relativo ao próprio perfil
+(`corteAdaptativo()`: afinidade na posição "top 20%", com piso de 40 títulos).
+Isso corrige o caso em que um perfil extremo não tinha nenhum título acima do
+limiar fixo de 62.
 
 Para diferenciar **lado do mapa**, o serviço também calcula o cosseno dos vetores
 centrados (`alinhamento`, de -1 a 1). Um perfil contemplativo tem alinhamento
@@ -55,7 +63,8 @@ Regras:
 
 - um título entra na **primeira** trilha compatível, na ordem do arquivo;
 - só entram obras com pelo menos uma plataforma ativa (o card precisa ter ação);
-- a trilha precisa de `min_titulos_trilha` (3) títulos com afinidade ≥ 62;
+- a trilha precisa de `min_titulos_trilha` (3) títulos acima do corte adaptativo
+  do perfil (não mais o 62 fixo);
 - o card mostra até `max_titulos_trilha` (6), ordenados por afinidade;
 - o encaixe do card é a média do alinhamento dos 3 melhores títulos,
   normalizada para 0–100 (`50 + 50 × alinhamento`);
@@ -103,6 +112,21 @@ nota_trilha = afinidade_média × log(1 + títulos) × (0,2 + 0,8 × títulos / 
 Assim a MUBI pode ganhar "cinema francês" com 40 títulos (50% do acervo dela),
 mesmo que a Netflix tenha mais títulos franceses no total. O mínimo é 5 títulos
 na trilha.
+
+### A pergunta que o usuário faz: quantos serviços?
+
+`PlataformaRankingService::combinacao()` calcula a **cobertura de conjunto** dos
+50 títulos mais próximos do perfil. Ele testa cada serviço sozinho e cada par, e
+devolve quantos dos 50 cada opção cobre e por qual preço. É a diferença entre
+"Netflix tem nota 78,7" e "Netflix + MUBI cobrem 78% dos seus 50 melhores por
+R$ 55/mês". A nota continua existindo para ordenar, mas a decisão de assinatura
+passa a ser explícita.
+
+### O que a nota não é
+
+O encaixe é um índice ponderado (40% relevância, 25% acervo, 15% exclusivos,
+10% variedade, 10% preço), não uma probabilidade. A interface declara isso no
+rodapé da seção. Os pesos são calibráveis em `config/recomendacao.php`.
 
 ## 4. Elenco
 

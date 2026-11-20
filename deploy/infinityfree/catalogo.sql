@@ -1,6 +1,6 @@
 -- =============================================================================
 -- PersonaCut — catálogo audiovisual
--- Gerado em 2026-11-18 20:10:19 por bin/deploy_pacote.php
+-- Gerado em 2026-11-20 02:00:05 por bin/deploy_pacote.php
 -- Fontes: sql/010_catalogo_seed.sql
 -- Importe primeiro personacut.sql e depois catalogo.sql.
 -- =============================================================================

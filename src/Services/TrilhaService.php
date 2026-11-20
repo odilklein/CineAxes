@@ -25,12 +25,13 @@ final class TrilhaService
     /**
      * @param list<array<string, mixed>> $obras  já com `afinidade` e `trilha`
      * @param array<int, list<array<string, mixed>>> $onde mapa "onde assistir"
+     * @param float|null $afinidadeMinima corte relativo do perfil; null usa o config
      * @return list<array<string, mixed>>
      */
-    public function montar(array $obras, array $onde = []): array
+    public function montar(array $obras, array $onde = [], ?float $afinidadeMinima = null): array
     {
         $limiares = (array) ($this->config['limiares'] ?? []);
-        $afinidadeMinima = (float) ($limiares['afinidade'] ?? 62.0);
+        $afinidadeMinima ??= (float) ($limiares['afinidade'] ?? 62.0);
         $minTitulos = max(1, (int) ($limiares['min_titulos_trilha'] ?? 3));
         $maxTitulos = max(1, (int) ($limiares['max_titulos_trilha'] ?? 6));
         $maxCards = max(1, (int) ($limiares['max_cards'] ?? 6));

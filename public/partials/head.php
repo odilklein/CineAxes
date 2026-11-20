@@ -13,6 +13,7 @@ $paginaTitulo    = $paginaTitulo ?? t('meta.title');
 $paginaDescricao = $paginaDescricao ?? t('meta.description');
 $bodyClass       = $bodyClass ?? '';
 $estilosExtras   = $estilosExtras ?? [];
+$vendorStyles    = $vendorStyles ?? [];
 ?>
 <!doctype html>
 <html lang="pt-BR" data-theme="light">
@@ -22,6 +23,7 @@ $estilosExtras   = $estilosExtras ?? [];
     <title><?= e($paginaTitulo) ?></title>
     <meta name="description" content="<?= e($paginaDescricao) ?>">
     <meta name="theme-color" content="#0c3b2e">
+    <meta name="csrf-token" content="<?= e(\Core\Csrf::token()) ?>">
     <meta property="og:type" content="website">
     <meta property="og:title" content="<?= e($paginaTitulo) ?>">
     <meta property="og:description" content="<?= e($paginaDescricao) ?>">
@@ -32,6 +34,10 @@ $estilosExtras   = $estilosExtras ?? [];
     <script src="<?= asset('js/theme.js') ?>"></script>
 
     <link rel="stylesheet" href="<?= asset('vendor/vuexy/core.css') ?>">
+    <?php foreach ($vendorStyles as $vendorStyle): ?>
+    <link rel="stylesheet" href="<?= asset('vendor/' . $vendorStyle) ?>">
+    <?php endforeach; ?>
+    <link rel="stylesheet" href="<?= asset('css/device-iphone.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/personacut.css') ?>">
     <?php foreach ($estilosExtras as $estilo): ?>
     <link rel="stylesheet" href="<?= asset('css/' . $estilo) ?>">

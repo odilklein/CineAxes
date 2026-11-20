@@ -1,0 +1,544 @@
+/* =============================================================================
+   PersonaCut — painel administrativo (layout Vuexy + identidade do site)
+   ========================================================================== */
+
+body.pc-admin-vuexy {
+  --bs-primary: var(--pc-primary);
+  --bs-primary-rgb: 83, 32, 28;
+  --bs-link-color: var(--pc-primary);
+  --bs-link-hover-color: var(--pc-primary-2);
+  min-height: 100vh;
+  background: var(--pc-bg-2);
+  color: var(--pc-ink);
+}
+
+body.pc-admin-vuexy .layout-wrapper,
+body.pc-admin-vuexy .layout-container { min-height: 100vh; }
+
+body.pc-admin-vuexy #layout-menu {
+  background: var(--pc-surface);
+  border-right: 1px solid var(--pc-line);
+}
+
+body.pc-admin-vuexy #layout-menu .app-brand {
+  padding: 1.1rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--pc-line);
+}
+
+body.pc-admin-vuexy .app-brand-link { color: var(--pc-ink); }
+body.pc-admin-vuexy .app-brand-link:hover { color: var(--pc-primary); }
+
+.pc-admin__brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--pc-primary);
+  color: var(--pc-primary-ink);
+  font-family: var(--pc-serif);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+body.pc-admin-vuexy .app-brand-text {
+  font-family: var(--pc-serif);
+  font-size: 21px;
+  letter-spacing: -0.04em;
+}
+
+body.pc-admin-vuexy .app-brand-text span { font-weight: 400; }
+
+body.pc-admin-vuexy #layout-menu .menu-inner {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding-block: 0.25rem 0.75rem;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-header {
+  padding-block: 1.15rem 0.4rem;
+  padding-inline: 1.4rem;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-header-text {
+  color: var(--pc-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item {
+  margin-block-start: 0.1rem;
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item > .menu-link {
+  margin-inline: 0.7rem;
+  border-radius: 0.55rem;
+  color: var(--pc-ink-2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item > .menu-link .menu-icon {
+  color: var(--pc-muted);
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item:not(.active) > .menu-link:hover {
+  background: var(--pc-bg);
+  color: var(--pc-ink);
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item:not(.active) > .menu-link:hover .menu-icon {
+  color: var(--pc-primary);
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item.active > .menu-link {
+  background: var(--pc-primary-soft);
+  color: var(--pc-primary);
+  font-weight: 700;
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item.active > .menu-link .menu-icon {
+  color: var(--pc-primary);
+}
+
+body.pc-admin-vuexy #layout-menu.menu-vertical .menu-inner > .menu-item.active > .menu-link::before {
+  position: absolute;
+  content: '';
+  inset-block: 0.55rem;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--pc-primary);
+}
+
+body.pc-admin-vuexy #layout-menu .menu-item.disabled > .menu-link {
+  opacity: 0.55;
+  cursor: default;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-item .badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user {
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--pc-line);
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.6rem;
+  background: var(--pc-bg-2);
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-name,
+body.pc-admin-vuexy #layout-menu .menu-user-email {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-name {
+  color: var(--pc-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-email {
+  color: var(--pc-muted);
+  font-size: 10.5px;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-logout { margin: 0; }
+
+body.pc-admin-vuexy #layout-menu .menu-user-logout button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pc-muted);
+}
+
+body.pc-admin-vuexy #layout-menu .menu-user-logout button:hover {
+  background: var(--pc-surface);
+  color: var(--pc-primary);
+}
+
+body.pc-admin-vuexy .layout-navbar.navbar-detached {
+  margin-top: 1rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.7rem;
+  background: var(--pc-surface);
+  box-shadow: var(--pc-shadow-sm);
+}
+
+body.pc-admin-vuexy .pc-admin__search {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 34px;
+  padding: 0 0.8rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.45rem;
+  background: var(--pc-bg-2);
+  color: var(--pc-muted);
+  font-size: 12px;
+}
+
+body.pc-admin-vuexy .pc-admin__search .pc-ico { color: var(--pc-muted); }
+
+body.pc-admin-vuexy .content-wrapper.container-p-y {
+  padding-top: 1.1rem;
+  padding-bottom: 2rem;
+}
+
+body.pc-admin-vuexy .pc-admin__main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.pc-admin-vuexy .pc-admin__head { margin-bottom: 1.15rem; }
+body.pc-admin-vuexy .pc-admin__head h1 {
+  font-family: var(--pc-serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+body.pc-admin-vuexy .pc-admin__head h2 { font-size: 18px; }
+body.pc-admin-vuexy .pc-admin__head p { margin-top: 0.25rem; }
+
+body.pc-admin-vuexy .pc-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+body.pc-admin-vuexy .pc-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 86px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.65rem;
+  background: var(--pc-surface);
+  box-shadow: var(--pc-shadow-sm);
+}
+
+body.pc-admin-vuexy .pc-stat__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 0.55rem;
+  background: var(--pc-primary-soft);
+  color: var(--pc-primary);
+}
+
+body.pc-admin-vuexy .pc-stat span {
+  color: var(--pc-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.pc-admin-vuexy .pc-stat b {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--pc-ink);
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+body.pc-admin-vuexy .pc-panel {
+  padding: 1.15rem 1.2rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.65rem;
+  background: var(--pc-surface);
+  box-shadow: var(--pc-shadow-sm);
+}
+
+body.pc-admin-vuexy .pc-panel__head { margin-bottom: 0.9rem; }
+body.pc-admin-vuexy .pc-panel__head h2 { font-size: 16px; }
+body.pc-admin-vuexy .pc-panel__head p { font-size: 11.5px; }
+
+body.pc-admin-vuexy .pc-result__grid { gap: 1rem; }
+
+body.pc-admin-vuexy .pc-table-wrap {
+  border: 1px solid var(--pc-line);
+  border-radius: 0.6rem;
+  background: var(--pc-surface);
+  overflow: hidden;
+}
+
+body.pc-admin-vuexy .pc-table { margin: 0; font-size: 12.5px; }
+
+body.pc-admin-vuexy .pc-table th,
+body.pc-admin-vuexy .pc-table td {
+  padding: 0.7rem 0.9rem;
+  border-color: var(--pc-line);
+}
+
+body.pc-admin-vuexy .pc-table th {
+  background: var(--pc-bg-2);
+  color: var(--pc-muted);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+body.pc-admin-vuexy .pc-table tbody tr { transition: background-color 0.15s ease; }
+body.pc-admin-vuexy .pc-table tbody tr:hover { background: var(--pc-bg-2); }
+
+body.pc-admin-vuexy .pc-table__empty {
+  padding: 2rem 1rem !important;
+  color: var(--pc-muted);
+  text-align: center;
+}
+
+/* Barra de ferramentas das tabelas */
+.pc-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--pc-line);
+  background: var(--pc-surface);
+}
+
+.pc-table-toolbar__search { flex: 1 1 220px; min-width: 180px; }
+
+.pc-table-toolbar .form-control,
+.pc-table-toolbar .form-select {
+  height: 34px;
+  border-color: var(--pc-line);
+  border-radius: 0.4rem;
+  background-color: var(--pc-bg-2);
+  color: var(--pc-ink);
+  font-size: 12px;
+}
+
+.pc-table-toolbar .form-control::placeholder { color: var(--pc-muted); }
+.pc-table-toolbar .form-select { width: auto; }
+.pc-table-toolbar .btn { height: 34px; padding: 0 0.7rem; font-size: 12px; }
+
+.pc-table-toolbar__count {
+  margin-left: auto;
+  color: var(--pc-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.pc-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.pc-table-sort::after {
+  content: '↕';
+  color: var(--pc-muted);
+  font-size: 10px;
+  opacity: 0.55;
+}
+
+.pc-table-sort[data-dir='asc']::after { content: '↑'; opacity: 1; color: var(--pc-primary); }
+.pc-table-sort[data-dir='desc']::after { content: '↓'; opacity: 1; color: var(--pc-primary); }
+
+.pc-table-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 0.7rem 0.9rem;
+  border-top: 1px solid var(--pc-line);
+}
+
+.pc-table-pagination button {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 0.45rem;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--pc-ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pc-table-pagination button:hover:not(:disabled) {
+  border-color: var(--pc-primary);
+  color: var(--pc-primary);
+}
+
+.pc-table-pagination button:disabled { opacity: 0.4; cursor: default; }
+.pc-table-pagination button.is-active {
+  border-color: var(--pc-primary);
+  background: var(--pc-primary);
+  color: var(--pc-primary-ink);
+}
+
+.pc-table-pagination__info {
+  margin-right: auto;
+  color: var(--pc-muted);
+  font-size: 12px;
+}
+
+/* Placeholders de módulos futuros */
+.pc-admin__placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.pc-admin__placeholder {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px dashed var(--pc-line-2);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--pc-surface) 70%, transparent);
+}
+
+.pc-admin__placeholder .pc-stat__icon {
+  width: 36px;
+  height: 36px;
+  background: var(--pc-bg);
+  color: var(--pc-muted);
+}
+
+.pc-admin__placeholder b { display: block; font-size: 13px; }
+.pc-admin__placeholder small { color: var(--pc-muted); font-size: 11.5px; }
+.pc-admin__placeholder .badge { font-size: 10px; }
+
+body.pc-admin-vuexy .pc-feature {
+  border: 1px solid var(--pc-line);
+  border-radius: 0.65rem;
+  background: var(--pc-surface);
+  box-shadow: var(--pc-shadow-sm);
+}
+
+body.pc-admin-vuexy .pc-feature:hover {
+  border-color: var(--pc-primary);
+  box-shadow: var(--pc-shadow);
+}
+
+body.pc-admin-vuexy .pc-login { background: var(--pc-bg-2); }
+
+@media (max-width: 1199px) {
+  body.pc-admin-vuexy .pc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pc-admin__placeholder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px) {
+  body.pc-admin-vuexy .layout-navbar.navbar-detached { margin-top: 0.6rem; border-radius: 0.5rem; }
+  body.pc-admin-vuexy .pc-admin__head h1 { font-size: 24px; }
+  body.pc-admin-vuexy .pc-stats { grid-template-columns: 1fr; }
+  .pc-admin__placeholder-grid { grid-template-columns: 1fr; }
+  .pc-table-toolbar__count { margin-left: 0; }
+}
+
+body.pc-admin-vuexy #layout-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+body.pc-admin-vuexy #layout-menu .menu-inner {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pc-admin__theme-moon { display: inline-flex; }
+.pc-admin__theme-sun { display: none; }
+[data-theme='dark'] .pc-admin__theme-moon { display: none; }
+[data-theme='dark'] .pc-admin__theme-sun { display: inline-flex; }
+
+@media (max-width: 575px) {
+  .pc-admin__search { display: none !important; }
+}
+
+.dropdown-menu.show { display: block; }
+
+body.pc-admin-vuexy .navbar-dropdown { position: relative; }
+
+body.pc-admin-vuexy .navbar-dropdown > .dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  left: auto;
+  z-index: 1055;
+  min-width: 220px;
+  margin: 0;
+  border: 1px solid var(--pc-line);
+  border-radius: 0.6rem;
+  background: var(--pc-surface);
+  box-shadow: var(--pc-shadow);
+}
+
+body.pc-admin-vuexy .navbar-dropdown > .dropdown-menu .dropdown-item {
+  color: var(--pc-ink);
+  font-size: 12.5px;
+}
+
+body.pc-admin-vuexy .navbar-dropdown > .dropdown-menu .dropdown-item:hover {
+  background: var(--pc-bg);
+  color: var(--pc-primary);
+}
+
+body.pc-admin-vuexy .pc-result__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.pc-admin-vuexy .pc-result__grid > *,
+body.pc-admin-vuexy .pc-panel,
+body.pc-admin-vuexy .pc-table-wrap,
+body.pc-admin-vuexy .pc-table-toolbar {
+  min-width: 0;
+}
+
+body.pc-admin-vuexy .pc-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+  body.pc-admin-vuexy .pc-result__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+}

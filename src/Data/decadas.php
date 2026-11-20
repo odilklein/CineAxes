@@ -123,7 +123,7 @@ return [
     ],
     2010 => [
         'epiteto' => 'Streaming e prestígio',
-        'descricao' => 'A série vira cinema de autor e o algoritmo começa a recomendar o próximo filme.',
+        'descricao' => 'A série vira cinema de autor e a plataforma começa a recomendar o próximo filme.',
         'curiosidade' => 'Os serviços de streaming mudaram a janela de exibição: estrear direto em casa deixou de ser vergonha. Em 2019, "Parasita" se tornou o primeiro filme de língua não inglesa a ganhar o Oscar de melhor filme.',
         'marcos' => [
             ['titulo' => 'Mad Max: Estrada da Fúria', 'ano' => 2015],

@@ -3,21 +3,24 @@
 declare(strict_types=1);
 
 /**
- * Card 9:16 do perfil. Reaproveitado na análise completa e no capítulo final
+ * Card vertical do perfil. Reaproveitado na análise completa e no capítulo final
  * da retrospectiva. Depende de $codigo, $tituloPerfil e $perfil.
  *
- * A partir desta versão, o card não mostra os 8 eixos: mostra as marcas que o
+ * A partir desta versão, o card não mostra os 6 eixos: mostra as marcas que o
  * perfil gerou. A leitura técnica fica na análise completa.
  */
 
-$storyChars = array_slice($perfil['personagens'], 0, 3);
+$storyChars = array_slice($perfil['filmes_top'] ?? $perfil['personagens'] ?? [], 0, 3);
 $storyFilms = array_slice($perfil['estante'], 0, 3);
 $storyMarks = array_slice($perfil['leituras'] ?? [], 0, 4);
 $storyTotalMarcas = count($perfil['leituras'] ?? []);
 $storyPlataforma = $perfil['plataformas'][0] ?? null;
 $storyTrilha = $perfil['trilhas'][0] ?? null;
+$storyGhost = !empty($storyGhost);
 ?>
-<div class="pc-story" data-story data-codigo="<?= e($codigo) ?>">
+<div class="pc-story<?= $storyGhost ? ' pc-story--ghost' : '' ?>"<?= $storyGhost
+    ? ' aria-hidden="true"'
+    : ' data-story data-codigo="' . e($codigo) . '"' ?>>
     <div class="pc-story__top">
         <span class="pc-story__brand">PersonaCut</span>
         <span class="pc-story__kicker"><?= e(t('resultado.story_kicker')) ?></span>
@@ -39,8 +42,18 @@ $storyTrilha = $perfil['trilhas'][0] ?? null;
 
     <h2 class="pc-story__title"><?= e($tituloPerfil) ?></h2>
     <p class="pc-story__meta">
-        <?= pct($perfil['afinidade_media']) ?> <?= e(t('resultado.affinity')) ?>
-        · <?= e($codigo) ?>
+        <?php $storyTopo = $perfil['personagens'][0] ?? null; ?>
+        <?php $storyRankKey = ($perfil['confianca']['rotulo'] ?? '') === 'baixa'
+            ? 'resultado.story_rank_low'
+            : 'resultado.story_rank'; ?>
+        <?php if ($storyTopo !== null): ?>
+            <span><?= e(t($storyRankKey, [
+                'posicao' => (int) ($storyTopo['posicao'] ?? 1),
+                'de' => (int) ($storyTopo['de'] ?? ($perfil['personagens_total'] ?? count($perfil['personagens'] ?? []))),
+            ])) ?></span>
+            <i aria-hidden="true">·</i>
+        <?php endif; ?>
+        <span><?= e($codigo) ?></span>
     </p>
 
     <?php if ($storyPlataforma !== null || $storyTrilha !== null): ?>
@@ -56,15 +69,21 @@ $storyTrilha = $perfil['trilhas'][0] ?? null;
 
     <div class="pc-story__actors">
         <?php foreach ($storyChars as $personagem): ?>
-            <?php $foto = $personagem['ator_foto_url'] ?: $personagem['imagem_url']; ?>
+            <?php
+            $foto = $personagem['ator_foto_url'] ?? '';
+            $foto = $foto !== '' ? $foto : tmdb_img($personagem['poster_path'] ?? null, 'w185');
+            $rotulo = (string) ($personagem['personagem'] ?? '') !== ''
+                ? (string) $personagem['personagem']
+                : (string) ($personagem['titulo'] ?? $personagem['nome'] ?? '');
+            ?>
             <span class="pc-story__actor">
                 <?php $fotoProxy = img_proxy($foto); ?>
-                <span class="pc-story__avatar<?= $fotoProxy !== '' ? ' has-photo' : '' ?>"<?php if ($fotoProxy !== ''): ?> style="background-image:url('<?= e($fotoProxy) ?>')" role="img" aria-label="<?= e($personagem['nome']) ?>"<?php endif; ?>>
+                <span class="pc-story__avatar<?= $fotoProxy !== '' ? ' has-photo' : '' ?>"<?php if ($fotoProxy !== ''): ?> style="background-image:url('<?= e($fotoProxy) ?>')" role="img" aria-label="<?= e($rotulo) ?>"<?php endif; ?>>
                     <?php if ($fotoProxy === ''): ?>
-                        <?= e(iniciais((string) $personagem['nome'])) ?>
+                        <?= e(iniciais($rotulo)) ?>
                     <?php endif; ?>
                 </span>
-                <b><?= e(nome_curto((string) $personagem['nome'])) ?></b>
+                <b><?= e(nome_curto($rotulo)) ?></b>
             </span>
         <?php endforeach; ?>
     </div>
@@ -92,7 +111,10 @@ $storyTrilha = $perfil['trilhas'][0] ?? null;
     </div>
 
     <div class="pc-story__foot">
-        <span>personacut</span>
+        <span class="pc-story__cta">
+            <small><?= e(t('resultado.story_cta')) ?></small>
+            <b>PersonaCut</b>
+        </span>
         <span class="pc-story__code"><?= e($codigo) ?></span>
     </div>
 </div>

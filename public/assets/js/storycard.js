@@ -1,15 +1,19 @@
 /* =============================================================================
-   PersonaCut — card de compartilhamento 9:16
-   Captura o card renderizado (270 x 480) em PNG 1080 x 1920 e usa a Web Share
+   PersonaCut — card de compartilhamento vertical
+   Captura o card renderizado (270 x 575) em PNG 1080 x 2300 e usa a Web Share
    API quando o navegador aceita arquivos; caso contrário, baixa o PNG.
-   Todas as imagens do card vêm de /api/imagem.php (mesma origem), então o
-   canvas não é contaminado. A página pode ter mais de um card (análise
-   completa e retrospectiva); cada botão captura o card do seu bloco.
+   Botões [data-story-share] compartilham (ou baixam como fallback) e
+   [data-story-download] sempre baixam. Todas as imagens do card vêm de
+   /api/imagem.php (mesma origem), então o canvas não é contaminado. A página
+   pode ter mais de um card (análise completa e retrospectiva); cada botão
+   captura o card do seu bloco.
    ========================================================================== */
 (function () {
   'use strict';
 
-  var botoes = Array.prototype.slice.call(document.querySelectorAll('[data-story-share]'));
+  var botoes = Array.prototype.slice.call(
+    document.querySelectorAll('[data-story-share], [data-story-download]')
+  );
 
   if (!botoes.length) {
     return;
@@ -69,7 +73,7 @@
     return html2canvas(card, {
       scale: 4,
       width: 270,
-      height: 480,
+      height: 575,
       windowWidth: 1440,
       windowHeight: 900,
       backgroundColor: null,
@@ -125,6 +129,7 @@
       return;
     }
 
+    var somenteDownload = botao.hasAttribute('data-story-download');
     var nota = escopo.querySelector('[data-story-note]');
     var textoOriginal = botao.innerHTML;
     var ocupado = false;
@@ -132,7 +137,7 @@
     var msg = {
       preparando: botao.getAttribute('data-msg-preparing') || 'Preparando o card…',
       erro: botao.getAttribute('data-msg-error') || 'Não foi possível gerar o card.',
-      salvo: botao.getAttribute('data-msg-download') || 'Card salvo em PNG.',
+      salvo: botao.getAttribute('data-msg-download') || 'Card salvo na galeria.',
       notaOriginal: nota ? nota.textContent : ''
     };
 
@@ -183,6 +188,12 @@
           });
         })
         .then(function (blob) {
+          if (somenteDownload) {
+            baixar(blob, arquivo);
+            estado(msg.salvo);
+            return;
+          }
+
           return compartilhar(blob, arquivo, card).then(function (compartilhado) {
             if (!compartilhado) {
               baixar(blob, arquivo);

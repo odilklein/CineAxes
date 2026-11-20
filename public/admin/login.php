@@ -47,13 +47,13 @@ $erro = Session::flash('erro');
 
             <div class="pc-field">
                 <label class="pc-label" for="usuario"><?= e(t('admin.user')) ?></label>
-                <input class="pc-input" id="usuario" name="usuario" type="text" autocomplete="username" required autofocus
+                <input class="pc-input" id="usuario" name="usuario" type="text" autocomplete="username" required autofocus placeholder="seu_usuario"
                        style="font-family:var(--pc-font);letter-spacing:0;text-transform:none">
             </div>
 
             <div class="pc-field">
                 <label class="pc-label" for="senha"><?= e(t('admin.password')) ?></label>
-                <input class="pc-input" id="senha" name="senha" type="password" autocomplete="current-password" required
+                <input class="pc-input" id="senha" name="senha" type="password" autocomplete="current-password" required placeholder="Sua senha"
                        style="font-family:var(--pc-font);letter-spacing:0;text-transform:none">
             </div>
 

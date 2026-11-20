@@ -9,6 +9,8 @@ declare(strict_types=1);
  */
 
 $temRetro = $temRetro ?? false;
+$bookmarks = $bookmarks ?? [];
+$authLogado = $authLogado ?? false;
 
 /**
  * Payload da ficha rápida de um personagem/diretor/estúdio.
@@ -74,7 +76,7 @@ $quickEntidade = static function (array $entidade): array {
 
                 <div class="pc-result__code">
                     <?php if (!empty($temRetro)): ?>
-                        <a class="pc-btn pc-btn--sm pc-btn--ghost pc-retro-open" href="<?= e(url('resultado.php', ['codigo' => $codigo])) ?>">
+                        <a class="pc-btn pc-btn--sm pc-btn--ghost pc-retro-open" href="<?= e(url('resultado.php', ['codigo' => $codigo, 'modo' => 'retro'])) ?>">
                             <?= icon('play', 14) ?>
                             <?= e(t('retro.open')) ?>
                         </a>
@@ -110,7 +112,7 @@ $quickEntidade = static function (array $entidade): array {
                         </div>
                     <?php endif; ?>
 
-                    <p class="pc-profile-card__desc">
+                    <p class="pc-profile-card__desc" data-narrativa-arquetipo>
                         <?= e($arquetipo['descricao'] ?? t('resultado.neutral_desc')) ?>
                     </p>
 
@@ -137,10 +139,14 @@ $quickEntidade = static function (array $entidade): array {
                         </div>
                     </div>
 
+                    <?php
+                    $mixAtual = (string) ($perfil['mix'] ?? 'misturado');
+                    $mixChave = ['classicos' => 'classics', 'descobertas' => 'discovery'][$mixAtual] ?? 'mixed';
+                    ?>
                     <div class="pc-ficha">
                         <div class="pc-ficha__item">
-                            <span><?= e(t('resultado.ficha_affinity')) ?></span>
-                            <b><?= pct($perfil['afinidade_media']) ?></b>
+                            <span><?= e(t('resultado.ficha_mix')) ?></span>
+                            <b data-ficha-mix><?= e(t('resultado.mix_' . $mixChave)) ?></b>
                         </div>
                         <div class="pc-ficha__item pc-ficha__item--reading">
                             <span><?= e(t('resultado.ficha_reading')) ?></span>
@@ -151,21 +157,52 @@ $quickEntidade = static function (array $entidade): array {
                             <b><?= e($perfil['insights']['decada']['label'] ?? '—') ?></b>
                         </div>
                     </div>
+
+                    <?php $confiancaPerfil = $perfil['confianca'] ?? []; ?>
+                    <p class="pc-ficha__note">
+                        <?= icon('compass', 12) ?>
+                        <?= e(t('resultado.match_confidence', [
+                            'rotulo' => t('resultado.confidence_' . (string) ($confiancaPerfil['rotulo'] ?? 'nao_estimada')),
+                        ])) ?>
+                        <?php if (($confiancaPerfil['rotulo'] ?? '') === 'baixa'): ?>
+                            <span><?= e(t('resultado.match_confidence_low', [
+                                'n' => (int) round((float) ($confiancaPerfil['por_eixo'] ?? 0)),
+                            ])) ?></span>
+                        <?php endif; ?>
+                    </p>
+
+                    <?php if (($perfil['consistencia']['rotulo'] ?? '') === 'indeterminado'): ?>
+                        <p class="pc-ficha__note pc-ficha__note--alert">
+                            <?= icon('x', 12) ?>
+                            <?= e(t('resultado.inconsistent')) ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
 
                 <aside class="pc-profile-card__side pc-story-side" data-story-side>
-                    <?php require __DIR__ . '/story-card.php'; ?>
+                    <?php require __DIR__ . '/phone-frame.php'; ?>
 
-                    <button class="pc-btn pc-btn--sm pc-btn--light pc-story-share" type="button"
-                            data-story-share
-                            data-codigo="<?= e($codigo) ?>"
-                            data-msg-preparing="<?= e(t('resultado.story_preparing')) ?>"
-                            data-msg-error="<?= e(t('resultado.story_error')) ?>"
-                            data-msg-download="<?= e(t('resultado.story_download')) ?>">
-                        <?= icon('share', 15) ?>
-                        <span><?= e(t('resultado.story_share')) ?></span>
-                    </button>
-                    <p class="pc-story__note" data-story-note><?= e(t('resultado.story_note')) ?></p>
+                    <div class="pc-story-actions">
+                        <button class="pc-btn pc-btn--sm pc-btn--light pc-story-share" type="button"
+                                data-story-share
+                                data-codigo="<?= e($codigo) ?>"
+                                data-msg-preparing="<?= e(t('resultado.story_preparing')) ?>"
+                                data-msg-error="<?= e(t('resultado.story_error')) ?>"
+                                data-msg-download="<?= e(t('resultado.story_download')) ?>">
+                            <?= icon('share', 15) ?>
+                            <span><?= e(t('resultado.story_share')) ?></span>
+                        </button>
+
+                        <button class="pc-btn pc-btn--sm pc-btn--ghost pc-btn--on-dark pc-story-download" type="button"
+                                data-story-download
+                                data-codigo="<?= e($codigo) ?>"
+                                data-msg-preparing="<?= e(t('resultado.story_preparing')) ?>"
+                                data-msg-error="<?= e(t('resultado.story_error')) ?>"
+                                data-msg-download="<?= e(t('resultado.story_download')) ?>">
+                            <?= icon('download', 15) ?>
+                            <span><?= e(t('resultado.story_download_btn')) ?></span>
+                        </button>
+                    </div>
                 </aside>
             </article>
 
@@ -190,6 +227,176 @@ $quickEntidade = static function (array $entidade): array {
                 </section>
             <?php endif; ?>
 
+            <section class="pc-section pc-films" id="filmes">
+                <div class="pc-section__head">
+                    <div>
+                        <span class="pc-eyebrow"><?= e(t('resultado.films_eyebrow')) ?></span>
+                        <h2 class="pc-title"><?= e(t('resultado.films_title')) ?></h2>
+                    </div>
+                    <p class="pc-lead" style="font-size:14px"><?= e(t('resultado.films_subtitle')) ?></p>
+                </div>
+
+                <div class="pc-films__toolbar">
+                    <div class="pc-mix">
+                        <?php foreach (['classicos' => 'classics', 'misturado' => 'mixed', 'descobertas' => 'discovery'] as $opcao => $chave): ?>
+                            <a class="pc-mix__item<?= ($perfil['mix'] ?? 'misturado') === $opcao ? ' is-active' : '' ?>"
+                               data-mix="<?= e($opcao) ?>"
+                               href="<?= e(url('resultado.php', ['codigo' => $codigo, 'modo' => 'completo', 'mix' => $opcao])) ?>">
+                                <?= e(t('resultado.mix_' . $chave)) ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <?php if ($authLogado): ?>
+                        <a class="pc-seen-clear" href="<?= e(url('minha-lista.php')) ?>"><?= e(t('auth.my_list')) ?></a>
+                    <?php else: ?>
+                        <a class="pc-seen-clear" href="<?= e(url('entrar.php', ['next' => '/resultado.php?codigo=' . $codigo . '&modo=completo'])) ?>"><?= e(t('auth.login_to_save')) ?></a>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (($perfil['filmes_top'] ?? []) === []): ?>
+                    <div class="pc-empty"><?= e(t('admin.no_data')) ?></div>
+                <?php else: ?>
+                    <div class="pc-film-slider" data-slider>
+                        <button class="pc-film-slider__nav pc-film-slider__nav--prev" type="button"
+                                data-slider-prev aria-label="<?= e(t('trilhas.prev')) ?>">
+                            <?= icon('arrow-left', 15) ?>
+                        </button>
+
+                        <div class="pc-film-slider__track" data-slider-track>
+                        <?php foreach ($perfil['filmes_top'] as $indice => $filme): ?>
+                            <?php
+                            $poster = tmdb_img($filme['poster_path'] ?? null, 'w342');
+                            $plataformasFilme = array_slice((array) ($filme['onde'] ?? []), 0, 3);
+                            $estado = $bookmarks[(int) ($filme['tmdb_id'] ?? 0)] ?? null;
+                            $quickFilme = [
+                                'tipo' => 'catalogo',
+                                'serie' => (string) ($filme['tipo'] ?? 'filme') === 'serie',
+                                'titulo' => (string) $filme['titulo'],
+                                'ano' => $filme['ano'],
+                                'poster' => $poster !== '' ? $poster : null,
+                                'sinopse' => $filme['sinopse'] ?? null,
+                                'generos' => array_map(
+                                    static fn (array $g): string => (string) ($g['nome'] ?? ''),
+                                    (array) ($filme['generos'] ?? [])
+                                ),
+                                'nota' => $filme['nota'] ?? null,
+                                'temporadas' => $filme['temporadas'] ?? null,
+                                'onde' => array_map(
+                                    static fn (array $p): array => [
+                                        'nome' => (string) ($p['nome'] ?? ''),
+                                        'logo' => tmdb_logo($p['logo'] ?? null),
+                                        'preco' => $p['preco'] ?? null,
+                                    ],
+                                    (array) ($filme['onde'] ?? [])
+                                ),
+                                'tmdb' => (int) ($filme['tmdb_id'] ?? 0),
+                            ];
+                            ?>
+                            <article class="pc-film" data-bookmark-card data-tmdb="<?= (int) ($filme['tmdb_id'] ?? 0) ?>">
+                                <div class="pc-film__poster" data-quickview="<?= json_attr($quickFilme) ?>" tabindex="0" role="button" aria-label="Abrir ficha de <?= e((string) $filme['titulo']) ?>">
+                                    <?php if ($poster !== ''): ?>
+                                        <img src="<?= e($poster) ?>" alt="Pôster de <?= e((string) $filme['titulo']) ?>" loading="lazy" decoding="async">
+                                    <?php else: ?>
+                                        <span class="pc-film__fallback"><?= e((string) $filme['titulo']) ?></span>
+                                    <?php endif; ?>
+                                    <span class="pc-film__rank"><?= str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                                    <?php if (($filme['top_pct'] ?? 0) > 0): ?>
+                                        <span class="pc-film__match">top <?= (int) $filme['top_pct'] ?>%</span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($filme['descoberta'])): ?>
+                                        <span class="pc-film__new"><?= e(t('resultado.new_badge')) ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($plataformasFilme !== []): ?>
+                                        <span class="pc-film__platforms" aria-label="Onde assistir">
+                                            <?php foreach ($plataformasFilme as $plataforma): ?>
+                                                <?php $logoPlataforma = tmdb_logo($plataforma['logo'] ?? null); ?>
+                                                <?php if ($logoPlataforma !== ''): ?>
+                                                    <img src="<?= e($logoPlataforma) ?>" alt="<?= e((string) ($plataforma['nome'] ?? '')) ?>" title="<?= e((string) ($plataforma['nome'] ?? '')) ?>" loading="lazy" decoding="async" width="16" height="16">
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        </span>
+                                    <?php endif; ?>
+
+                                    <?php
+                                    $bmTmdb = (int) ($filme['tmdb_id'] ?? 0);
+                                    $bmTipo = (string) ($filme['tipo'] ?? 'filme');
+                                    $bmTitulo = (string) $filme['titulo'];
+                                    $bmAno = $filme['ano'];
+                                    $bmPoster = (string) ($filme['poster_path'] ?? '');
+                                    $bmEstado = $estado;
+                                    $bmAuth = $authLogado;
+                                    $bmInline = false;
+                                    require __DIR__ . '/../bookmark-actions.php';
+                                    ?>
+                                </div>
+
+                                <div class="pc-film__body">
+                                    <b><?= e((string) $filme['titulo']) ?></b>
+                                    <small class="pc-film__meta">
+                                        <?php if ($filme['ano'] !== null): ?>
+                                            <span class="pc-film__tag"><?= (int) $filme['ano'] ?></span>
+                                        <?php endif; ?>
+                                        <span class="pc-film__tag"><?= e((string) ($filme['tipo'] ?? 'filme')) ?></span>
+                                    </small>
+
+                                    <?php if (!empty($filme['personagem'])): ?>
+                                        <p class="pc-film__character">
+                                            <?= e((string) $filme['personagem']) ?>
+                                            <?php if (!empty($filme['ator_nome'])): ?>
+                                                <span>· <?= e((string) $filme['ator_nome']) ?></span>
+                                            <?php endif; ?>
+                                        </p>
+                                    <?php endif; ?>
+
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                        </div>
+
+                        <button class="pc-film-slider__nav pc-film-slider__nav--next" type="button"
+                                data-slider-next aria-label="<?= e(t('trilhas.next')) ?>">
+                            <?= icon('arrow-right', 15) ?>
+                        </button>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (($perfil['descobertas'] ?? []) !== []): ?>
+                    <div class="pc-finds">
+                        <div class="pc-finds__head">
+                            <span class="pc-eyebrow"><?= e(t('resultado.finds_eyebrow')) ?></span>
+                            <h3><?= e(t('resultado.finds_title')) ?></h3>
+                        </div>
+                        <div class="pc-finds__grid">
+                            <?php foreach ($perfil['descobertas'] as $achado): ?>
+                                <?php
+                                $estadoAchado = $bookmarks[(int) ($achado['tmdb'] ?? 0)] ?? null;
+                                $quickAchado = [
+                                    'tipo' => 'catalogo',
+                                    'serie' => (string) ($achado['tipo'] ?? 'filme') === 'serie',
+                                    'titulo' => (string) $achado['titulo'],
+                                    'ano' => $achado['ano'] ?? null,
+                                    'poster' => $achado['poster'] ?? null,
+                                    'tmdb' => (int) ($achado['tmdb'] ?? 0),
+                                ];
+                                ?>
+                                <div class="pc-find" data-tmdb="<?= (int) ($achado['tmdb'] ?? 0) ?>"
+                                     data-quickview="<?= json_attr($quickAchado) ?>" tabindex="0" role="button"
+                                     aria-label="Abrir ficha de <?= e((string) $achado['titulo']) ?>">
+                                    <?php if (!empty($achado['poster'])): ?>
+                                        <img src="<?= e((string) $achado['poster']) ?>" alt="" loading="lazy" decoding="async">
+                                    <?php endif; ?>
+                                    <div>
+                                        <b><?= e((string) $achado['titulo']) ?></b>
+                                        <small><span data-narrativa-descoberta="<?= e((string) $achado['titulo']) ?>"><?= (int) ($achado['ano'] ?? 0) ?> · <?= e((string) $achado['porque']) ?></span></small>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </section>
+
             <section class="pc-panel pc-readings reveal" id="leituras">
                 <div class="pc-panel__head">
                     <div>
@@ -208,7 +415,7 @@ $quickEntidade = static function (array $entidade): array {
                             </div>
 
                             <h3 class="pc-reading__title"><?= e($leitura['manchete']) ?></h3>
-                            <p class="pc-reading__body"><?= e($leitura['corpo']) ?></p>
+                            <p class="pc-reading__body" data-narrativa-leitura="<?= e((string) $leitura['slug']) ?>"><?= e($leitura['corpo']) ?></p>
 
                             <div class="pc-reading__films">
                                 <span><?= e(t('retro.reading.matches')) ?></span>
@@ -312,6 +519,13 @@ $quickEntidade = static function (array $entidade): array {
                 </summary>
 
                 <div class="pc-dados__body">
+                    <p class="pc-top10__method">
+                        <?= e(t('resultado.technical_version', [
+                            'versao' => (string) ($perfil['resultado']['questionario_versao'] ?? t('resultado.technical_unknown')),
+                            'modo' => modo_rotulo((string) $perfil['resultado']['modo']),
+                        ])) ?>
+                    </p>
+
                     <div class="pc-result__grid">
                         <section class="pc-panel">
                             <div class="pc-panel__head">
@@ -390,28 +604,12 @@ $quickEntidade = static function (array $entidade): array {
                         </article>
                     <?php endif; ?>
 
-                    <?php if ($ins['oposto'] !== null): ?>
-                        <article class="pc-insight reveal">
-                            <span class="pc-insight__icon"><?= icon('x', 18) ?></span>
-                            <span class="pc-insight__label"><?= e(t('resultado.insights.oposto_title')) ?></span>
-                            <span class="pc-insight__value"><?= e($ins['oposto']['nome']) ?></span>
-                            <p><?= e(t('resultado.insights.oposto_text', [
-                                'tipo' => t('resultado.types.' . $ins['oposto']['tipo']),
-                                'obra' => $ins['oposto']['obra'],
-                                'pct' => numero($ins['oposto']['afinidade'], 0),
-                            ])) ?></p>
-                            <p><?= e(t('retro.insights.oposto_cta', ['obra' => $ins['oposto']['obra']])) ?></p>
-                        </article>
-                    <?php endif; ?>
-
                     <?php if ($ins['secundario'] !== null): ?>
                         <article class="pc-insight pc-insight--archetype reveal">
                             <span class="pc-insight__icon"><?= icon('layers', 18) ?></span>
                             <span class="pc-insight__label"><?= e(t('resultado.insights.secundario_title')) ?></span>
                             <span class="pc-insight__value"><?= e($ins['secundario']['titulo']) ?></span>
-                            <p class="pc-insight__compat"><?= e(t('resultado.insights.secundario_text', [
-                                'pct' => numero($ins['secundario']['compatibilidade'], 0),
-                            ])) ?></p>
+                            <p class="pc-insight__compat"><?= e(t('resultado.insights.secundario_text')) ?></p>
                             <p><?= e((string) $ins['secundario']['descricao']) ?></p>
 
                             <?php if (!empty($ins['secundario']['polos'])): ?>
@@ -443,11 +641,23 @@ $quickEntidade = static function (array $entidade): array {
                             </div>
                         </div>
 
-                        <div class="pc-filme-grid pc-filme-grid--decade">
-                            <?php $filmeVariante = 'card'; ?>
-                            <?php foreach ($ins['decada']['obras'] as $filme): ?>
-                                <?php require __DIR__ . '/../card-filme.php'; ?>
-                            <?php endforeach; ?>
+                        <div class="pc-film-slider pc-film-slider--decade" data-slider>
+                            <button class="pc-film-slider__nav pc-film-slider__nav--prev" type="button"
+                                    data-slider-prev aria-label="<?= e(t('trilhas.prev')) ?>">
+                                <?= icon('arrow-left', 15) ?>
+                            </button>
+
+                            <div class="pc-film-slider__track pc-filme-slider-track" data-slider-track>
+                                <?php $filmeVariante = 'card'; ?>
+                                <?php foreach ($ins['decada']['obras'] as $filme): ?>
+                                    <?php require __DIR__ . '/../card-filme.php'; ?>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <button class="pc-film-slider__nav pc-film-slider__nav--next" type="button"
+                                    data-slider-next aria-label="<?= e(t('trilhas.next')) ?>">
+                                <?= icon('arrow-right', 15) ?>
+                            </button>
                         </div>
 
                         <?php if ($ins['decada']['marcos'] !== []): ?>
@@ -464,158 +674,20 @@ $quickEntidade = static function (array $entidade): array {
                     </section>
                 <?php endif; ?>
 
-                <?php if ($ins['top10'] !== []): ?>
-                    <section class="pc-panel pc-top10-panel reveal">
-                        <div class="pc-panel__head">
-                            <div>
-                                <h2><?= e(t('resultado.insights.top10_title')) ?></h2>
-                                <p><?= e(t('resultado.insights.top10_sub', ['n' => $ins['base_total']])) ?></p>
-                            </div>
-                        </div>
-
-                        <div class="pc-top10">
-                            <?php foreach ($ins['top10'] as $indice => $item): ?>
-                                <div class="pc-top-row">
-                                    <span class="pc-top-row__rank"><?= str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                                    <span class="pc-top-row__avatar">
-                                        <?php if (!empty($item['imagem'])): ?>
-                                            <img src="<?= e($item['imagem']) ?>" alt="" loading="lazy" decoding="async">
-                                        <?php else: ?>
-                                            <?= e(iniciais((string) $item['nome'])) ?>
-                                        <?php endif; ?>
-                                    </span>
-                                    <span class="pc-top-row__info">
-                                        <b><?= e($item['nome']) ?></b>
-                                        <small><?= e(t('resultado.types.' . $item['tipo'])) ?> · <?= e($item['obra']) ?></small>
-                                    </span>
-                                    <span class="pc-top-row__score"><?= pct($item['afinidade']) ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-                <?php endif; ?>
-
-                <?php if ($ins['top_ancoras'] !== []): ?>
-                    <section class="pc-panel pc-top10-panel reveal">
-                        <div class="pc-panel__head">
-                            <div>
-                                <h2><?= e(t('resultado.insights.top_anchors_title')) ?></h2>
-                                <p><?= e(t('resultado.insights.top_anchors_sub')) ?></p>
-                            </div>
-                        </div>
-
-                        <div class="pc-anchors-list">
-                            <?php foreach ($ins['top_ancoras'] as $indice => $item): ?>
-                                <div class="pc-top-row">
-                                    <span class="pc-top-row__rank"><?= str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                                    <span class="pc-top-row__avatar">
-                                        <?php if (!empty($item['imagem'])): ?>
-                                            <img src="<?= e($item['imagem']) ?>" alt="" loading="lazy" decoding="async">
-                                        <?php else: ?>
-                                            <?= e(iniciais((string) $item['nome'])) ?>
-                                        <?php endif; ?>
-                                    </span>
-                                    <span class="pc-top-row__info">
-                                        <b><?= e($item['nome']) ?></b>
-                                        <small><?= e(t('resultado.types.' . $item['tipo'])) ?><?= $item['obra'] !== '' ? ' · ' . e($item['obra']) : '' ?></small>
-                                    </span>
-                                    <span class="pc-top-row__score"><?= pct($item['afinidade']) ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-                <?php endif; ?>
             </section>
 
             <?php require __DIR__ . '/streaming.php'; ?>
 
-            <section class="pc-section" id="espelhos">
+            <section class="pc-section" id="diretores">
                 <div class="pc-section__head">
                     <div>
-                        <span class="pc-eyebrow"><?= e(t('resultado.characters_title')) ?></span>
-                        <h2 class="pc-title"><?= e(t('resultado.characters_subtitle')) ?></h2>
+                        <span class="pc-eyebrow"><?= e(t('resultado.anchors_eyebrow')) ?></span>
+                        <h2 class="pc-title"><?= e(t('resultado.anchors_title')) ?></h2>
                     </div>
-                    <p class="pc-lead" style="font-size:14px"><?= e(t('resultado.characters_hint')) ?></p>
+                    <p class="pc-lead" style="font-size:14px"><?= e(t('resultado.anchors_subtitle')) ?></p>
                 </div>
 
-                <?php if ($perfil['personagens'] === []): ?>
-                    <div class="pc-empty"><?= e(t('admin.no_data')) ?></div>
-                <?php else: ?>
-                    <div class="pc-entity-grid pc-entity-grid--rich">
-                        <?php foreach ($perfil['personagens'] as $indice => $entidade): ?>
-                            <?php
-                            $cor = cor_dominante($entidade['vetor'], $perfil['eixos']);
-                            $quick = $quickEntidade($entidade);
-                            ?>
-                            <article class="pc-entity pc-entity--rich reveal"
-                                     data-quickview="<?= json_attr($quick) ?>"
-                                     tabindex="0" role="button"
-                                     aria-label="Abrir ficha de <?= e($entidade['nome']) ?>">
-                                <div class="pc-entity__poster">
-                                    <?php if (!empty($entidade['imagem_url'])): ?>
-                                        <img src="<?= e($entidade['imagem_url']) ?>" alt="Pôster de <?= e($entidade['obra_origem']) ?>" loading="lazy" decoding="async">
-                                    <?php else: ?>
-                                        <span class="pc-entity__mono-lg" style="--mono-bg: <?= e($cor) ?>"><?= e(iniciais((string) $entidade['nome'])) ?></span>
-                                    <?php endif; ?>
-                                    <span class="pc-entity__rank"><?= str_pad((string) ($indice + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                                    <span class="pc-quick-hint">Ficha rápida</span>
-                                </div>
-
-                                <div class="pc-entity__content">
-                                    <div class="pc-entity__name"><?= e($entidade['nome']) ?></div>
-                                    <div class="pc-entity__meta">
-                                        <?= e($entidade['obra_origem']) ?><?= $entidade['ano'] !== null ? ' · ' . (int) $entidade['ano'] : '' ?>
-                                    </div>
-
-                                    <p class="pc-entity__bio"><?= e((string) ($entidade['bio'] ?? '')) ?></p>
-
-                                    <?php if (!empty($entidade['frase'])): ?>
-                                        <blockquote class="pc-entity__quote">“<?= e((string) $entidade['frase']) ?>”</blockquote>
-                                    <?php endif; ?>
-
-                                    <?php if (!empty($entidade['polos'])): ?>
-                                        <div class="pc-entity__traits">
-                                            <?php foreach ($entidade['polos'] as $polo): ?>
-                                                <span class="pc-entity__trait" style="--trait:<?= e($polo['cor']) ?>">
-                                                    <i aria-hidden="true"></i>
-                                                    <?= e($polo['eixo']) ?> · <?= e($polo['polo']) ?>
-                                                </span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if (!empty($entidade['ator_nome'])): ?>
-                                        <div class="pc-entity__actor">
-                                            <span class="pc-entity__actor-photo">
-                                                <?php if (!empty($entidade['ator_foto_url'])): ?>
-                                                    <img src="<?= e($entidade['ator_foto_url']) ?>" alt="" loading="lazy" decoding="async">
-                                                <?php else: ?>
-                                                    <?= e(iniciais((string) $entidade['ator_nome'])) ?>
-                                                <?php endif; ?>
-                                            </span>
-                                            <span>
-                                                <b><?= e($entidade['ator_nome']) ?></b>
-                                                <small>
-                                                    <?= e(origem_curta($entidade['pais'] ?? null)) ?><?= $entidade['nascimento'] !== null ? ' · ' . (int) $entidade['nascimento'] : '' ?>
-                                                </small>
-                                            </span>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <div class="pc-entity__foot">
-                                        <span class="pc-entity__type"><?= e(t('resultado.types.personagem')) ?></span>
-                                        <span class="pc-affinity">
-                                            <b><?= pct($entidade['afinidade']) ?></b>
-                                            <small><?= e(t('resultado.affinity')) ?></small>
-                                        </span>
-                                    </div>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-                <div class="pc-two-col pc-mt-3">
+                <div class="pc-anchor-grid pc-mt-3">
                     <?php foreach ([
                         ['item' => $perfil['diretor'], 'tipo' => 'diretor', 'icone' => 'film'],
                         ['item' => $perfil['estudio'], 'tipo' => 'estudio', 'icone' => 'star'],
@@ -636,16 +708,19 @@ $quickEntidade = static function (array $entidade): array {
                                  tabindex="0" role="button"
                                  aria-label="Abrir ficha de <?= e($item['nome']) ?>">
                             <div class="pc-entity__poster <?= $ehEstudio ? 'pc-entity__poster--logo' : '' ?>">
-                                <?php if (!empty($item['imagem_url'])): ?>
-                                    <img src="<?= e($item['imagem_url']) ?>" alt="" loading="lazy" decoding="async">
-                                <?php elseif ($ehEstudio): ?>
-                                    <span class="pc-entity__seal" style="--seal: <?= e($cor) ?>">
+                                <?php if ($ehEstudio): ?>
+                                    <span class="pc-entity__seal pc-entity__seal--back" style="--seal: <?= e($cor) ?>">
                                         <span class="pc-entity__seal-mono"><?= e(iniciais((string) $item['nome'])) ?></span>
                                         <small><?= e(t('resultado.types.estudio')) ?></small>
                                     </span>
                                 <?php else: ?>
-                                    <span class="pc-entity__mono-lg" style="--mono-bg: <?= e($cor) ?>"><?= e(iniciais((string) $item['nome'])) ?></span>
+                                    <span class="pc-entity__mono-lg pc-entity__mono-lg--back" style="--mono-bg: <?= e($cor) ?>"><?= e(iniciais((string) $item['nome'])) ?></span>
                                 <?php endif; ?>
+
+                                <?php if (!empty($item['imagem_url'])): ?>
+                                    <img src="<?= e($item['imagem_url']) ?>" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback-img>
+                                <?php endif; ?>
+
                                 <span class="pc-quick-hint">Ficha rápida</span>
                             </div>
 
@@ -657,7 +732,7 @@ $quickEntidade = static function (array $entidade): array {
                                     <?= $item['pais'] === null && $item['nascimento'] === null ? e($item['obra_origem']) : '' ?>
                                 </div>
 
-                                <p class="pc-entity__bio"><?= e((string) ($item['bio'] ?? '')) ?></p>
+                                <p class="pc-entity__bio"<?= $bloco['tipo'] === 'diretor' ? ' data-narrativa-diretor' : '' ?>><?= e((string) ($item['bio'] ?? '')) ?></p>
 
                                 <?php if (!empty($item['frase'])): ?>
                                     <blockquote class="pc-entity__quote">“<?= e((string) $item['frase']) ?>”</blockquote>
@@ -674,11 +749,26 @@ $quickEntidade = static function (array $entidade): array {
                                     </ul>
                                 <?php endif; ?>
 
+                                <?php if (!empty($item['motivos'])): ?>
+                                    <p class="pc-entity__why">
+                                        <?php foreach ($item['motivos'] as $motivo): ?>
+                                            <span title="<?= e(t('resultado.match_why', [
+                                                'eixo' => $motivo['eixo'],
+                                                'voce' => (int) $motivo['voce'],
+                                                'ele' => (int) $motivo['ele'],
+                                            ])) ?>">
+                                                <?= e($motivo['eixo']) ?>
+                                                <b><?= (int) $motivo['voce'] ?>·<?= (int) $motivo['ele'] ?></b>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    </p>
+                                <?php endif; ?>
+
                                 <div class="pc-entity__foot">
                                     <span class="pc-entity__type"><?= e(t('resultado.types.' . $bloco['tipo'])) ?></span>
                                     <span class="pc-affinity">
-                                        <b><?= pct($item['afinidade']) ?></b>
-                                        <small><?= e(t('resultado.affinity')) ?></small>
+                                        <b><?= (int) ($item['posicao'] ?? 1) ?>º</b>
+                                        <small><?= e(t('resultado.match_of', ['n' => (int) ($item['de'] ?? 1)])) ?></small>
                                     </span>
                                 </div>
                             </div>
@@ -739,57 +829,6 @@ $quickEntidade = static function (array $entidade): array {
             <?php endif; ?>
 
             <?php require __DIR__ . '/elenco.php'; ?>
-
-            <?php if ($perfil['estante'] !== []): ?>
-                <section class="pc-section" id="estante">
-                    <div class="pc-section__head">
-                        <div>
-                            <span class="pc-eyebrow"><?= e(t('resultado.shelf_eyebrow')) ?></span>
-                            <h2 class="pc-title"><?= e(t('resultado.shelf_title')) ?></h2>
-                        </div>
-                        <p class="pc-lead" style="font-size:14px"><?= e(t('resultado.shelf_subtitle')) ?></p>
-                    </div>
-
-                    <div class="pc-shelf">
-                        <?php foreach ($perfil['estante'] as $obra): ?>
-                            <?php
-                            $quick = [
-                                'tipo' => 'filme',
-                                'tmdb' => $obra['tmdb'] ?? null,
-                                'titulo' => $obra['titulo'],
-                                'ano' => $obra['ano'],
-                                'poster' => $obra['poster'],
-                                'origem' => $obra['origem'],
-                                'personagem' => $obra['personagem'],
-                                'onde' => array_map(
-                                    static fn (array $p): array => [
-                                        'nome'  => (string) ($p['nome'] ?? ''),
-                                        'logo'  => tmdb_logo($p['logo'] ?? null),
-                                        'preco' => $p['preco'] ?? null,
-                                    ],
-                                    (array) ($obra['onde'] ?? [])
-                                ),
-                            ];
-                            ?>
-                            <article class="pc-shelf__item"
-                                     data-quickview="<?= json_attr($quick) ?>"
-                                     tabindex="0" role="button"
-                                     aria-label="Abrir ficha de <?= e($obra['titulo']) ?>">
-                                <div class="pc-shelf__poster">
-                                    <?php if (!empty($obra['poster'])): ?>
-                                        <img src="<?= e($obra['poster']) ?>" alt="Pôster de <?= e($obra['titulo']) ?>" loading="lazy" decoding="async">
-                                    <?php else: ?>
-                                        <span class="pc-shelf__fallback"><?= e($obra['titulo']) ?></span>
-                                    <?php endif; ?>
-                                    <span class="pc-quick-hint">Ficha</span>
-                                </div>
-                                <span class="pc-shelf__title"><?= e($obra['titulo']) ?></span>
-                                <small><?= $obra['ano'] !== null ? (int) $obra['ano'] . ' · ' : '' ?><?= e($obra['origem']) ?></small>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-            <?php endif; ?>
 
             <?php require __DIR__ . '/trilhas.php'; ?>
 

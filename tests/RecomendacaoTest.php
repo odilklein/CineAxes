@@ -51,8 +51,8 @@ teste('anime japonês puxa para o fantástico e para o passado', function () use
 });
 
 teste('afinidade encolhe quando a confiança é baixa', function () use ($rec): void {
-    $usuario = [50.0, 15.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0];
-    $obra = [50.0, 15.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0];
+    $usuario = [50.0, 15.0, 50.0, 50.0, 50.0, 50.0];
+    $obra = [50.0, 15.0, 50.0, 50.0, 50.0, 50.0];
 
     $comConfianca = $rec->afinidade($usuario, ['vetor' => $obra, 'confianca' => 100]);
     $semConfianca = $rec->afinidade($usuario, ['vetor' => $obra, 'confianca' => 0]);
@@ -62,8 +62,8 @@ teste('afinidade encolhe quando a confiança é baixa', function () use ($rec): 
 });
 
 teste('motivos só cita eixos em que perfil e obra apontam para o mesmo lado', function () use ($rec): void {
-    $usuario = [80.0, 20.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0];
-    $obra = [85.0, 15.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0];
+    $usuario = [80.0, 20.0, 50.0, 50.0, 50.0, 50.0];
+    $obra = [85.0, 15.0, 50.0, 50.0, 50.0, 50.0];
 
     $motivos = $rec->motivos($usuario, ['vetor' => $obra]);
     $indices = array_column($motivos, 'indice');
@@ -243,10 +243,64 @@ teste('elenco ignora obra sem força', function (): void {
     ]], [1 => ['nome' => 'Ninguém']]));
 });
 
+teste('elenco reserva vagas para nomes reconhecíveis', function (): void {
+    $servico = new \Services\ElencoService();
+
+    $obras = [];
+    $creditos = [];
+    $pessoas = [];
+
+    // Quatro atores medianos com score alto; dois famosos com score menor.
+    for ($i = 1; $i <= 4; $i++) {
+        $obras[] = ['id' => $i, 'titulo' => 'Obra ' . $i, 'forca' => 1.0, 'afinidade' => 90.0, 'idioma_original' => 'pt'];
+        $creditos[$i] = [['pessoa_id' => $i, 'funcao' => 'elenco', 'ordem' => 0]];
+        $pessoas[$i] = ['id' => $i, 'tmdb_id' => $i, 'nome' => 'Mediano ' . $i, 'foto_path' => null, 'popularidade' => 2.0];
+    }
+
+    foreach ([10, 11] as $indice => $id) {
+        $obraId = 5 + $indice;
+        $obras[] = ['id' => $obraId, 'titulo' => 'Obra ' . $obraId, 'forca' => 0.55, 'afinidade' => 88.0, 'idioma_original' => 'en'];
+        $creditos[$obraId] = [['pessoa_id' => $id, 'funcao' => 'elenco', 'ordem' => 0]];
+        $pessoas[$id] = ['id' => $id, 'tmdb_id' => $id, 'nome' => 'Famoso ' . $indice, 'foto_path' => null, 'popularidade' => 60.0];
+    }
+
+    $lista = $servico->relevantes($obras, $creditos, $pessoas, 4);
+    $famosos = array_filter($lista, static fn (array $item): bool => (float) ($item['popularidade'] ?? 0) >= 8.0);
+
+    igual(4, count($lista));
+    afirmar(count($famosos) >= 2, 'esperava pelo menos duas vagas para nomes reconhecíveis');
+});
+
+teste('elenco não deixa um idioma ocupar a lista toda', function (): void {
+    $servico = new \Services\ElencoService();
+
+    $obras = [];
+    $creditos = [];
+    $pessoas = [];
+
+    for ($i = 1; $i <= 6; $i++) {
+        $obras[] = ['id' => $i, 'titulo' => 'Anime ' . $i, 'forca' => 1.0, 'afinidade' => 95.0, 'idioma_original' => 'ja'];
+        $creditos[$i] = [['pessoa_id' => $i, 'funcao' => 'elenco', 'ordem' => 0]];
+        $pessoas[$i] = ['id' => $i, 'tmdb_id' => $i, 'nome' => 'Voz ' . $i, 'foto_path' => null, 'popularidade' => 3.0];
+    }
+
+    for ($i = 7; $i <= 11; $i++) {
+        $obras[] = ['id' => $i, 'titulo' => 'Filme ' . $i, 'forca' => 0.5, 'afinidade' => 88.0, 'idioma_original' => 'en'];
+        $creditos[$i] = [['pessoa_id' => $i, 'funcao' => 'elenco', 'ordem' => 0]];
+        $pessoas[$i] = ['id' => $i, 'tmdb_id' => $i, 'nome' => 'Ator ' . $i, 'foto_path' => null, 'popularidade' => 4.0];
+    }
+
+    $lista = $servico->relevantes($obras, $creditos, $pessoas, 5);
+    $japoneses = array_filter($lista, static fn (array $item): bool => ($item['idiomas'][0] ?? '') === 'ja');
+
+    igual(5, count($lista));
+    afirmar(count($japoneses) <= 3, 'o mesmo idioma deveria ficar limitado a três nomes');
+});
+
 teste('alinhamento separa o lado do mapa melhor que a afinidade', function () use ($rec): void {
-    $contemplativo = [50.0, 30.0, 50.0, 20.0, 50.0, 50.0, 50.0, 50.0];
-    $obraContemplativa = [50.0, 35.0, 50.0, 25.0, 50.0, 50.0, 50.0, 50.0];
-    $obraFrenetica = [50.0, 70.0, 50.0, 85.0, 50.0, 50.0, 50.0, 50.0];
+    $contemplativo = [50.0, 30.0, 50.0, 20.0, 50.0, 50.0];
+    $obraContemplativa = [50.0, 35.0, 50.0, 25.0, 50.0, 50.0];
+    $obraFrenetica = [50.0, 70.0, 50.0, 85.0, 50.0, 50.0];
 
     afirmar($rec->alinhamento($contemplativo, $obraContemplativa) > 0.9, 'mesmo lado deveria ter alinhamento alto');
     afirmar($rec->alinhamento($contemplativo, $obraFrenetica) < 0.0, 'lado oposto deveria ter alinhamento negativo');

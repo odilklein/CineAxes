@@ -1,6 +1,6 @@
 -- =============================================================================
 -- PersonaCut — banco completo (sem catálogo)
--- Gerado em 2026-11-18 20:10:19 por bin/deploy_pacote.php
+-- Gerado em 2026-11-20 02:00:05 por bin/deploy_pacote.php
 -- Fontes: sql/001_schema.sql, sql/002_seed.sql, sql/003_enriquecimento.sql, sql/004_cenas_video.sql, sql/005_rotulos.sql, sql/009_catalogo.sql
 -- Importe primeiro personacut.sql e depois catalogo.sql.
 -- =============================================================================
@@ -14,6 +14,8 @@
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS bookmarks;
+DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS cache_tmdb;
 DROP TABLE IF EXISTS retratos;
 DROP TABLE IF EXISTS resultados_usuarios;
@@ -39,7 +41,41 @@ CREATE TABLE usuarios_admin (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- Os 8 eixos. `polo_*_key` é a chave de tradução; as cores e ícones alimentam
+-- Contas públicas (opcionais): necessárias apenas para salvar bookmarks.
+-- Separadas de `usuarios_admin`, que é o painel editorial.
+-- -----------------------------------------------------------------------------
+CREATE TABLE usuarios (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome         VARCHAR(80)  NOT NULL,
+    usuario      VARCHAR(40)  NOT NULL,
+    senha        VARCHAR(255) NOT NULL,
+    criado_em    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ultimo_login DATETIME NULL,
+    UNIQUE KEY uq_usuarios_usuario (usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Bookmark de filme/série: "quero ver" ou "já vi". Uma linha por usuário/obra;
+-- o status muda quando o usuário troca de lista. Não some da lista ao marcar.
+-- -----------------------------------------------------------------------------
+CREATE TABLE bookmarks (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id   INT UNSIGNED NOT NULL,
+    tmdb_id      INT UNSIGNED NOT NULL,
+    tipo         ENUM('filme', 'serie') NOT NULL DEFAULT 'filme',
+    status       ENUM('quero', 'visto') NOT NULL,
+    titulo       VARCHAR(200) NOT NULL,
+    ano          SMALLINT UNSIGNED NULL,
+    poster_path  VARCHAR(160) NULL,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_bookmarks_obra (usuario_id, tmdb_id, tipo),
+    KEY idx_bookmarks_status (usuario_id, status, updated_at),
+    CONSTRAINT fk_bookmarks_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Os 6 eixos do modelo v2. `polo_*_key` é a chave de tradução; as cores e ícones alimentam
 -- barras, cards e gráfico de radar.
 -- `tmdb_genres_*`: IDs oficiais de gênero (o discover usa IDs numéricos).
 -- `tmdb_keywords_*`: nomes de keywords; o TmdbService resolve para IDs e cacheia.
@@ -100,7 +136,8 @@ CREATE TABLE perguntas (
 
 -- -----------------------------------------------------------------------------
 -- Entidades do matcher: personagens, diretores, estúdios/escolas e filmes.
--- Cada linha é um vetor de 8 eixos (0 = polo esquerdo, 100 = polo direito).
+-- O vetor de 8 eixos é legado: o app usa `vetor6` (projeção) e, para
+-- diretores/escolas, o centroide da filmografia. Personagens não entram no match.
 -- `imagem_url` é opcional: sem ela o front renderiza um monograma na cor do eixo.
 -- -----------------------------------------------------------------------------
 CREATE TABLE entidades_match (
@@ -129,6 +166,9 @@ CREATE TABLE entidades_match (
     eixo_6      TINYINT UNSIGNED NOT NULL,
     eixo_7      TINYINT UNSIGNED NOT NULL,
     eixo_8      TINYINT UNSIGNED NOT NULL,
+    -- Procedência do vetor: editorial (à mão), catalogo (centroide das obras)
+    -- ou misto. Ver docs/CALIBRACAO.md e bin/calibrar_entidades.php.
+    vetor_origem ENUM('editorial', 'catalogo', 'misto') NOT NULL DEFAULT 'editorial',
     CONSTRAINT chk_ent_e1 CHECK (eixo_1 BETWEEN 0 AND 100),
     CONSTRAINT chk_ent_e2 CHECK (eixo_2 BETWEEN 0 AND 100),
     CONSTRAINT chk_ent_e3 CHECK (eixo_3 BETWEEN 0 AND 100),
@@ -160,7 +200,7 @@ CREATE TABLE entidades_obras (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- Arquétipos: um por (eixo dominante, polo) = 16 linhas.
+-- Arquétipos: um por (eixo dominante, polo) = 12 linhas no modelo de 6 eixos.
 -- O segundo eixo é um modificador opcional de texto, não uma chave.
 -- -----------------------------------------------------------------------------
 CREATE TABLE arquetipos (
@@ -176,8 +216,6 @@ CREATE TABLE arquetipos (
     eixo_4             TINYINT UNSIGNED NOT NULL DEFAULT 50,
     eixo_5             TINYINT UNSIGNED NOT NULL DEFAULT 50,
     eixo_6             TINYINT UNSIGNED NOT NULL DEFAULT 50,
-    eixo_7             TINYINT UNSIGNED NOT NULL DEFAULT 50,
-    eixo_8             TINYINT UNSIGNED NOT NULL DEFAULT 50,
     titulo_key         VARCHAR(80)  NOT NULL,
     descricao_key      VARCHAR(80)  NOT NULL,
     ritual_cinema_key  VARCHAR(80)  NOT NULL,
@@ -201,6 +239,8 @@ CREATE TABLE resultados_usuarios (
     codigo_unico  CHAR(8) NOT NULL,
     idioma        VARCHAR(5) NOT NULL DEFAULT 'pt-BR',
     modo          ENUM('rapido', 'completo', 'extremo') NOT NULL DEFAULT 'completo',
+    -- Versão do conjunto de perguntas que gerou o vetor (NULL = anterior ao registro).
+    questionario_versao VARCHAR(40) NULL,
     respostas_json JSON NULL,
     eixo_1        DECIMAL(5,2) NOT NULL,
     eixo_2        DECIMAL(5,2) NOT NULL,
@@ -208,8 +248,6 @@ CREATE TABLE resultados_usuarios (
     eixo_4        DECIMAL(5,2) NOT NULL,
     eixo_5        DECIMAL(5,2) NOT NULL,
     eixo_6        DECIMAL(5,2) NOT NULL,
-    eixo_7        DECIMAL(5,2) NOT NULL,
-    eixo_8        DECIMAL(5,2) NOT NULL,
     arquetipo_id  SMALLINT UNSIGNED NULL,
     origem        ENUM('real', 'sintetico') NOT NULL DEFAULT 'real',
     ip_hash       CHAR(64) NULL,
@@ -224,9 +262,7 @@ CREATE TABLE resultados_usuarios (
     CONSTRAINT chk_res_e3 CHECK (eixo_3 BETWEEN 0 AND 100),
     CONSTRAINT chk_res_e4 CHECK (eixo_4 BETWEEN 0 AND 100),
     CONSTRAINT chk_res_e5 CHECK (eixo_5 BETWEEN 0 AND 100),
-    CONSTRAINT chk_res_e6 CHECK (eixo_6 BETWEEN 0 AND 100),
-    CONSTRAINT chk_res_e7 CHECK (eixo_7 BETWEEN 0 AND 100),
-    CONSTRAINT chk_res_e8 CHECK (eixo_8 BETWEEN 0 AND 100)
+    CONSTRAINT chk_res_e6 CHECK (eixo_6 BETWEEN 0 AND 100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
@@ -238,6 +274,9 @@ CREATE TABLE retratos (
     idioma        VARCHAR(5) NOT NULL DEFAULT 'pt-BR',
     texto         MEDIUMTEXT NOT NULL,
     frase         VARCHAR(280) NULL,
+    -- JSON com a narrativa por perfil (retrato, leituras, arquétipo, diretor,
+    -- repertório e descobertas). Ver Services\NarrativaService.
+    narrativa_json JSON NULL,
     modelo        VARCHAR(80) NOT NULL,
     prompt_versao VARCHAR(20) NOT NULL,
     tokens        INT UNSIGNED NULL,
@@ -261,718 +300,105 @@ CREATE TABLE cache_tmdb (
 
 -- >>> sql/002_seed.sql
 -- =============================================================================
--- PersonaCut — dados iniciais (pt-BR)
--- Executado automaticamente pelo MySQL na primeira subida do Docker
--- (ordem alfabética: 001_schema.sql, 002_seed.sql, 003...).
+-- PersonaCut — seed do modelo v2 (6 eixos)
+-- Gerado para a migração 6D. Reexecutável: o schema 001 derruba as tabelas.
 -- =============================================================================
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- 1. Eixos
--- Gêneros = IDs oficiais da TMDB (usados em discover/with_genres).
--- Keywords = nomes (o TmdbService resolve para IDs na v1.5).
+-- 1. Eixos (6)
 -- -----------------------------------------------------------------------------
 INSERT INTO eixos
-    (id, ordem, slug, nome, descricao, polo_esq_key, polo_esq_nome, polo_dir_key, polo_dir_nome,
+    (ordem, slug, nome, descricao, polo_esq_key, polo_esq_nome, polo_dir_key, polo_dir_nome,
      cor_esq, cor_dir, icone_esq, icone_dir, tmdb_genres_esq, tmdb_genres_dir,
      tmdb_keywords_esq, tmdb_keywords_dir)
 VALUES
-    (1, 1, 'estetica', 'Forma', 'A linguagem visual: transparência clássica, decupagem invisível e continuidade contra ruptura formal, textura e auto-reflexão.',
-     'eixo.estetica.esq', 'Clássica', 'eixo.estetica.dir', 'Experimental', '#8C5A2B', '#4F6480',
-     'frame',    'sparkles', '18,36,10749', '14,16,9648',
-     'cinema clássico,preto e branco,ópera', 'surrealismo,sonho,expressionismo'),
-
-    (2, 2, 'tom', 'Tom', 'O registro emocional: peso, silêncio e catarse triste contra leveza, humor e saída em estado de festa.',
-     'eixo.tom.esq', 'Melancólico', 'eixo.tom.dir', 'Eufórico', '#445C7A', '#C08A2E',
-     'moon',     'sun',      '18,10749,10752', '35,12,10402',
-     'melancolia,luto,solidão', 'amizade,festa,verão'),
-
-    (3, 3, 'universo', 'Realismo', 'O grau de invenção do mundo: ruas reconhecíveis e gente real contra cosmologias, regras próprias e mundos impossíveis.',
-     'eixo.universo.esq', 'Realista', 'eixo.universo.dir', 'Fantástico', '#5C7048', '#7A4A63',
-     'building', 'planet',   '99,80,36', '878,14,16',
-     'baseado em fatos reais,periferia', 'mundo distópico,viagem espacial,criaturas'),
-
-    (4, 4, 'ritmo', 'Tempo', 'A experiência da duração: planos que respiram e temps morts contra corte rápido, perseguição e adrenalina.',
-     'eixo.ritmo.esq', 'Contemplativo', 'eixo.ritmo.dir', 'Frenético', '#3F6B6B', '#B0553C',
-     'feather',  'bolt',     '18,37,99', '28,53,12',
-     'slow cinema,contemplação', 'perseguição,adrenalina,explosão'),
-
-    (5, 5, 'moralidade', 'Moral', 'A posição ética: zona cinzenta em que ninguém é inocente contra bem e mal bem demarcados.',
-     'eixo.moralidade.esq', 'Ambígua', 'eixo.moralidade.dir', 'Maniqueísta', '#6B5B7B', '#A8792C',
-     'scale',    'shield',   '80,53,9648', '10751,12,14',
-     'anti-herói,dilema moral,corrupção', 'heroísmo,bem contra o mal,fábula'),
-
-    (6, 6, 'estrutura', 'Narrativa', 'A arquitetura da história: causalidade linear e arco fechado contra quebra de tempo, camadas e realidades paralelas.',
-     'eixo.estrutura.esq', 'Linear', 'eixo.estrutura.dir', 'Fragmentada', '#3E6A66', '#9E5560',
-     'list',     'layers',   '18,37,36', '9648,878,53',
-     'narrativa linear,jornada', 'linha do tempo não linear,reviravolta,multiverso'),
-
-    (7, 7, 'atmosfera', 'Escala', 'A medida do drama: quartos, closes e poucos personagens contra exércitos, planetas e tela grande.',
-     'eixo.atmosfera.esq', 'Íntima', 'eixo.atmosfera.dir', 'Épica', '#8A5F6B', '#4A6B85',
-     'home',     'mountain', '18,10749,10402', '12,10752,878',
-     'filme de câmara,claustrofobia,família', 'épico,batalha,paisagem'),
-
-    (8, 8, 'epoca', 'Temporalidade', 'A orientação no tempo: memória, grão e passado contra neon, código e imaginação do amanhã.',
-     'eixo.epoca.esq', 'Memória', 'eixo.epoca.dir', 'Futuro', '#8A6A45', '#5E7F6A',
-     'film',     'rocket',   '36,37,10749', '878,28,14',
-     'filme de época,anos dourados,memória', 'futuro,cyberpunk,tecnologia');
+    (1, 'estetica', 'Estética', 'Onde o filme circula: do blockbuster ao circuito de arte.', 'eixo.estetica.esq', 'Popular', 'eixo.estetica.dir', 'Autoral', '#b0553c', '#4f6480', 'users', 'feather', '28,12,35,10751', '18,36,99,10749', '', ''),
+    (2, 'tom', 'Tom', 'O registro afetivo: da leveza ao desconforto.', 'eixo.tom.esq', 'Claro', 'eixo.tom.dir', 'Sombrio', '#c08a2e', '#3f4a5a', 'sun', 'moon', '35,10749,10751,16', '27,80,53,9648', '', ''),
+    (3, 'mundo', 'Mundo', 'O grau de invenção: do real imediato ao mundo inventado.', 'eixo.mundo.esq', 'Real', 'eixo.mundo.dir', 'Imaginário', '#5c7048', '#7a4a63', 'home', 'planet', '99,18,36,80', '14,878,16,12', '', ''),
+    (4, 'ritmo', 'Ritmo', 'A experiência da duração: do plano que respira ao corte que acelera.', 'eixo.ritmo.esq', 'Calmo', 'eixo.ritmo.dir', 'Intenso', '#3f6b6b', '#b04a5a', 'moon', 'bolt', '18,99,37', '28,53,12,27', '', ''),
+    (5, 'escala', 'Escala', 'A medida do drama: do quarto ao planeta.', 'eixo.escala.esq', 'Íntimo', 'eixo.escala.dir', 'Épico', '#8c5a2b', '#2f4858', 'frame', 'mountain', '18,10749,35', '12,10752,878,14', '', ''),
+    (6, 'amplitude', 'Amplitude', 'O quanto você sai do familiar: país, época, gênero e risco.', 'eixo.amplitude.esq', 'Circunscrito', 'eixo.amplitude.dir', 'Omnívoro', '#6b5b7b', '#a8792c', 'lock', 'globe', '28,35,10751', '99,36,37,10752', '', '');
 
 -- -----------------------------------------------------------------------------
--- 2. Perguntas — 240 no total, 30 por eixo.
--- A ordem é round-robin entre os eixos (a cada rodada, uma pergunta de cada eixo),
--- então qualquer prefixo já é um teste equilibrado:
---   ordem 1..32   → 4 por eixo, curadas, com cena do TMDB (2 primeiras de cada eixo com peso 2)
---   ordem 33..240 → 26 por eixo, texto curado, sem mídia
--- Modos: rápido = 36, completo = 60, extremo = 240 (ver Pergunta::paraModo).
+-- 2. Perguntas (48: 8 por eixo, 4 por polo)
+-- `modo_rapido=1` marca o núcleo (4 por eixo) usado nos formatos curtos.
 -- -----------------------------------------------------------------------------
 INSERT INTO perguntas
     (eixo_id, texto_key, texto, direcao, peso, modo_rapido, ordem, tmdb_id,
      midia_tipo, midia_url_ou_id, midia_meta)
 VALUES
-    (1, 'pergunta.estetica.01', 'Prefiro um filme com fotografia limpa e enquadramento clássico a um que quebra todas as regras da imagem.', -1, 2, 1, 1, 289,
-     'imagem', '/87wqeMeUeMRLjsE1IWNKJcPlpuC.jpg',
-     '{"legenda":"Casablanca (1942)","ano":1942,"tmdb_id":289,"fonte":"tmdb"}'),
-    (2, 'pergunta.tom.01', 'Os filmes que mais me marcam são os que me deixam com um nó na garganta.', -1, 2, 1, 2, 334541,
-     'imagem', '/fjk4eE8Ypke4YLv5A3ArDH4GzYH.jpg',
-     '{"legenda":"Manchester à Beira-Mar (2016)","ano":2016,"tmdb_id":334541,"fonte":"tmdb"}'),
-    (3, 'pergunta.universo.01', 'Histórias que poderiam acontecer comigo hoje me prendem mais do que mundos inventados.', -1, 2, 1, 3, 598,
-     'imagem', '/uvitbjFU4JqvMwIkMWHp69bmUzG.jpg',
-     '{"legenda":"Cidade de Deus (2002)","ano":2002,"tmdb_id":598,"fonte":"tmdb"}'),
-    (4, 'pergunta.ritmo.01', 'Não me incomodo com um filme que respira devagar; até gosto dos silêncios.', -1, 2, 1, 4, 655,
-     'imagem', '/pAKpSMrCv9HQdMKvIdLgTdpKh5f.jpg',
-     '{"legenda":"Paris, Texas (1984)","ano":1984,"tmdb_id":655,"fonte":"tmdb"}'),
-    (5, 'pergunta.moralidade.01', 'Os melhores filmes são aqueles em que ninguém é totalmente bom nem totalmente mau.', -1, 2, 1, 5, 238,
-     'imagem', '/39rtAdg3yx6IDxRg0ZLXefv0aPY.jpg',
-     '{"legenda":"O Poderoso Chefão (1972)","ano":1972,"tmdb_id":238,"fonte":"tmdb"}'),
-    (6, 'pergunta.estrutura.01', 'Prefiro uma história contada do começo ao fim, na ordem certa.', -1, 2, 1, 6, 13,
-     'imagem', '/66Kn4XWhkuPkJxOJyPEx4U2CUfN.jpg',
-     '{"legenda":"Forrest Gump: O Contador de Histórias (1994)","ano":1994,"tmdb_id":13,"fonte":"tmdb"}'),
-    (7, 'pergunta.atmosfera.01', 'Meus filmes favoritos se passam em poucos lugares, com poucos personagens.', -1, 2, 1, 7, 389,
-     'imagem', '/qqHQsStV6exghCM7zbObuYBiYxw.jpg',
-     '{"legenda":"12 Homens e uma Sentença (1957)","ano":1957,"tmdb_id":389,"fonte":"tmdb"}'),
-    (8, 'pergunta.epoca.01', 'Sinto falta da textura do cinema de antigamente: grão, luz de tungstênio, charme.', -1, 2, 1, 8, 11216,
-     'imagem', '/zoVeIgKzGJzpdG6Gwnr7iOYfIMU.jpg',
-     '{"legenda":"Cinema Paradiso (1988)","ano":1988,"tmdb_id":11216,"fonte":"tmdb"}'),
-    (1, 'pergunta.estetica.02', 'Curto quando um filme inventa uma linguagem visual própria, mesmo que eu estranhe no começo.', 1, 2, 1, 9, 335984,
-     'imagem', '/gNdLJU9TxrpGx4dkZidjys3fyy0.jpg',
-     '{"legenda":"Blade Runner 2049 (2017)","ano":2017,"tmdb_id":335984,"fonte":"tmdb"}'),
-    (2, 'pergunta.tom.02', 'Prefiro sair do cinema leve, rindo e com vontade de viver.', 1, 2, 1, 10, 120467,
-     'imagem', '/jK65srQczOKTpW62wPxwwKztGgE.jpg',
-     '{"legenda":"O Grande Hotel Budapeste (2014)","ano":2014,"tmdb_id":120467,"fonte":"tmdb"}'),
-    (3, 'pergunta.universo.02', 'Quanto mais o filme cria um universo próprio, com regras próprias, mais eu me entrego.', 1, 2, 1, 11, 120,
-     'imagem', '/oiwc338EoBgS4sEI2ixAny4KQKg.jpg',
-     '{"legenda":"O Senhor dos Anéis: A Sociedade do Anel (2001)","ano":2001,"tmdb_id":120,"fonte":"tmdb"}'),
-    (4, 'pergunta.ritmo.02', 'Se o filme para por cinco minutos, eu já estou olhando o celular.', 1, 2, 1, 12, 76341,
-     'imagem', '/gqrnQA6Xppdl8vIb2eJc58VC1tW.jpg',
-     '{"legenda":"Mad Max: Estrada da Fúria (2015)","ano":2015,"tmdb_id":76341,"fonte":"tmdb"}'),
-    (5, 'pergunta.moralidade.02', 'Gosto de histórias em que o herói é claramente o herói e o vilão é claramente o vilão.', 1, 2, 1, 13, 85,
-     'imagem', '/c7Mjuip0jfHLY7x8ZSEriRj45cu.jpg',
-     '{"legenda":"Indiana Jones e os Caçadores da Arca Perdida (1981)","ano":1981,"tmdb_id":85,"fonte":"tmdb"}'),
-    (6, 'pergunta.estrutura.02', 'Adoro quando o filme embaralha o tempo e me obriga a montar as peças.', 1, 2, 1, 14, 680,
-     'imagem', '/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg',
-     '{"legenda":"Pulp Fiction: Tempo de Violência (1994)","ano":1994,"tmdb_id":680,"fonte":"tmdb"}'),
-    (7, 'pergunta.atmosfera.02', 'Quero escala: exércitos, planetas, multidões e uma tela bem grande.', 1, 2, 1, 15, 947,
-     'imagem', '/6wmemKdbkOIaWfzz607K21R6qOh.jpg',
-     '{"legenda":"Lawrence da Arábia (1962)","ano":1962,"tmdb_id":947,"fonte":"tmdb"}'),
-    (8, 'pergunta.epoca.02', 'Me interessa mais o cinema que imagina o amanhã do que o que revisita o passado.', 1, 2, 1, 16, 603,
-     'imagem', '/8K9qHeM6G6QjQN0C5XKFGvK5lzM.jpg',
-     '{"legenda":"Matrix (1999)","ano":1999,"tmdb_id":603,"fonte":"tmdb"}'),
-    (1, 'pergunta.estetica.03', 'Um bom plano-sequência sem cortes me impressiona mais do que qualquer efeito digital.', -1, 1, 0, 17, 9693,
-     'imagem', '/8Y1S9BtmTOh86irwFo7CJ01YPXF.jpg',
-     '{"legenda":"Filhos da Esperança (2006)","ano":2006,"tmdb_id":9693,"fonte":"tmdb"}'),
-    (2, 'pergunta.tom.03', 'Trilha melancólica e final aberto é a minha definição de boa sessão.', -1, 1, 0, 18, 843,
-     'imagem', '/ffQFnAUm2Uu4RU0nijpjPRf9TBT.jpg',
-     '{"legenda":"Amor à Flor da Pele (2000)","ano":2000,"tmdb_id":843,"fonte":"tmdb"}'),
-    (3, 'pergunta.universo.03', 'Gosto de filmes que parecem um documentário, com cheiro de rua e gente real.', -1, 1, 0, 19, 426426,
-     'imagem', '/zl9uqCl5iUSb50sTk2BPzw6bJnU.jpg',
-     '{"legenda":"Roma (2018)","ano":2018,"tmdb_id":426426,"fonte":"tmdb"}'),
-    (4, 'pergunta.ritmo.03', 'Prefiro cenas longas, com tempo para reparar nos detalhes.', -1, 1, 0, 20, 1398,
-     'imagem', '/6yrbWzzrPp7pwz6zHdifspJk8t3.jpg',
-     '{"legenda":"Stalker (1979)","ano":1979,"tmdb_id":1398,"fonte":"tmdb"}'),
-    (5, 'pergunta.moralidade.03', 'Um final moralmente ambíguo, que me deixa sem lado para torcer, me agrada.', -1, 1, 0, 21, 6977,
-     'imagem', '/fCCvn3xsG29TGKJPvZgTRppsDgk.jpg',
-     '{"legenda":"Onde os Fracos Não Têm Vez (2007)","ano":2007,"tmdb_id":6977,"fonte":"tmdb"}'),
-    (6, 'pergunta.estrutura.03', 'Flashbacks e realidades paralelas costumam me tirar do filme.', -1, 1, 0, 22, 601,
-     'imagem', '/mXLVA0YL6tcXi6SJSuAh9ONXFj5.jpg',
-     '{"legenda":"E.T.: O Extraterrestre (1982)","ano":1982,"tmdb_id":601,"fonte":"tmdb"}'),
-    (7, 'pergunta.atmosfera.03', 'Um quarto, duas pessoas e um segredo mal resolvido já bastam para mim.', -1, 1, 0, 23, 76,
-     'imagem', '/qA2TyqPldTtoTVY3LKrNIG5g6bH.jpg',
-     '{"legenda":"Antes do Amanhecer (1995)","ano":1995,"tmdb_id":76,"fonte":"tmdb"}'),
-    (8, 'pergunta.epoca.03', 'Um figurino de época e uma trilha de orquestra me conquistam de imediato.', -1, 1, 0, 24, 3175,
-     'imagem', '/ef6SvWbSfCFlKodJZqpIaTvsRRP.jpg',
-     '{"legenda":"Barry Lyndon (1975)","ano":1975,"tmdb_id":3175,"fonte":"tmdb"}'),
-    (1, 'pergunta.estetica.04', 'Filmes com estética de sonho, cores impossíveis e montagem livre me conquistam mais fácil.', 1, 1, 0, 25, 38,
-     'imagem', '/95qi5TJMIBI5VzWHia88Pbrye7Z.jpg',
-     '{"legenda":"Brilho Eterno de uma Mente sem Lembranças (2004)","ano":2004,"tmdb_id":38,"fonte":"tmdb"}'),
-    (2, 'pergunta.tom.04', 'Uma comédia bem escrita faz mais por mim do que um drama pesado.', 1, 1, 0, 26, 639,
-     'imagem', '/dbdegCWeD4iK5LXxSBjGdIRsVXS.jpg',
-     '{"legenda":"Harry & Sally: Feitos um para o Outro (1989)","ano":1989,"tmdb_id":639,"fonte":"tmdb"}'),
-    (3, 'pergunta.universo.04', 'Ficção científica e fantasia são as minhas portas de entrada para o cinema.', 1, 1, 0, 27, 11,
-     'imagem', '/4qCqAdHcNKeAHcK8tJ8wNJZa9cx.jpg',
-     '{"legenda":"Guerra nas Estrelas (1977)","ano":1977,"tmdb_id":11,"fonte":"tmdb"}'),
-    (4, 'pergunta.ritmo.04', 'Adrenalina, perseguição e corte rápido são o que me mantêm acordado.', 1, 1, 0, 28, 949,
-     'imagem', '/5JaR6UEoCJJLtLpqFOVMY4O4R7P.jpg',
-     '{"legenda":"Fogo Contra Fogo (1995)","ano":1995,"tmdb_id":949,"fonte":"tmdb"}'),
-    (5, 'pergunta.moralidade.04', 'Ver o bem vencer no final ainda me dá satisfação de verdade.', 1, 1, 0, 29, 122,
-     'imagem', '/ctiw6FZK4N36LmkjSklWEbuvlq9.jpg',
-     '{"legenda":"O Senhor dos Anéis: O Retorno do Rei (2003)","ano":2003,"tmdb_id":122,"fonte":"tmdb"}'),
-    (6, 'pergunta.estrutura.04', 'Um roteiro com camadas, pistas e reviravoltas estruturais me diverte mais que uma narrativa reta.', 1, 1, 0, 30, 27205,
-     'imagem', '/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg',
-     '{"legenda":"A Origem (2010)","ano":2010,"tmdb_id":27205,"fonte":"tmdb"}'),
-    (7, 'pergunta.atmosfera.04', 'Final épico com trilha orquestral me arrepia mais do que qualquer cena intimista.', 1, 1, 0, 31, 157336,
-     'imagem', '/8sNiAPPYU14PUepFNeSNGUTiHW.jpg',
-     '{"legenda":"Interestelar (2014)","ano":2014,"tmdb_id":157336,"fonte":"tmdb"}'),
-    (8, 'pergunta.epoca.04', 'Telas, códigos, inteligência artificial e cidades neon são o meu tipo de cenário.', 1, 1, 0, 32, 152601,
-     'imagem', '/1YnZchmaGc8dchgRPDpR1KGrixA.jpg',
-     '{"legenda":"Ela (2013)","ano":2013,"tmdb_id":152601,"fonte":"tmdb"}');
-
-INSERT INTO perguntas
-    (eixo_id, texto_key, texto, direcao, peso, modo_rapido, ordem, tmdb_id,
-     midia_tipo, midia_url_ou_id, midia_meta)
-VALUES
-    (1, 'pergunta.estetica.05', 'Prefiro enquadramentos estáveis e simétricos, que me deixem olhar a ação sem distração.', -1, 1, 0, 33, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.06', 'Gosto de enquadramentos assimétricos que criem tensão visual e inquietação.', 1, 1, 0, 41, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.07', 'Detesto câmera tremida: parece realismo barato e me cansa em cinco minutos.', -1, 1, 0, 49, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.08', 'Detesto a previsibilidade de composições clássicas que não desafiam meu olhar.', 1, 1, 0, 57, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.09', 'Gosto de luz natural e suave, que imita a realidade sem exageros artificiais.', -1, 1, 0, 65, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.10', 'Prefiro luzes duras, sombras marcadas e contrastes que distorçam a realidade.', 1, 1, 0, 73, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.11', 'A decupagem invisível, que eu nem percebo, é o sinal de um trabalho técnico impecável.', -1, 1, 0, 81, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.12', 'A decupagem fragmentada me faz reconstruir o sentido, e isso me instiga.', 1, 1, 0, 89, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.13', 'Prefiro paletas de cores neutras e realistas a explosões cromáticas saturadas.', -1, 1, 0, 97, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.14', 'Amo quando as cores se tornam abstratas e perdem referência ao mundo real.', 1, 1, 0, 105, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.15', 'Composições equilibradas me dão conforto visual imediato, quadro após quadro.', -1, 1, 0, 113, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.16', 'Composições desequilibradas e instáveis me parecem mais honestas e contemporâneas.', 1, 1, 0, 121, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.17', 'Prefiro a luz que desenha o rosto sem truque a qualquer efeito de pós-produção.', -1, 1, 0, 129, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.18', 'Gosto de luz teatral, quase de palco, que reinventa o rosto do ator.', 1, 1, 0, 137, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.19', 'Prefiro planos médios e gerais que situem o espaço antes de mostrarem detalhes.', -1, 1, 0, 145, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.20', 'Gosto de cores que parecem pintadas à mão, mesmo quando o filme é digital.', 1, 1, 0, 153, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.21', 'Texturas nítidas e definidas são essenciais para eu apreciar a qualidade da imagem.', -1, 1, 0, 161, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.22', 'Prefiro a imagem rasgada, com sobreposições e falhas, à nitidez impecável.', 1, 1, 0, 169, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.23', 'Defendo o corte que ninguém nota: se eu percebo a montagem, ela falhou.', -1, 1, 0, 177, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.24', 'Gosto quando o enquadramento esconde parte do rosto e me obriga a completar.', 1, 1, 0, 185, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.25', 'A continuidade espacial clara e lógica é inegociável para eu entender o filme.', -1, 1, 0, 193, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.26', 'A quebra da continuidade espacial me permite explorar novas geografias mentais.', 1, 1, 0, 201, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.27', 'Gosto de enquadramentos que respeitam as linhas do horizonte e a regra dos terços.', -1, 1, 0, 209, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.28', 'Quero a câmera dentro do espaço do personagem, mesmo que isso me incomode.', 1, 1, 0, 217, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.29', 'Gosto de filmes em que a beleza do plano serve à cena, não ao ego do diretor.', -1, 1, 0, 225, NULL,
-     NULL, NULL, NULL),
-    (1, 'pergunta.estetica.30', 'Cor impossível, fora de qualquer paleta realista, é o que me prende na tela.', 1, 1, 0, 233, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.05', 'Gosto quando o filme me deixa quieto, pensando, em vez de me animar.', -1, 1, 0, 34, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.06', 'Rir alto no meio da sessão é a melhor sensação que o cinema me dá.', 1, 1, 0, 42, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.07', 'Choro no escuro sem vergonha nenhuma, e é por isso que eu volto.', -1, 1, 0, 50, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.08', 'Gosto de sair do cinema com a alma leve e vontade de fazer planos.', 1, 1, 0, 58, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.09', 'A tristeza bem contada me abraça mais do que qualquer final feliz.', -1, 1, 0, 66, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.10', 'Humor afiado me deixa esperto e alerta, do jeito que eu gosto.', 1, 1, 0, 74, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.11', 'Procuro filmes que me deixem com um vazio bom, desses que duram dias.', -1, 1, 0, 82, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.12', 'Adoro final que explode em festa, música e todo mundo dançando.', 1, 1, 0, 90, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.13', 'Prefiro o riso nervoso, que vem depois do desconforto, à gargalhada fácil.', -1, 1, 0, 98, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.14', 'A euforia da plateia me contagia e melhora qualquer filme.', 1, 1, 0, 106, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.15', 'A melancolia é o tempero que faz o resto do filme valer a pena.', -1, 1, 0, 114, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.16', 'Prefiro o riso fácil e generoso ao humor que exige sofrimento antes.', 1, 1, 0, 122, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.17', 'Sinto prazer quando a história termina em perda e não em recompensa.', -1, 1, 0, 130, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.18', 'Sinto afeto imediato por roteiros cheios de luz e gente gentil.', 1, 1, 0, 138, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.19', 'Filmes que me fazem chorar são os que eu recomendo com mais convicção.', -1, 1, 0, 146, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.20', 'Gosto de sair do cinema com energia renovada, pronto para a semana.', 1, 1, 0, 154, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.21', 'Gosto do silêncio final, quando ninguém sabe direito o que dizer.', -1, 1, 0, 162, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.22', 'O abraço coletivo no fim me ganha, mesmo quando é piegas.', 1, 1, 0, 170, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.23', 'Prefiro a emoção contida, que aperta o peito, ao entusiasmo escancarado.', -1, 1, 0, 178, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.24', 'Rir sem esforço é o meu jeito preferido de passar duas horas.', 1, 1, 0, 186, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.25', 'Uma cena de despedida bem filmada vale a sessão inteira para mim.', -1, 1, 0, 194, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.26', 'Prefiro a comédia que celebra a vida à que só aponta o que está errado.', 1, 1, 0, 202, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.27', 'Fico com aquele peso no peito depois do filme, e considero isso um elogio.', -1, 1, 0, 210, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.28', 'Filme bom, para mim, é aquele que me devolve o ânimo.', 1, 1, 0, 218, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.29', 'Prefiro um final amargo e honesto a uma alegria que não foi conquistada.', -1, 1, 0, 226, NULL,
-     NULL, NULL, NULL),
-    (2, 'pergunta.tom.30', 'Gosto quando a sala inteira sai sorrindo, e eu saio junto.', 1, 1, 0, 234, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.05', 'Prefiro rostos cansados de gente comum a criaturas mágicas irreais.', -1, 1, 0, 35, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.06', 'Um dragão voando sobre cidades me empolga mais do que um trânsito lotado.', 1, 1, 0, 43, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.07', 'O cotidiano banal me prende quando mostrado com fidelidade brutal.', -1, 1, 0, 51, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.08', 'Mundos impossíveis com lógica interna me prendem mais que a realidade.', 1, 1, 0, 59, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.09', 'Gosto de ver pessoas reais falando sobre problemas reais.', -1, 1, 0, 67, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.10', 'Fantasias épicas me deixam escapar da rotina por duas horas.', 1, 1, 0, 75, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.11', 'A verossimilhança dos detalhes do dia a dia é o que me vende a história.', -1, 1, 0, 83, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.12', 'Prefiro histórias com criaturas e deuses a histórias de divórcio e contas.', 1, 1, 0, 91, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.13', 'Prefiro filmes que parecem documentários sobre a vida cotidiana.', -1, 1, 0, 99, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.14', 'Quero mapa, mitologia e cronologia: gosto de universos que exigem estudo.', 1, 1, 0, 107, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.15', 'Ruas reconhecíveis e diálogo natural são meu padrão de ouro.', -1, 1, 0, 115, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.16', 'Quero explorar galáxias distantes, não apenas o meu bairro.', 1, 1, 0, 123, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.17', 'A realidade crua e sem filtro me comove mais que a ficção.', -1, 1, 0, 131, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.18', 'Mundos fantásticos oferecem uma liberdade criativa que a realidade não tem.', 1, 1, 0, 139, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.19', 'Gosto de histórias ancoradas em contextos sociais e geográficos verdadeiros.', -1, 1, 0, 147, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.20', 'A estranheza de universos paralelos me atrai mais que o familiar.', 1, 1, 0, 155, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.21', 'Prefiro a honestidade de um retrato social realista.', -1, 1, 0, 163, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.22', 'A magia e o sobrenatural me permitem sonhar além do possível.', 1, 1, 0, 171, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.23', 'Detalhes sensoriais do mundo real criam a minha conexão emocional.', -1, 1, 0, 179, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.24', 'Sistemas de magia complexos me intrigam mais que a vida real.', 1, 1, 0, 187, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.25', 'A simplicidade de um enredo cotidiano me basta para sentir algo.', -1, 1, 0, 195, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.26', 'A grandiosidade de civilizações alienígenas me faz perder a noção do tempo.', 1, 1, 0, 203, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.27', 'Prefiro o peso da existência humana a qualquer artefato tecnológico.', -1, 1, 0, 211, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.28', 'Escolho a porta que leva a dimensões desconhecidas, não a do meu prédio.', 1, 1, 0, 219, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.29', 'A textura das ruas e a luz do sol real me atraem mais que qualquer efeito.', -1, 1, 0, 227, NULL,
-     NULL, NULL, NULL),
-    (3, 'pergunta.universo.30', 'Viver aventuras em planetas distantes é o meu maior desejo de cinema.', 1, 1, 0, 235, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.05', 'Preciso sentir o tempo passar para entender o peso da cena.', -1, 1, 0, 36, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.06', 'Velocidade constante é o único ritmo que não me faz dormir.', 1, 1, 0, 44, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.07', 'Corte rápido demais me deixa tonto e desconectado da história.', -1, 1, 0, 52, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.08', 'Prefiro três cortes por segundo a um plano que dura um minuto.', 1, 1, 0, 60, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.09', 'A espera faz parte da experiência; não quero pular nada.', -1, 1, 0, 68, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.10', 'Tensão só funciona se houver urgência visual constante e aguda.', 1, 1, 0, 76, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.11', 'Plano fixo me permite observar reações sutis que o corte esconde.', -1, 1, 0, 84, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.12', 'Montagem frenética é essencial para manter minha atenção presa à tela.', 1, 1, 0, 92, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.13', 'Sinto falta do tempo morto para processar o que acabou de acontecer.', -1, 1, 0, 100, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.14', 'Gosto quando o filme me atropela e não me deixa respirar.', 1, 1, 0, 108, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.15', 'Gosto de ficar no mesmo plano até sentir o desconforto natural.', -1, 1, 0, 116, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.16', 'Adrenalina visual é o que me impede de perder o foco.', 1, 1, 0, 124, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.17', 'Respiro com o filme; pressa visual me gera ansiedade imediata.', -1, 1, 0, 132, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.18', 'Quanto mais cortes por cena, mais vivo eu me sinto na poltrona.', 1, 1, 0, 140, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.19', 'A duração estendida revela camadas que o ritmo rápido apaga.', -1, 1, 0, 148, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.20', 'Cortes bruscos criam a tensão que eu busco em qualquer cena.', 1, 1, 0, 156, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.21', 'Espera ativa é mais interessante que qualquer resolução rápida.', -1, 1, 0, 164, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.22', 'Ação ininterrupta é o único jeito de me manter na poltrona.', 1, 1, 0, 172, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.23', 'Tolerar a lentidão é uma forma de respeito ao espectador.', -1, 1, 0, 180, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.24', 'Ritmo acelerado elimina a chance de eu pensar demais.', 1, 1, 0, 188, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.25', 'Deixo o plano durar o quanto precisar, mesmo que a sala se inquiete.', -1, 1, 0, 196, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.26', 'Perseguição constante é o combustível principal da minha atenção.', 1, 1, 0, 204, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.27', 'A pausa dramática é o momento mais honesto do filme.', -1, 1, 0, 212, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.28', 'Prefiro o ritmo de videoclipe: rápido, alto e sem pausa.', 1, 1, 0, 220, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.29', 'Deixar a cena respirar evita que eu sinta pressa.', -1, 1, 0, 228, NULL,
-     NULL, NULL, NULL),
-    (4, 'pergunta.ritmo.30', 'Prefiro que a história avance a cada plano, sem tempo para paisagem.', 1, 1, 0, 236, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.05', 'Prefiro quando o protagonista comete um erro imperdoável e não se redime por completo.', -1, 1, 0, 37, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.06', 'Preciso que o vilão seja punido de forma proporcional e definitiva na cena final.', 1, 1, 0, 45, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.07', 'A culpa do personagem deve persistir até o último segundo, sem absolvição fácil.', -1, 1, 0, 53, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.08', 'Justiça é quando o inocente é completamente exonerado e o culpado é preso.', 1, 1, 0, 61, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.09', 'Não suporto finais em que todos perdoam todo mundo, criando uma paz artificial.', -1, 1, 0, 69, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.10', 'Adoro quando a ordem moral é restaurada e o mundo volta ao normal.', 1, 1, 0, 77, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.11', 'Um anti-herói que age por motivações mesquinhas é mais realista do que um santo.', -1, 1, 0, 85, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.12', 'O herói deve ter um código moral inabalável, mesmo que custe sua vida.', 1, 1, 0, 93, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.13', 'A ambiguidade ética me faz questionar minhas próprias ações depois de sair da sala.', -1, 1, 0, 101, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.14', 'Clareza moral me dá conforto: saber exatamente quem está certo e quem está errado.', 1, 1, 0, 109, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.15', 'Prefiro personagens que erram sem discurso e convivem com o que fizeram.', -1, 1, 0, 117, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.16', 'Preciso de um julgamento final onde a verdade factual seja a única que importa.', 1, 1, 0, 125, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.17', 'Gosto de personagens que falham moralmente e sofrem as consequências sem piedade.', -1, 1, 0, 133, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.18', 'Vilões devem ser odiáveis e heróis admiráveis, sem nuances confusas.', 1, 1, 0, 141, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.19', 'Gosto de torcer por alguém que fez algo terrível e não se arrepende.', -1, 1, 0, 149, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.20', 'A justiça divina ou humana deve ser cega e imparcial em seus veredictos.', 1, 1, 0, 157, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.21', 'A zona cinzenta entre certo e errado é onde a verdade narrativa reside.', -1, 1, 0, 165, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.22', 'Sinto alívio quando o caos moral é resolvido com uma resolução binária.', 1, 1, 0, 173, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.23', 'A redenção é rara e deve ser conquistada através de sofrimento extremo.', -1, 1, 0, 181, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.24', 'Não aceito finais em que o mal vence apenas por ser mais forte.', 1, 1, 0, 189, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.25', 'Prefiro finais tristes de moral complexa a finais felizes simplistas.', -1, 1, 0, 197, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.26', 'O bem deve vencer porque é o que está certo, não por acaso.', 1, 1, 0, 205, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.27', 'A culpa compartilhada entre todos os personagens torna a história mais rica.', -1, 1, 0, 213, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.28', 'Gosto quando o filme deixa claro, na primeira cena, quem é bom e quem é mau.', 1, 1, 0, 221, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.29', 'Prefiro o personagem que trai por amor ao que trai por maldade pura.', -1, 1, 0, 229, NULL,
-     NULL, NULL, NULL),
-    (5, 'pergunta.moralidade.30', 'Prefiro o vilão que assume a maldade ao que esconde atrás de um trauma.', 1, 1, 0, 237, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.05', 'Preciso saber o que aconteceu antes para entender o que acontece agora.', -1, 1, 0, 38, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.06', 'O efeito de colocar o final no início me atrai instantaneamente.', 1, 1, 0, 46, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.07', 'Gosto de saber, a cada cena, quanto tempo passou desde a anterior.', -1, 1, 0, 54, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.08', 'Gosto de perceber como o tempo se dobra sobre si mesmo na estrutura.', 1, 1, 0, 62, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.09', 'Gosto de ver as consequências diretas das escolhas feitas na cena anterior.', -1, 1, 0, 70, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.10', 'Múltiplos narradores contraditórios me fazem questionar a verdade dos fatos.', 1, 1, 0, 78, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.11', 'Um final que fecha o arco inicial me traz uma sensação de paz.', -1, 1, 0, 86, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.12', 'A falta de uma linha temporal única me estimula a ativar minha memória.', 1, 1, 0, 94, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.13', 'Detesto quando o narrador esconde informações para criar suspense artificial.', -1, 1, 0, 102, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.14', 'Prefiro descobrir a causa de um evento depois de ver suas consequências.', 1, 1, 0, 110, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.15', 'Um filme bem contado não precisa de truque de estrutura para me prender.', -1, 1, 0, 118, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.16', 'A fragmentação do tempo reflete melhor a forma como realmente lembramos.', 1, 1, 0, 126, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.17', 'Sinto cansaço mental quando preciso reorganizar os eventos na minha cabeça.', -1, 1, 0, 134, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.18', 'Gosto de ver a mesma cena retratada por diferentes pontos de vista.', 1, 1, 0, 142, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.19', 'Prefiro um único ponto de vista estável que acompanhe o personagem do início ao fim.', -1, 1, 0, 150, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.20', 'A ausência de uma ordem lógica me obriga a prestar atenção máxima.', 1, 1, 0, 158, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.21', 'A causalidade clara me permite prever o próximo passo com certa segurança.', -1, 1, 0, 166, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.22', 'Encontro beleza na desordem temporal que quebra a minha expectativa.', 1, 1, 0, 174, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.23', 'Prefiro que o filme conte uma coisa só, sem tramas paralelas.', -1, 1, 0, 182, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.24', 'Gosto de histórias em que o passado e o presente se sobrepõem na tela.', 1, 1, 0, 190, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.25', 'Valorizo a progressão contínua do tempo, sem interrupções bruscas ou saltos.', -1, 1, 0, 198, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.26', 'A não-linearidade me permite construir ativamente a lógica da história.', 1, 1, 0, 206, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.27', 'Gosto de acompanhar o crescimento de um personagem em sequência temporal direta.', -1, 1, 0, 214, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.28', 'Prefiro que o filme termine antes de me explicar como chegamos ali.', 1, 1, 0, 222, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.29', 'A simplicidade narrativa me permite focar nos diálogos e nas emoções presentes.', -1, 1, 0, 230, NULL,
-     NULL, NULL, NULL),
-    (6, 'pergunta.estrutura.30', 'A quebra da cronologia cria uma tensão que a ordem natural não produz.', 1, 1, 0, 238, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.05', 'Prefiro o sussurro de dois corpos colados ao rugido de uma multidão.', -1, 1, 0, 39, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.06', 'A imensidão de uma paisagem deserta me faz sentir pequeno e livre.', 1, 1, 0, 47, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.07', 'Só me importo quando a câmera fecha no poro da pele do ator.', -1, 1, 0, 55, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.08', 'Preciso ver a multidão se movendo como um único organismo vivo na tela.', 1, 1, 0, 63, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.09', 'A intimidade de uma cozinha pequena me atrai mais que qualquer batalha campal.', -1, 1, 0, 71, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.10', 'O espetáculo de uma batalha aérea me dá arrepio de pura adrenalina.', 1, 1, 0, 79, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.11', 'Um close no olho trêmulo revela mais verdade que qualquer exército em marcha.', -1, 1, 0, 87, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.12', 'Só me emociono quando a câmera revela a escala colossal de um monumento antigo.', 1, 1, 0, 95, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.13', 'O silêncio de um quarto vazio me incomoda menos que o barulho de uma praça lotada.', -1, 1, 0, 103, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.14', 'A grandiosidade de um universo em expansão me faz sentir parte de algo maior.', 1, 1, 0, 111, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.15', 'Quero sentir o hálito do outro, não o vento de uma paisagem infinita.', -1, 1, 0, 119, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.16', 'Quero sentir o peso da história em cada pedra de uma cidade em ruínas.', 1, 1, 0, 127, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.17', 'A escala de uma relação a dois é o único palco que me interessa.', -1, 1, 0, 135, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.18', 'A vista de um exército se formando no horizonte me deixa sem fôlego.', 1, 1, 0, 143, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.19', 'Detesto quando a câmera se afasta demais e perde a textura da pele.', -1, 1, 0, 151, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.20', 'Um plano aberto da solidão humana diante da natureza me comove profundamente.', 1, 1, 0, 159, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.21', 'Meu cinema ideal cabe em uma cápsula espacial pequena, não em uma galáxia.', -1, 1, 0, 167, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.22', 'A escala de um desastre natural me lembra da fragilidade da nossa existência.', 1, 1, 0, 175, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.23', 'A dor de um dedo cortado me afeta mais que a queda de um império.', -1, 1, 0, 183, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.24', 'Prefiro a energia caótica de uma festa gigante à quietude de um quarto.', 1, 1, 0, 191, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.25', 'Gosto de filmes que cabem numa sala, com porta, mesa e janela.', -1, 1, 0, 199, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.26', 'Gosto de filmes em que a paisagem é o personagem principal.', 1, 1, 0, 207, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.27', 'A intimidade de um espelho rachado me fascina mais que a vastidão do oceano.', -1, 1, 0, 215, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.28', 'O rugido de uma multidão em um estádio me dá uma sensação de poder.', 1, 1, 0, 223, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.29', 'Um beijo demorado em close vale mais que uma explosão de efeitos especiais.', -1, 1, 0, 231, NULL,
-     NULL, NULL, NULL),
-    (7, 'pergunta.atmosfera.30', 'A arquitetura monumental de uma catedral me faz sentir a presença do divino.', 1, 1, 0, 239, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.05', 'Prefiro cheirar o pó de veludo de uma sala antiga a qualquer brilho digital.', -1, 1, 0, 40, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.06', 'Quero ver hologramas, interfaces no ar e cidades que ainda não existem.', 1, 1, 0, 48, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.07', 'Sinto um puxão no peito quando vejo personagens envelhecidos revendo vidas perdidas.', -1, 1, 0, 56, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.08', 'Gosto de filmes em que a tecnologia é a nova pele dos nossos desejos.', 1, 1, 0, 64, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.09', 'Adoro a sensação tátil de um negativo de filme passando por uma máquina.', -1, 1, 0, 72, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.10', 'Prefiro mundos em que a biotecnologia redefine o que significa ser humano.', 1, 1, 0, 80, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.11', 'Nostalgia é o meu vício favorito: quero reviver épocas que nunca conheci.', -1, 1, 0, 88, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.12', 'A imaginação do amanhã me empolga mais do que qualquer restauração histórica.', 1, 1, 0, 96, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.13', 'O passado me atrai porque guarda segredos que o futuro ainda não revela.', -1, 1, 0, 104, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.14', 'Códigos, algoritmos e luzes frias são a minha paisagem emocional preferida.', 1, 1, 0, 112, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.15', 'Gosto de ver como as cidades mudaram: o bonde, o telefone, a calçada.', -1, 1, 0, 120, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.16', 'Prefiro o futuro distópico ao passado idealizado.', 1, 1, 0, 128, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.17', 'Gosto de filmes que parecem ter sido achados num arquivo empoeirado.', -1, 1, 0, 136, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.18', 'Gosto de histórias em que a humanidade já resolveu problemas que hoje parecem eternos.', 1, 1, 0, 144, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.19', 'Gosto de histórias que se passam em décadas passadas, cheias de poeira.', -1, 1, 0, 152, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.20', 'O futuro me atrai pela promessa de soluções para problemas atuais.', 1, 1, 0, 160, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.21', 'Prefiro a imperfeição analógica à precisão clínica das imagens digitais.', -1, 1, 0, 168, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.22', 'Quero ver como a inteligência artificial vai mudar a nossa sociedade.', 1, 1, 0, 176, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.23', 'A nostalgia é um refúgio seguro contra o caos do mundo moderno.', -1, 1, 0, 184, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.24', 'O passado é um museu; prefiro o laboratório do futuro.', 1, 1, 0, 192, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.25', 'Sinto atração por objetos antigos que carregam a memória de tempos remotos.', -1, 1, 0, 200, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.26', 'A tecnologia acelerada me fascina, mesmo quando assusta.', 1, 1, 0, 208, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.27', 'Prefiro filmes com carros antigos, rádios de válvula e roupa bem cortada.', -1, 1, 0, 216, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.28', 'Quero cenários que eu nunca vi: estações orbitais, desertos de vidro.', 1, 1, 0, 224, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.29', 'Nostalgia por sons analógicos e vinil é a minha constante emocional.', -1, 1, 0, 232, NULL,
-     NULL, NULL, NULL),
-    (8, 'pergunta.epoca.30', 'Prefiro o cinema que tenta prever o próximo passo da humanidade.', 1, 1, 0, 240, NULL,
-     NULL, NULL, NULL);
+    (1, 'q6.estetica.1', 'Um filme premiado em festival me interessa mais do que um blockbuster de bilheteria.', 1, 2, 1, 1, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.2', 'Prefiro um filme comercial bem feito a um filme de arte que exige paciência.', -1, 2, 1, 7, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.3', 'Gosto quando o filme tem a assinatura de um autor, mesmo que isso o torne mais difícil.', 1, 1, 1, 13, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.4', 'Escolho o que está em cartaz no shopping antes de procurar um cinema de rua.', -1, 1, 1, 19, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.5', 'Filmes de diretores desconhecidos, vindos de outros circuitos, me atraem.', 1, 1, 0, 25, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.6', 'Gosto de franquias e continuações porque já sei o que vou encontrar.', -1, 1, 0, 31, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.7', 'Prefiro um filme que arrisca uma linguagem própria a um que segue a fórmula.', 1, 1, 0, 37, NULL, NULL, NULL, NULL),
+    (1, 'q6.estetica.8', 'O que eu quero é entretenimento garantido, não uma experiência de festival.', -1, 1, 0, 43, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.1', 'Gosto de filmes que me deixam desconfortável e pensando no que vi.', 1, 2, 1, 2, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.2', 'Vou ao cinema para sair leve e bem-humorado.', -1, 2, 1, 8, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.3', 'Histórias com finais tristes ou ambíguos me parecem mais honestas.', 1, 1, 1, 14, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.4', 'Evito filmes que me deixam para baixo.', -1, 1, 1, 20, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.5', 'Terror e suspense psicológico estão entre os meus gêneros favoritos.', 1, 1, 0, 26, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.6', 'Comédia e romance são meus gêneros de conforto.', -1, 1, 0, 32, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.7', 'Prefiro um drama pesado a uma comédia leve.', 1, 1, 0, 38, NULL, NULL, NULL, NULL),
+    (2, 'q6.tom.8', 'Gosto de finais que resolvem tudo e deixam todo mundo bem.', -1, 1, 0, 44, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.1', 'Mundos inventados, com regras próprias, me prendem mais que histórias realistas.', 1, 2, 1, 3, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.2', 'Prefiro histórias que poderiam acontecer comigo ou com alguém que conheço.', -1, 2, 1, 9, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.3', 'Ficção científica e fantasia são minhas portas de entrada para o cinema.', 1, 1, 1, 15, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.4', 'Documentários e dramas sociais me prendem mais que fantasia.', -1, 1, 1, 21, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.5', 'Gosto de mitologias, criaturas e universos que não existem.', 1, 1, 0, 27, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.6', 'Gosto de filmes que parecem registrar a rua, o bairro, a vida como ela é.', -1, 1, 0, 33, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.7', 'Um filme que cria uma realidade própria me interessa mais que um retrato do cotidiano.', 1, 1, 0, 39, NULL, NULL, NULL, NULL),
+    (3, 'q6.mundo.8', 'Universos muito inventados me afastam da história.', -1, 1, 0, 45, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.1', 'Perseguições, cortes rápidos e adrenalina me mantêm dentro do filme.', 1, 2, 1, 4, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.2', 'Gosto de planos longos, silêncios e cenas que respiram.', -1, 2, 1, 10, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.3', 'Gosto quando o filme não me dá tempo de respirar.', 1, 1, 1, 16, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.4', 'Um filme lento, com pouco acontecendo, pode ser hipnótico para mim.', -1, 1, 1, 22, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.5', 'Ação e suspense acelerados são meu tipo de sessão.', 1, 1, 0, 28, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.6', 'Prefiro contemplar a imagem a ser empurrado para a próxima cena.', -1, 1, 0, 34, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.7', 'Prefiro um filme que me carregue no ritmo a um que me peça paciência.', 1, 1, 0, 40, NULL, NULL, NULL, NULL),
+    (4, 'q6.ritmo.8', 'Corte rápido demais me cansa.', -1, 1, 0, 46, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.1', 'Gosto de filmes com exércitos, planetas, multidões e trilha grandiosa.', 1, 2, 1, 5, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.2', 'Prefiro filmes com poucos personagens, em espaços pequenos.', -1, 2, 1, 11, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.3', 'Quanto maior a escala, melhor: quero sentir o tamanho das coisas.', 1, 1, 1, 17, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.4', 'Um quarto, dois atores e uma conversa podem ser o melhor cinema para mim.', -1, 1, 1, 23, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.5', 'Épicos históricos e space operas estão entre os meus favoritos.', 1, 1, 0, 29, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.6', 'Close-ups e silêncios domésticos me dizem mais que batalhas.', -1, 1, 0, 35, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.7', 'Prefiro uma história que atravessa gerações e lugares a um único quarto.', 1, 1, 0, 41, NULL, NULL, NULL, NULL),
+    (5, 'q6.escala.8', 'Grandes espetáculos me parecem vazios.', -1, 1, 0, 47, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.1', 'Assisto a filmes de países e idiomas que não são o meu.', 1, 2, 1, 6, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.2', 'Prefiro filmes recentes, do meu país, com atores que eu conheço.', -1, 2, 1, 12, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.3', 'Gosto de explorar gêneros que não domino, mesmo sem garantia de que vou gostar.', 1, 1, 1, 18, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.4', 'Escolho quase sempre os mesmos gêneros.', -1, 1, 1, 24, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.5', 'Filmes antigos, de décadas antes de eu nascer, me interessam.', 1, 1, 0, 30, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.6', 'Filme antigo ou estrangeiro me dá preguiça.', -1, 1, 0, 36, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.7', 'Gosto de sair da minha zona de conforto quando escolho o que ver.', 1, 1, 0, 42, NULL, NULL, NULL, NULL),
+    (6, 'q6.amplitude.8', 'Prefiro o que está todo mundo comentando agora.', -1, 1, 0, 48, NULL, NULL, NULL, NULL);
 
 -- -----------------------------------------------------------------------------
--- 3. Arquétipos — 16 combinações (eixo dominante + polo)
+-- 3. Arquétipos (12: um por eixo/polo)
 -- -----------------------------------------------------------------------------
 INSERT INTO arquetipos
     (eixo_dominante_1, polo_1, eixo_dominante_2, polo_2,
+     eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6,
      titulo_key, descricao_key, ritual_cinema_key, titulo, descricao, ritual_cinema)
 VALUES
-    (1, 'E', 2, 'E',
-     'arquetipo.estetica_esq', 'arquetipo.estetica_esq.desc', 'arquetipo.estetica_esq.ritual',
-     'O Arquiteto da Forma',
-     'Você acredita que cinema é construção: enquadramento, luz e corte a serviço da história. Um filme bom, para você, é aquele em que nada está fora de lugar — e a emoção nasce da precisão, não do ruído.',
-     'Escolha um clássico restaurado, apague as luzes e deixe o celular em outro cômodo.'),
+    (1, 'E', NULL, NULL, 25, 45, 50, 50, 55, 40, 'arquetipo.estetica_e', 'arquetipo.estetica_e.desc', 'arquetipo.estetica_e.ritual', 'O Espectador de Multidão', 'Você quer que o filme funcione antes de querer que ele surpreenda. Histórias claras, elenco carismático e uma boa noite de cinema valem mais que um exercício de linguagem.', 'Sessão de estreia, pipoca grande e a sala cheia.'),
+    (1, 'D', NULL, NULL, 75, 55, 55, 50, 50, 60, 'arquetipo.estetica_d', 'arquetipo.estetica_d.desc', 'arquetipo.estetica_d.ritual', 'O Caçador de Festivais', 'Você procura a assinatura do diretor, o plano que ninguém mais faria, o filme que pede um pouco de esforço. O prazer está em reconhecer uma voz, não em seguir a fórmula.', 'Uma sessão de festival, com o telefone desligado e um caderno do lado.'),
+    (2, 'E', NULL, NULL, 45, 25, 50, 55, 50, 50, 'arquetipo.tom_e', 'arquetipo.tom_e.desc', 'arquetipo.tom_e.ritual', 'O Coração em Festa', 'Cinema, para você, é energia compartilhada. Você quer rir alto, sair leve e levar a trilha embora. A sala cheia faz parte do prazer.', 'Comédia com plateia cheia, pipoca e sessão comentada depois.'),
+    (2, 'D', NULL, NULL, 55, 75, 55, 45, 50, 50, 'arquetipo.tom_d', 'arquetipo.tom_d.desc', 'arquetipo.tom_d.ritual', 'O Colecionador de Silêncios', 'Você não foge do que dói: procura. Os filmes que ficam com você terminam em silêncio, com uma pergunta aberta e a sensação de que algo mudou.', 'Um drama em dia de chuva, com a janela aberta e nenhuma pressa depois do final.'),
+    (3, 'E', NULL, NULL, 50, 45, 25, 50, 45, 40, 'arquetipo.mundo_e', 'arquetipo.mundo_e.desc', 'arquetipo.mundo_e.ritual', 'O Cronista do Real', 'Você se interessa pelo que poderia acontecer na esquina. Personagens verossímeis, ruas reconhecíveis e conflitos sem solução mágica são o seu tipo de invenção.', 'Um documentário ou um drama social, de preferência no cinema de rua do bairro.'),
+    (3, 'D', NULL, NULL, 55, 55, 75, 50, 60, 55, 'arquetipo.mundo_d', 'arquetipo.mundo_d.desc', 'arquetipo.mundo_d.ritual', 'O Cartógrafo de Mundos', 'Você quer regras novas. Mundos inventados, mitologias e criaturas são menos fuga do que uma forma de olhar o real de outro ângulo.', 'Maratona de fantasia em tela grande, com o mapa do universo do filme aberto no colo.'),
+    (4, 'E', NULL, NULL, 55, 45, 50, 25, 45, 50, 'arquetipo.ritmo_e', 'arquetipo.ritmo_e.desc', 'arquetipo.ritmo_e.ritual', 'O Paciente da Sala Escura', 'Você confia no tempo longo. Um plano parado pode dizer mais que dez cortes, e você prefere reparar no detalhe a ser empurrado para o próximo estímulo.', 'Sessão da tarde com um filme de três horas e o telefone desligado.'),
+    (4, 'D', NULL, NULL, 50, 55, 50, 75, 60, 45, 'arquetipo.ritmo_d', 'arquetipo.ritmo_d.desc', 'arquetipo.ritmo_d.ritual', 'O Corredor de Adrenalina', 'Você quer o corpo dentro do filme. Perseguição, corte seco e som no limite são a gramática que te mantém presente na cadeira.', 'Sessão IMAX ou som alto em casa, com o filme mais acelerado da sua lista.'),
+    (5, 'E', NULL, NULL, 45, 45, 50, 45, 25, 50, 'arquetipo.escala_e', 'arquetipo.escala_e.desc', 'arquetipo.escala_e.ritual', 'O Habitante do Close', 'Você prefere o rosto ao horizonte. Quartos, segredos domésticos e dois personagens falando baixo dizem mais sobre o mundo do que qualquer exército em cena.', 'Um filme de câmara, luz baixa e uma bebida quente ao alcance da mão.'),
+    (5, 'D', NULL, NULL, 55, 55, 60, 60, 75, 50, 'arquetipo.escala_d', 'arquetipo.escala_d.desc', 'arquetipo.escala_d.ritual', 'O Passageiro do Colosso', 'Você quer escala. Deserto, planeta, multidão, trilha orquestral — o cinema é o único lugar onde o tamanho das coisas pode ser sentido no corpo.', 'A maior tela disponível, som alto e nenhum intervalo para não quebrar o transe.'),
+    (6, 'E', NULL, NULL, 40, 45, 40, 50, 50, 25, 'arquetipo.amplitude_e', 'arquetipo.amplitude_e.desc', 'arquetipo.amplitude_e.ritual', 'O Espectador de Casa', 'Você prefere o que já conhece: o gênero que domina, o ator de sempre, o país de sempre. Familiaridade não é preguiça; é conforto.', 'Rever um favorito com a comida de sempre e nenhuma surpresa no cardápio.'),
+    (6, 'D', NULL, NULL, 60, 55, 60, 50, 50, 75, 'arquetipo.amplitude_d', 'arquetipo.amplitude_d.desc', 'arquetipo.amplitude_d.ritual', 'O Colecionador de Mundos', 'Você busca o que ainda não viu: outro país, outra década, outro gênero. O risco faz parte do prazer, e o familiar é só o ponto de partida.', 'Escolher o filme mais estranho da lista e assistir sem pesquisar antes.');
 
-    (1, 'D', 7, 'D',
-     'arquetipo.estetica_dir', 'arquetipo.estetica_dir.desc', 'arquetipo.estetica_dir.ritual',
-     'O Alquimista da Imagem',
-     'Você vai ao cinema para ver o que ainda não viu. Texturas impossíveis, montagem livre e imagens que não pedem licença fazem mais sentido para você do que qualquer convenção de continuidade.',
-     'Sessão dupla com um filme que você não entendeu na primeira vez e outro que ninguém recomenda.'),
-
-    (2, 'E', 6, 'E',
-     'arquetipo.tom_esq', 'arquetipo.tom_esq.desc', 'arquetipo.tom_esq.ritual',
-     'O Colecionador de Silêncios',
-     'Você não foge do que dói: procura. Os filmes que ficam com você são os que terminam em silêncio, com uma pergunta aberta e a sensação de que algo mudou sem barulho.',
-     'Um drama em dia de chuva, com a janela aberta e nenhuma pressa depois do final.'),
-
-    (2, 'D', 7, 'D',
-     'arquetipo.tom_dir', 'arquetipo.tom_dir.desc', 'arquetipo.tom_dir.ritual',
-     'O Coração em Festa',
-     'Cinema, para você, é energia compartilhada. Você quer rir alto, sair leve e levar a trilha embora — e desconfia de qualquer filme que peça seriedade demais.',
-     'Comédia com plateia cheia, pipoca grande e sessão comentada depois.'),
-
-    (3, 'E', 8, 'E',
-     'arquetipo.universo_esq', 'arquetipo.universo_esq.desc', 'arquetipo.universo_esq.ritual',
-     'O Cronista do Real',
-     'Você se interessa pelo que poderia acontecer na esquina. Personagens verossímeis, ruas reconhecíveis e conflitos sem solução mágica são o seu tipo de invenção.',
-     'Um documentário ou um drama social, de preferência no cinema de rua do bairro.'),
-
-    (3, 'D', 7, 'D',
-     'arquetipo.universo_dir', 'arquetipo.universo_dir.desc', 'arquetipo.universo_dir.ritual',
-     'O Cartógrafo de Mundos',
-     'Você quer regras novas. Mundos inventados, mitologias e criaturas são menos fuga do que uma forma de olhar o real de outro ângulo.',
-     'Maratona de fantasia em tela grande, com o mapa do universo do filme aberto no colo.'),
-
-    (4, 'E', 7, 'E',
-     'arquetipo.ritmo_esq', 'arquetipo.ritmo_esq.desc', 'arquetipo.ritmo_esq.ritual',
-     'O Paciente da Sala Escura',
-     'Você confia no tempo longo. Um plano parado pode dizer mais que dez cortes, e você prefere reparar no detalhe a ser empurrado para o próximo estímulo.',
-     'Sessão da tarde com um filme de três horas e o telefone desligado.'),
-
-    (4, 'D', 7, 'D',
-     'arquetipo.ritmo_dir', 'arquetipo.ritmo_dir.desc', 'arquetipo.ritmo_dir.ritual',
-     'O Corredor de Adrenalina',
-     'Você quer o corpo dentro do filme. Perseguição, corte seco e som no limite são a gramática que te mantém presente na cadeira.',
-     'Sessão IMAX ou som alto em casa, com o filme mais acelerado da sua lista.'),
-
-    (5, 'E', 6, 'D',
-     'arquetipo.moralidade_esq', 'arquetipo.moralidade_esq.desc', 'arquetipo.moralidade_esq.ritual',
-     'O Juiz Incomodado',
-     'Você desconfia de respostas fáceis. Os melhores filmes, para você, deixam o espectador sem um lado confortável para torcer — e é justamente aí que a história começa.',
-     'Um thriller moralmente ambíguo, seguido de uma discussão longa sobre quem estava certo.'),
-
-    (5, 'D', 7, 'D',
-     'arquetipo.moralidade_dir', 'arquetipo.moralidade_dir.desc', 'arquetipo.moralidade_dir.ritual',
-     'O Guardião da Luz',
-     'Você gosta de clareza moral: heróis com motivo, vilões com peso e um final que faz o mundo voltar ao lugar. Não é ingenuidade — é o prazer da fábula bem contada.',
-     'Sessão de aventura com a família, torcida em voz alta e final aplaudido.'),
-
-    (6, 'E', 8, 'E',
-     'arquetipo.estrutura_esq', 'arquetipo.estrutura_esq.desc', 'arquetipo.estrutura_esq.ritual',
-     'O Contador de Estradas',
-     'Você quer saber para onde a história vai. Causalidade clara, progressão e um final que fecha o arco são para você sinais de respeito com quem está assistindo.',
-     'Um faroeste ou um drama clássico, sem consultar o celular em nenhum momento.'),
-
-    (6, 'D', 3, 'D',
-     'arquetipo.estrutura_dir', 'arquetipo.estrutura_dir.desc', 'arquetipo.estrutura_dir.ritual',
-     'O Montador de Espelhos',
-     'Você gosta de montar o filme enquanto assiste. Tempo embaralhado, camadas e pistas são um convite, não um obstáculo.',
-     'Um filme de quebra-cabeça, com caderno ao lado para anotar as linhas do tempo.'),
-
-    (7, 'E', 2, 'E',
-     'arquetipo.atmosfera_esq', 'arquetipo.atmosfera_esq.desc', 'arquetipo.atmosfera_esq.ritual',
-     'O Habitante do Close',
-     'Você prefere o rosto ao horizonte. Quartos, segredos domésticos e dois personagens falando baixo dizem mais sobre o mundo do que qualquer exército em cena.',
-     'Um filme de câmara, luz baixa e uma bebida quente ao alcance da mão.'),
-
-    (7, 'D', 4, 'D',
-     'arquetipo.atmosfera_dir', 'arquetipo.atmosfera_dir.desc', 'arquetipo.atmosfera_dir.ritual',
-     'O Passageiro do Colosso',
-     'Você quer escala. Deserto, planeta, multidão, trilha orquestral — o cinema é o único lugar onde o tamanho das coisas pode ser sentido no corpo.',
-     'A maior tela disponível, som alto e nenhum intervalo para não quebrar o transe.'),
-
-    (8, 'E', 1, 'E',
-     'arquetipo.epoca_esq', 'arquetipo.epoca_esq.desc', 'arquetipo.epoca_esq.ritual',
-     'O Guardião da Película',
-     'Você sente o tempo no material. Grão, figurino, luz de tungstênio e um certo jeito antigo de contar histórias te parecem mais verdadeiros que o futuro brilhante.',
-     'Um filme de época em película ou restauração, de preferência numa sala antiga.'),
-
-    (8, 'D', 3, 'D',
-     'arquetipo.epoca_dir', 'arquetipo.epoca_dir.desc', 'arquetipo.epoca_dir.ritual',
-     'O Filho do Amanhã',
-     'Você quer o cinema que imagina o que vem depois. Neon, código, corpos modificados e cidades impossíveis são o seu presente, não o seu futuro distante.',
-     'Uma distopia visualmente ambiciosa e uma playlist sintetizada para o caminho de volta.');
-
-
--- Vetores de referência de cada arquétipo (0 = polo esquerdo, 100 = direito).
--- O matcher escolhe o arquétipo mais próximo do vetor completo do usuário.
-
-UPDATE arquetipos SET eixo_1 = 20, eixo_2 = 35, eixo_3 = 30, eixo_4 = 40, eixo_5 = 55, eixo_6 = 25, eixo_7 = 40, eixo_8 = 35 WHERE titulo_key = 'arquetipo.estetica_esq';
-UPDATE arquetipos SET eixo_1 = 85, eixo_2 = 50, eixo_3 = 55, eixo_4 = 55, eixo_5 = 40, eixo_6 = 80, eixo_7 = 60, eixo_8 = 60 WHERE titulo_key = 'arquetipo.estetica_dir';
-UPDATE arquetipos SET eixo_1 = 45, eixo_2 = 15, eixo_3 = 30, eixo_4 = 35, eixo_5 = 45, eixo_6 = 35, eixo_7 = 35, eixo_8 = 45 WHERE titulo_key = 'arquetipo.tom_esq';
-UPDATE arquetipos SET eixo_1 = 35, eixo_2 = 90, eixo_3 = 45, eixo_4 = 75, eixo_5 = 80, eixo_6 = 30, eixo_7 = 60, eixo_8 = 45 WHERE titulo_key = 'arquetipo.tom_dir';
-UPDATE arquetipos SET eixo_1 = 35, eixo_2 = 35, eixo_3 = 10, eixo_4 = 45, eixo_5 = 45, eixo_6 = 30, eixo_7 = 35, eixo_8 = 40 WHERE titulo_key = 'arquetipo.universo_esq';
-UPDATE arquetipos SET eixo_1 = 65, eixo_2 = 60, eixo_3 = 90, eixo_4 = 65, eixo_5 = 75, eixo_6 = 55, eixo_7 = 80, eixo_8 = 65 WHERE titulo_key = 'arquetipo.universo_dir';
-UPDATE arquetipos SET eixo_1 = 55, eixo_2 = 25, eixo_3 = 35, eixo_4 = 10, eixo_5 = 45, eixo_6 = 45, eixo_7 = 45, eixo_8 = 40 WHERE titulo_key = 'arquetipo.ritmo_esq';
-UPDATE arquetipos SET eixo_1 = 50, eixo_2 = 55, eixo_3 = 50, eixo_4 = 90, eixo_5 = 70, eixo_6 = 40, eixo_7 = 80, eixo_8 = 55 WHERE titulo_key = 'arquetipo.ritmo_dir';
-UPDATE arquetipos SET eixo_1 = 50, eixo_2 = 25, eixo_3 = 25, eixo_4 = 40, eixo_5 = 15, eixo_6 = 60, eixo_7 = 35, eixo_8 = 45 WHERE titulo_key = 'arquetipo.moralidade_esq';
-UPDATE arquetipos SET eixo_1 = 30, eixo_2 = 80, eixo_3 = 45, eixo_4 = 65, eixo_5 = 95, eixo_6 = 20, eixo_7 = 70, eixo_8 = 40 WHERE titulo_key = 'arquetipo.moralidade_dir';
-UPDATE arquetipos SET eixo_1 = 35, eixo_2 = 35, eixo_3 = 25, eixo_4 = 40, eixo_5 = 60, eixo_6 = 10, eixo_7 = 40, eixo_8 = 40 WHERE titulo_key = 'arquetipo.estrutura_esq';
-UPDATE arquetipos SET eixo_1 = 75, eixo_2 = 45, eixo_3 = 55, eixo_4 = 55, eixo_5 = 40, eixo_6 = 90, eixo_7 = 55, eixo_8 = 55 WHERE titulo_key = 'arquetipo.estrutura_dir';
-UPDATE arquetipos SET eixo_1 = 45, eixo_2 = 30, eixo_3 = 20, eixo_4 = 30, eixo_5 = 50, eixo_6 = 35, eixo_7 = 10, eixo_8 = 40 WHERE titulo_key = 'arquetipo.atmosfera_esq';
-UPDATE arquetipos SET eixo_1 = 55, eixo_2 = 50, eixo_3 = 50, eixo_4 = 75, eixo_5 = 75, eixo_6 = 35, eixo_7 = 95, eixo_8 = 60 WHERE titulo_key = 'arquetipo.atmosfera_dir';
-UPDATE arquetipos SET eixo_1 = 40, eixo_2 = 30, eixo_3 = 25, eixo_4 = 35, eixo_5 = 55, eixo_6 = 40, eixo_7 = 35, eixo_8 = 10 WHERE titulo_key = 'arquetipo.epoca_esq';
-UPDATE arquetipos SET eixo_1 = 60, eixo_2 = 45, eixo_3 = 70, eixo_4 = 60, eixo_5 = 65, eixo_6 = 60, eixo_7 = 60, eixo_8 = 90 WHERE titulo_key = 'arquetipo.epoca_dir';
-
--- -----------------------------------------------------------------------------
 -- 4. Entidades do matcher (personagens, diretores e escolas/estúdios)
 -- Vetor = (estética, tom, universo, ritmo, moralidade, estrutura, atmosfera, época)
 -- Imagens, país, nascimento e popularidade são preenchidos por bin/tmdb_sync.php
@@ -1107,59 +533,31 @@ SELECT id, obra.titulo, obra.ano, obra.ordem
  WHERE e.tipo IN ('diretor', 'estudio');
 
 -- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
 -- 5. Usuário administrativo padrão: admin / admin123
--- (hash bcrypt; troque a senha em produção)
 -- -----------------------------------------------------------------------------
 INSERT INTO usuarios_admin (nome, usuario, senha, perfil) VALUES
     ('Administrador', 'admin',
      '$2y$12$DChqIGa/hpOW/bA4zEfpA.IWOxOiVfadevOcqBSejIHgz3p1aCi.K', 'admin');
 
 -- -----------------------------------------------------------------------------
--- 6. Base estatística sintética para o Índice de Raridade
--- 400 perfis com distribuição triangular em torno de 50 (extremos são raros).
--- origem = 'sintetico' deixa claro que NÃO são pessoas reais.
+-- 6. Perfil de exemplo da landing
 -- -----------------------------------------------------------------------------
 INSERT INTO resultados_usuarios
-    (codigo_unico, idioma, modo, respostas_json,
-     eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6, eixo_7, eixo_8,
-     arquetipo_id, origem, created_at)
-WITH RECURSIVE seq(n) AS (
-    SELECT 1
-    UNION ALL
-    SELECT n + 1 FROM seq WHERE n < 400
-)
-SELECT
-    CONCAT('S', LPAD(n, 7, '0')),
-    'pt-BR',
-    'completo',
-    NULL,
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 1) + RAND(n * 1000 + 2)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 3) + RAND(n * 1000 + 4)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 5) + RAND(n * 1000 + 6)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 7) + RAND(n * 1000 + 8)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 9) + RAND(n * 1000 + 10)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 11) + RAND(n * 1000 + 12)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 13) + RAND(n * 1000 + 14)) / 2 - 0.5) * 132, 2))),
-    LEAST(100, GREATEST(0, ROUND(50 + ((RAND(n * 1000 + 15) + RAND(n * 1000 + 16)) / 2 - 0.5) * 132, 2))),
-    NULL,
-    'sintetico',
-    NOW() - INTERVAL (n % 180) DAY
-FROM seq;
-
--- -----------------------------------------------------------------------------
--- 9. Perfil de exemplo da landing
--- Vetor curado para render um arquétipo e espelhos reconhecíveis. A landing lê
--- este código para montar o card de exemplo com dados reais (não é um perfil real
--- de usuário; origem = sintetico).
--- -----------------------------------------------------------------------------
-INSERT INTO resultados_usuarios
-    (codigo_unico, idioma, modo, respostas_json,
-     eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6, eixo_7, eixo_8,
+    (codigo_unico, idioma, modo, questionario_versao, respostas_json,
+     eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6,
      arquetipo_id, origem, ip_hash, created_at)
 VALUES
-    ('EXEMPLO1', 'pt-BR', 'completo', NULL,
-     62.00, 38.00, 72.00, 45.00, 30.00, 68.00, 74.00, 58.00,
-     NULL, 'sintetico', NULL, '2026-01-15 12:00:00');
+    ('EXEMPLO1', 'pt-BR', 'completo', 'perguntas-6d-v1', NULL,
+     72.00, 38.00, 82.00, 30.00, 60.00, 68.00,
+     NULL, 'sintetico', NULL, '2026-01-15 12:00:00'),
+    ('EXEMPLO2', 'pt-BR', 'completo', 'perguntas-6d-v1', NULL,
+     2.61, 42.17, 20.16, 78.34, 90.90, 83.43,
+     NULL, 'sintetico', NULL, '2026-01-15 12:05:00'),
+    ('EXEMPLO3', 'pt-BR', 'completo', 'perguntas-6d-v1', NULL,
+     99.25, 55.87, 65.77, 74.38, 8.39, 63.27,
+     NULL, 'sintetico', NULL, '2026-01-15 12:10:00');
 
 -- >>> sql/003_enriquecimento.sql
 -- =============================================================================

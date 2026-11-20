@@ -10,7 +10,7 @@ declare(strict_types=1);
  * Sem JavaScript, a capa continua visível e o link para a análise completa
  * funciona normalmente.
  *
- * A partir desta versão, a retrospectiva não mostra os 8 eixos como produto:
+ * A partir desta versão, a retrospectiva não mostra os 6 eixos como produto:
  * mostra as leituras que eles geram. Os capítulos variam de 10 (perfil de
  * trânsito) a 13 (quatro leituras).
  */
@@ -167,7 +167,7 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                     <?= e($tituloPerfil) ?>
                 </h2>
 
-                <p class="pc-retro__lead" data-reveal style="--d:.2s">
+                <p class="pc-retro__lead" data-narrativa-arquetipo data-reveal style="--d:.2s">
                     <?= e($arquetipo['descricao'] ?? t('resultado.neutral_desc')) ?>
                 </p>
 
@@ -221,7 +221,7 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                         <?= e($leitura['manchete']) ?>
                     </h2>
 
-                    <p class="pc-retro__lead" data-reveal style="--d:.14s"><?= e($leitura['corpo']) ?></p>
+                    <p class="pc-retro__lead" data-narrativa-leitura="<?= e((string) $leitura['slug']) ?>" data-reveal style="--d:.14s"><?= e($leitura['corpo']) ?></p>
 
                     <div class="pc-retro__films" data-reveal style="--d:.22s">
                         <span class="pc-retro__films-label"><?= e(t('retro.reading.matches')) ?></span>
@@ -264,105 +264,6 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                     </span>
                 </article>
             <?php endforeach; ?>
-
-            <?php $c = $retroCap++; ?>
-            <article class="pc-retro__chapter pc-retro__chapter--scroll" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
-                     aria-labelledby="retro-titulo-espelho" hidden>
-                <span class="pc-retro__ghost" aria-hidden="true"><?= str_pad((string) ($c + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                <span class="pc-retro__eyebrow" data-reveal><?= e(t('retro.mirror.eyebrow')) ?></span>
-                <h2 class="pc-retro__display" id="retro-titulo-espelho" data-reveal style="--d:.06s">
-                    <?= e(t('retro.mirror.title')) ?>
-                </h2>
-                <p class="pc-retro__lead" data-reveal style="--d:.14s"><?= e(t('retro.mirror.lead')) ?></p>
-
-                <?php if ($retroPrincipal !== null): ?>
-                    <?php
-                    $retroFoto = (string) ($retroPrincipal['ator_foto_url'] ?? '');
-                    $retroFotoProxy = img_proxy($retroFoto !== '' ? $retroFoto : (string) $retroPrincipal['imagem_url']);
-                    $retroCenaProxy = img_proxy((string) $retroPrincipal['imagem_url']);
-                    ?>
-                    <div class="pc-retro__mirror" data-reveal style="--d:.2s">
-                        <?php if ($retroCenaProxy !== ''): ?>
-                            <span class="pc-retro__mirror-bg" style="background-image:url('<?= e($retroCenaProxy) ?>')" aria-hidden="true"></span>
-                        <?php endif; ?>
-
-                        <span class="pc-retro__portrait<?= $retroFotoProxy !== '' ? ' has-photo' : '' ?>"
-                              <?php if ($retroFotoProxy !== ''): ?>style="background-image:url('<?= e($retroFotoProxy) ?>')" role="img" aria-label="<?= e($retroPrincipal['nome']) ?>"<?php endif; ?>>
-                            <?php if ($retroFotoProxy === ''): ?>
-                                <?= e(iniciais((string) $retroPrincipal['nome'])) ?>
-                            <?php endif; ?>
-                        </span>
-
-                        <h3 class="pc-retro__mirror-name"><?= e($retroPrincipal['nome']) ?></h3>
-                        <p class="pc-retro__mirror-work">
-                            <?= e($retroPrincipal['obra_origem']) ?><?= $retroPrincipal['ano'] !== null ? ' · ' . (int) $retroPrincipal['ano'] : '' ?>
-                        </p>
-
-                        <?php if (!empty($retroPrincipal['bio'])): ?>
-                            <p class="pc-retro__mirror-bio"><?= e((string) $retroPrincipal['bio']) ?></p>
-                        <?php endif; ?>
-
-                        <?php if (!empty($retroPrincipal['frase'])): ?>
-                            <blockquote class="pc-retro__mirror-quote">
-                                “<?= e((string) $retroPrincipal['frase']) ?>”
-                                <cite>
-                                    <?= e($retroPrincipal['nome']) ?>, <?= e($retroPrincipal['obra_origem']) ?><?= $retroPrincipal['ano'] !== null ? ' (' . (int) $retroPrincipal['ano'] . ')' : '' ?>
-                                </cite>
-                            </blockquote>
-                        <?php endif; ?>
-
-                        <div class="pc-retro__mirror-foot">
-                            <span class="pc-retro__affinity"><?= pct($retroPrincipal['afinidade']) ?></span>
-                            <span><?= e(t('retro.mirror.affinity_label')) ?></span>
-                        </div>
-
-                        <button class="pc-retro__ghost-btn" type="button"
-                                data-quickview="<?= json_attr($retroQuickPersonagem($retroPrincipal)) ?>">
-                            <?= e(t('retro.mirror.open')) ?>
-                            <?= icon('arrow-right', 15) ?>
-                        </button>
-                    </div>
-                <?php else: ?>
-                    <p class="pc-retro__lead"><?= e(t('admin.no_data')) ?></p>
-                <?php endif; ?>
-            </article>
-
-            <?php $c = $retroCap++; ?>
-            <article class="pc-retro__chapter" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
-                     aria-labelledby="retro-titulo-espelhos" hidden>
-                <span class="pc-retro__ghost" aria-hidden="true"><?= str_pad((string) ($c + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                <span class="pc-retro__eyebrow" data-reveal><?= e(t('retro.mirrors.eyebrow')) ?></span>
-                <h2 class="pc-retro__display" id="retro-titulo-espelhos" data-reveal style="--d:.06s">
-                    <?= e(t('retro.mirrors.title')) ?>
-                </h2>
-                <p class="pc-retro__lead" data-reveal style="--d:.14s"><?= e(t('retro.mirrors.lead')) ?></p>
-
-                <div class="pc-retro__mirrors">
-                    <?php foreach ($retroOutros as $indice => $personagem): ?>
-                        <?php
-                        $foto = (string) ($personagem['ator_foto_url'] ?? '');
-                        $fotoProxy = img_proxy($foto !== '' ? $foto : (string) $personagem['imagem_url']);
-                        ?>
-                        <button class="pc-retro__mini" type="button"
-                                style="--d:<?= 0.2 + ($indice * 0.06) ?>s" data-reveal
-                                data-quickview="<?= json_attr($retroQuickPersonagem($personagem)) ?>">
-                            <span class="pc-retro__mini-photo<?= $fotoProxy !== '' ? ' has-photo' : '' ?>"
-                                  <?php if ($fotoProxy !== ''): ?>style="background-image:url('<?= e($fotoProxy) ?>')" aria-hidden="true"<?php endif; ?>>
-                                <?php if ($fotoProxy === ''): ?>
-                                    <?= e(iniciais((string) $personagem['nome'])) ?>
-                                <?php endif; ?>
-                            </span>
-                            <b><?= e(nome_curto((string) $personagem['nome'])) ?></b>
-                            <small><?= e($personagem['obra_origem']) ?></small>
-                            <span class="pc-retro__mini-pct"><?= e(t('retro.mirrors.affinity', ['pct' => numero($personagem['afinidade'], 0)])) ?></span>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
-
-                <?php if ($retroOutros === []): ?>
-                    <p class="pc-retro__note pc-retro__note--center"><?= e(t('admin.no_data')) ?></p>
-                <?php endif; ?>
-            </article>
 
             <?php $c = $retroCap++; ?>
             <article class="pc-retro__chapter" data-chapter="<?= $c ?>" aria-roledescription="capítulo"
@@ -409,7 +310,7 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                                     ))) ?>
                                 </small>
                             <?php endif; ?>
-                            <span class="pc-retro__affinity"><?= pct($retroAncora['afinidade']) ?></span>
+                            <span class="pc-retro__affinity"><?= (int) ($retroAncora['posicao'] ?? 1) ?>º</span>
                         </button>
                     <?php endforeach; ?>
                 </div>
@@ -577,34 +478,12 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                         </div>
                     <?php endif; ?>
 
-                    <?php if ($retroInsights['oposto'] !== null): ?>
-                        <?php $oposto = $retroInsights['oposto']; ?>
-                        <div class="pc-retro__insight" data-reveal style="--d:.3s">
-                            <span class="pc-retro__insight-label"><?= e(t('retro.insights.oposto_label')) ?></span>
-                            <div class="pc-retro__insight-name"><?= e($oposto['nome']) ?></div>
-                            <p class="pc-retro__insight-line">
-                                <?= e(t('retro.insights.oposto_meta', [
-                                    'tipo' => t('resultado.types.' . $oposto['tipo']),
-                                    'obra' => $oposto['obra'],
-                                ])) ?>
-                            </p>
-                            <p class="pc-retro__insight-line">
-                                <?= e(t('retro.insights.oposto_cta', ['obra' => $oposto['obra']])) ?>
-                            </p>
-                            <span class="pc-retro__insight-meta">
-                                <?= e(t('retro.insights.oposto_affinity', ['pct' => numero($oposto['afinidade'], 0)])) ?>
-                            </span>
-                        </div>
-                    <?php endif; ?>
-
                     <?php if ($retroInsights['secundario'] !== null): ?>
                         <div class="pc-retro__insight" data-reveal style="--d:.4s">
                             <span class="pc-retro__insight-label"><?= e(t('retro.insights.secundario_label')) ?></span>
                             <div class="pc-retro__insight-name"><?= e($retroInsights['secundario']['titulo']) ?></div>
                             <p class="pc-retro__insight-line">
-                                <?= e(t('resultado.insights.secundario_text', [
-                                    'pct' => numero($retroInsights['secundario']['compatibilidade'], 0),
-                                ])) ?>
+                                <?= e(t('resultado.insights.secundario_text')) ?>
                             </p>
                             <p class="pc-retro__insight-line"><?= e((string) $retroInsights['secundario']['descricao']) ?></p>
 
@@ -622,7 +501,6 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
 
                     <?php if (
                         $retroInsights['decada'] === null
-                        && $retroInsights['oposto'] === null
                         && $retroInsights['secundario'] === null
                     ): ?>
                         <p class="pc-retro__lead"><?= e(t('admin.no_data')) ?></p>
@@ -646,18 +524,29 @@ $retroQuickAncora = static function (array $item, string $tipo): array {
                 </a>
 
                 <div class="pc-retro__share-card" data-story-side data-reveal style="--d:.2s">
-                    <?php require __DIR__ . '/story-card.php'; ?>
+                    <?php require __DIR__ . '/phone-frame.php'; ?>
 
-                    <button class="pc-btn pc-btn--sm pc-retro__share-btn" type="button"
-                            data-story-share
-                            data-codigo="<?= e($codigo) ?>"
-                            data-msg-preparing="<?= e(t('resultado.story_preparing')) ?>"
-                            data-msg-error="<?= e(t('resultado.story_error')) ?>"
-                            data-msg-download="<?= e(t('resultado.story_download')) ?>">
-                        <?= icon('share', 15) ?>
-                        <span><?= e(t('resultado.story_share')) ?></span>
-                    </button>
-                    <p class="pc-retro__note pc-retro__note--center" data-story-note><?= e(t('resultado.story_note')) ?></p>
+                    <div class="pc-story-actions">
+                        <button class="pc-btn pc-btn--sm pc-retro__share-btn" type="button"
+                                data-story-share
+                                data-codigo="<?= e($codigo) ?>"
+                                data-msg-preparing="<?= e(t('resultado.story_preparing')) ?>"
+                                data-msg-error="<?= e(t('resultado.story_error')) ?>"
+                                data-msg-download="<?= e(t('resultado.story_download')) ?>">
+                            <?= icon('share', 15) ?>
+                            <span><?= e(t('resultado.story_share')) ?></span>
+                        </button>
+
+                        <button class="pc-btn pc-btn--sm pc-btn--ghost pc-btn--on-dark pc-story-download" type="button"
+                                data-story-download
+                                data-codigo="<?= e($codigo) ?>"
+                                data-msg-preparing="<?= e(t('resultado.story_preparing')) ?>"
+                                data-msg-error="<?= e(t('resultado.story_error')) ?>"
+                                data-msg-download="<?= e(t('resultado.story_download')) ?>">
+                            <?= icon('download', 15) ?>
+                            <span><?= e(t('resultado.story_download_btn')) ?></span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="pc-retro__final-actions" data-reveal style="--d:.28s">

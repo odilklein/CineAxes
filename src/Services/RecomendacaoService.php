@@ -49,7 +49,7 @@ final class RecomendacaoService
         $mapaPaises = (array) ($this->config['paises'] ?? []);
         $mapaIdiomas = (array) ($this->config['idiomas'] ?? []);
 
-        $soma = array_fill(0, Vetor::EIXOS, 0.0);
+        $soma = array_fill(0, Vetor::EIXOS_LEGADO, 0.0);
         $sinais = 0;
 
         foreach ($generos as $id) {
@@ -94,7 +94,7 @@ final class RecomendacaoService
 
         $vetor = [];
 
-        for ($i = 0; $i < Vetor::EIXOS; $i++) {
+        for ($i = 0; $i < Vetor::EIXOS_LEGADO; $i++) {
             $vetor[] = round(max(0.0, min(100.0, 50.0 + $soma[$i])), 2);
         }
 
@@ -120,7 +120,7 @@ final class RecomendacaoService
      */
     public function afinidade(array $vetorUsuario, array $obra): float
     {
-        $vetor = $obra['vetor'] ?? [];
+        $vetor = $obra['vetor6'] ?? $obra['vetor'] ?? [];
 
         if (!Vetor::valido($vetor)) {
             return 0.0;
@@ -163,7 +163,7 @@ final class RecomendacaoService
         foreach ($obras as &$obra) {
             $obra['afinidade'] = $this->afinidade($vetorUsuario, $obra);
             $obra['forca'] = $this->forca($vetorUsuario, $obra);
-            $obra['alinhamento'] = $this->alinhamento($vetorUsuario, (array) ($obra['vetor'] ?? []));
+            $obra['alinhamento'] = $this->alinhamento($vetorUsuario, (array) ($obra['vetor6'] ?? $obra['vetor'] ?? []));
         }
         unset($obra);
 
@@ -230,7 +230,7 @@ final class RecomendacaoService
      */
     public function motivos(array $vetorUsuario, array $obra): array
     {
-        $vetor = $obra['vetor'] ?? [];
+        $vetor = $obra['vetor6'] ?? $obra['vetor'] ?? [];
 
         if (!Vetor::valido($vetor)) {
             return [];
@@ -245,6 +245,12 @@ final class RecomendacaoService
             $desvioUsuario = $usuario - 50.0;
 
             if ($desvioObra === 0.0 || $desvioObra * $desvioUsuario <= 0.0) {
+                continue;
+            }
+
+            // Mesmo lado não basta: 4 e 25 são uma diferença grande demais
+            // para ser chamada de "combina".
+            if (abs($usuario - $valor) > 20.0) {
                 continue;
             }
 
@@ -325,6 +331,30 @@ final class RecomendacaoService
         return max(0, (int) ($this->config['confianca_minima'] ?? 25));
     }
 
+    /**
+     * Corte de afinidade relativo ao perfil, em vez do 62 fixo.
+     *
+     * O limiar absoluto falhava para perfis extremos: quando o melhor título
+     * do catálogo ficava em 74, nenhum passava de 62 e o perfil recebia zero
+     * plataformas. Aqui o corte é a afinidade do título na posição "top 20%"
+     * (com um piso de 40 títulos), então todo perfil tem um conjunto de
+     * candidatos do próprio tamanho.
+     *
+     * @param list<array<string, mixed>> $ranqueadas já ordenadas por afinidade
+     */
+    public function corteAdaptativo(array $ranqueadas, int $minimo = 40, float $fracao = 0.20): float
+    {
+        $total = count($ranqueadas);
+
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        $indice = (int) max(0, min($total - 1, max($minimo - 1, (int) floor($total * $fracao))));
+
+        return round((float) ($ranqueadas[$indice]['afinidade'] ?? 0.0), 1);
+    }
+
     /** @return array<string, mixed> */
     public function config(): array
     {
@@ -340,7 +370,7 @@ final class RecomendacaoService
         foreach ($deltas as $eixo => $delta) {
             $indice = (int) $eixo - 1;
 
-            if ($indice < 0 || $indice >= Vetor::EIXOS) {
+            if ($indice < 0 || $indice >= Vetor::EIXOS_LEGADO) {
                 continue;
             }
 

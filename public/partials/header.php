@@ -10,6 +10,9 @@ declare(strict_types=1);
  */
 
 $navSimples = $navSimples ?? false;
+
+use Core\Auth;
+use Core\Csrf;
 ?>
 <header class="pc-header">
     <div class="pc-wrap pc-header__inner">
@@ -27,6 +30,19 @@ $navSimples = $navSimples ?? false;
         <?php endif; ?>
 
         <div class="pc-header__actions">
+            <div class="pc-header__auth">
+                <?php if (Auth::logado()): ?>
+                    <a class="pc-header__link" href="<?= e(url('minha-lista.php')) ?>"><?= e(t('auth.my_list')) ?></a>
+                    <span class="pc-header__user"><?= e(Auth::nome()) ?></span>
+                    <form class="pc-header__logout" action="<?= e(url('sair.php')) ?>" method="post">
+                        <?= Csrf::campo() ?>
+                        <button type="submit"><?= e(t('auth.logout')) ?></button>
+                    </form>
+                <?php else: ?>
+                    <a class="pc-header__link" href="<?= e(url('entrar.php')) ?>"><?= e(t('auth.login')) ?></a>
+                <?php endif; ?>
+            </div>
+
             <button class="pc-theme" type="button" data-theme-toggle aria-label="<?= e(t('ui.nav.theme')) ?>">
                 <?= icon('moon', 18, 'pc-ico--moon') ?>
                 <?= icon('sun', 18, 'pc-ico--sun') ?>

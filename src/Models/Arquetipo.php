@@ -13,7 +13,7 @@ final class Arquetipo
     {
         $linhas = $pdo->query(
             'SELECT a.id, a.eixo_dominante_1, a.polo_1, a.eixo_dominante_2, a.polo_2,
-                    a.eixo_1, a.eixo_2, a.eixo_3, a.eixo_4, a.eixo_5, a.eixo_6, a.eixo_7, a.eixo_8,
+                    a.eixo_1, a.eixo_2, a.eixo_3, a.eixo_4, a.eixo_5, a.eixo_6,
                     a.titulo_key, a.descricao_key, a.ritual_cinema_key,
                     a.titulo, a.descricao, a.ritual_cinema
                FROM arquetipos a
@@ -28,7 +28,7 @@ final class Arquetipo
     {
         $stmt = $pdo->prepare(
             'SELECT id, eixo_dominante_1, polo_1, eixo_dominante_2, polo_2,
-                    eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6, eixo_7, eixo_8,
+                    eixo_1, eixo_2, eixo_3, eixo_4, eixo_5, eixo_6,
                     titulo_key, descricao_key, ritual_cinema_key,
                     titulo, descricao, ritual_cinema
                FROM arquetipos

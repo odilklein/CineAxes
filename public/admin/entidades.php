@@ -93,7 +93,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $fraseKey = 'frase.' . pc_admin_slug($nome) . '.' . substr(bin2hex(random_bytes(2)), 0, 4);
     }
 
-    $colunas = Vetor::paraColunas($vetor);
+    $colunas = Vetor::paraColunasLegado($vetor);
 
     $dados = [
         'tipo' => $tipo,
@@ -179,7 +179,7 @@ require __DIR__ . '/partials/head.php';
 <div class="pc-admin__head">
     <div>
         <h1><?= e(t('admin.entities')) ?></h1>
-        <p class="pc-text-muted" style="font-size:13px">Cada entidade é um vetor de 8 eixos usado pelo matcher.</p>
+        <p class="pc-text-muted" style="font-size:13px">O vetor editorial de 8 eixos é legado. O match usa a filmografia de diretores/escolas; personagens não entram no matching.</p>
     </div>
 
     <a class="pc-btn pc-btn--sm" href="<?= url('admin/entidades.php', ['editar' => 'novo', 'tipo' => $filtro]) ?>">
@@ -264,7 +264,7 @@ require __DIR__ . '/partials/head.php';
         </div>
 
         <div class="pc-field">
-            <span class="pc-label">Vetor de 8 eixos (0 = polo esquerdo, 100 = polo direito)</span>
+            <span class="pc-label">Vetor editorial legado (8 eixos; não usado no match)</span>
         </div>
 
         <div class="pc-form__row" style="grid-template-columns: repeat(4, minmax(0,1fr))">

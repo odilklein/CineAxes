@@ -6,8 +6,8 @@ use Models\EixoGuia;
 
 require_once __DIR__ . '/_assert.php';
 
-teste('guia cobre os oito eixos', function (): void {
-    $esperados = ['estetica', 'tom', 'universo', 'ritmo', 'moralidade', 'estrutura', 'atmosfera', 'epoca'];
+teste('guia cobre os seis eixos', function (): void {
+    $esperados = ['estetica', 'tom', 'mundo', 'ritmo', 'escala', 'amplitude'];
     $guias = EixoGuia::todos();
 
     igual(count($esperados), count($guias));

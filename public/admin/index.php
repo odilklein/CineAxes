@@ -166,7 +166,7 @@ require __DIR__ . '/partials/head.php';
 
 <div class="pc-features">
     <?php foreach ([
-        ['icon' => 'grid', 'titulo' => t('admin.axes'), 'texto' => '8 eixos', 'url' => 'eixos.php'],
+        ['icon' => 'grid', 'titulo' => t('admin.axes'), 'texto' => '6 eixos', 'url' => 'eixos.php'],
         ['icon' => 'list', 'titulo' => t('admin.questions'), 'texto' => $totalPerguntas . ' perguntas', 'url' => 'perguntas.php'],
         ['icon' => 'users', 'titulo' => t('admin.entities'), 'texto' => $totalEntidades . ' entidades', 'url' => 'entidades.php'],
         ['icon' => 'compass', 'titulo' => t('admin.archetypes'), 'texto' => count($arquetipos) . ' arquétipos', 'url' => 'arquetipos.php'],
@@ -178,6 +178,30 @@ require __DIR__ . '/partials/head.php';
                 <p><?= e($atalho['texto']) ?></p>
             </div>
         </a>
+    <?php endforeach; ?>
+</div>
+
+<div class="pc-admin__head pc-mt-4" style="margin-bottom:12px">
+    <div>
+        <h2 style="font-size:18px">Próximos módulos</h2>
+        <p class="pc-text-muted" style="font-size:12px">Estrutura pronta no menu, com dados reais entrando nas próximas etapas.</p>
+    </div>
+</div>
+
+<div class="pc-admin__placeholder-grid">
+    <?php foreach ([
+        ['icon' => 'film', 'titulo' => 'Mídia e imagens', 'texto' => 'Biblioteca de pôsteres, logos e imagens de diretores.'],
+        ['icon' => 'lock', 'titulo' => 'Usuários', 'texto' => 'Contas públicas, permissões e histórico de acesso.'],
+        ['icon' => 'clock', 'titulo' => 'Relatórios', 'texto' => 'Exportações, funil do quiz e leitura por período.'],
+    ] as $breve): ?>
+        <div class="pc-admin__placeholder">
+            <span class="pc-stat__icon"><?= icon($breve['icon'], 18) ?></span>
+            <div>
+                <b><?= e($breve['titulo']) ?></b>
+                <small><?= e($breve['texto']) ?></small>
+            </div>
+            <span class="badge bg-label-secondary ms-auto">em breve</span>
+        </div>
     <?php endforeach; ?>
 </div>
 

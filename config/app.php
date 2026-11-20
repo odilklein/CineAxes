@@ -11,7 +11,7 @@ declare(strict_types=1);
 return [
     'nome'    => 'PersonaCut',
     'tagline' => 'Seu perfil cinéfilo em 8 eixos',
-    'versao'  => '1.6.0',
+    'versao'  => '2.0.0',
 
     'locale'  => 'pt-BR',
     'locales' => [
@@ -31,9 +31,9 @@ return [
 
     // Quantidade de perguntas por modo de teste (ver Pergunta::MODOS).
     'quiz' => [
-        'rapido'   => 36,
-        'completo' => 60,
-        'extremo'  => 240,
+        'rapido'   => 24,
+        'completo' => 36,
+        'extremo'  => 48,
     ],
 
     // Integração TMDB (usada a partir da v1.5; o MVP funciona offline).
@@ -56,6 +56,15 @@ return [
         'temperature'    => 0.75,
         'enabled'        => \Core\Env::booleano('GROQ_ENABLED', true),
         'prompt_versao'  => 'retrato-v1',
+    ],
+
+    // Camada de descoberta: piso de qualidade e critério do que conta como
+    // "fora do óbvio". Ajuste sem tocar no código.
+    'descoberta' => [
+        'nota_minima'      => 6.5,
+        'votos_minimos'    => 500,
+        'nota_descoberta'  => 7.0,
+        'votos_descoberta' => 1000,
     ],
 
     // GeoCinema (v2).

@@ -1,3 +1,8 @@
+> **Modelo v2.** O perfil ativo tem **6 eixos**. O catálogo e as entidades antigas
+> continuam em 8 coordenadas e são projetados por `Core\Vetor::projetar6`.
+> Personagens não entram no matching; diretores/escolas usam o centroide da
+> filmografia.
+
 # Arquitetura do PersonaCut
 
 ## Camadas
@@ -50,6 +55,25 @@ O mesmo método monta os **insights** (maior desvio em relação à média da ba
 eixo mais típico, década mediana do repertório, oposto, arquétipo secundário e
 top 10) e carrega o **retrato salvo** em `retratos`, se existir.
 
+### Calibração
+
+`Services\CalibracaoService` (puro, testável em `tests/CalibracaoTest.php`)
+transforma o score bruto em **posição dentro do grupo** (36 personagens, 10
+diretores, 6 escolas), top %, margem e z-score. Ele também faz o **bootstrap das
+respostas**: reamostra os itens de cada eixo, recalcula o vetor e o ranking, e
+devolve a mediana e o IC 95% da posição. A fração de vezes em que o 1º lugar se
+mantém vira o rótulo de confiança (alta/média/baixa).
+
+O `PerfilController` roda esse bootstrap **por tipo de entidade** — um diretor
+não compete com Batman — e usa o resultado apenas como apresentação: o vetor, o
+arquétipo e a ordem não são alterados. Perfis antigos sem `respostas_json` ficam
+com `nao_estimada`, sem confiança inventada.
+
+O limiar de "neutro" é único (`MatcherService::NEUTRO = 8.0`), igual ao
+"Equilibrado" da escala de intensidade, e o arquétipo devolve uma distribuição
+softmax entre os três primeiros. Os detalhes e os números da auditoria estão em
+[docs/CALIBRACAO.md](CALIBRACAO.md).
+
 ### Retrato por IA
 
 `Services\RetratoService` monta o prompt (sistema + JSON com arquétipo, eixos,
@@ -61,12 +85,16 @@ determinístico em duas frases.
 
 ### Card 9:16
 
-`public/resultado.php` renderiza o card no `pc-profile-card__side` com os mesmos
-dados do perfil. As imagens passam por `img_proxy()` → `public/api/imagem.php`
-(proxy same-origin com cache em `storage/cache/img`), porque `image.tmdb.org` não
-envia CORS e o canvas do `html2canvas` seria contaminado. `assets/js/storycard.js`
-captura em `scale: 4` (1080 × 1920), compartilha o PNG via Web Share API e, sem
-suporte, baixa o arquivo.
+`public/resultado.php` renderiza o card no `pc-profile-card__side` e a landing no
+hero, ambos através de `partials/resultado/phone-frame.php`: o card vertical
+aparece dentro da moldura de iPhone 14 Pro e o conjunto é reduzido para caber na
+coluna. Na landing, um slider (Swiper) mostra três perfis de exemplo (EXEMPLO1,
+EXEMPLO2 e EXEMPLO3), cada um em seu próprio frame. As imagens passam por
+`img_proxy()` → `public/api/imagem.php` (proxy same-origin com cache em
+`storage/cache/img`), porque `image.tmdb.org` não envia CORS e o canvas do
+`html2canvas` seria contaminado. `assets/js/storycard.js` captura em `scale: 4`
+(1080 × 2300), compartilha o PNG via Web Share API e, sem suporte, baixa o
+arquivo. O botão "Baixar PNG" força o download.
 
 ## Modos de teste
 

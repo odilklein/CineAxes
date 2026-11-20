@@ -7,6 +7,8 @@
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS bookmarks;
+DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS cache_tmdb;
 DROP TABLE IF EXISTS retratos;
 DROP TABLE IF EXISTS resultados_usuarios;
@@ -32,7 +34,41 @@ CREATE TABLE usuarios_admin (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- Os 8 eixos. `polo_*_key` é a chave de tradução; as cores e ícones alimentam
+-- Contas públicas (opcionais): necessárias apenas para salvar bookmarks.
+-- Separadas de `usuarios_admin`, que é o painel editorial.
+-- -----------------------------------------------------------------------------
+CREATE TABLE usuarios (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome         VARCHAR(80)  NOT NULL,
+    usuario      VARCHAR(40)  NOT NULL,
+    senha        VARCHAR(255) NOT NULL,
+    criado_em    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ultimo_login DATETIME NULL,
+    UNIQUE KEY uq_usuarios_usuario (usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Bookmark de filme/série: "quero ver" ou "já vi". Uma linha por usuário/obra;
+-- o status muda quando o usuário troca de lista. Não some da lista ao marcar.
+-- -----------------------------------------------------------------------------
+CREATE TABLE bookmarks (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id   INT UNSIGNED NOT NULL,
+    tmdb_id      INT UNSIGNED NOT NULL,
+    tipo         ENUM('filme', 'serie') NOT NULL DEFAULT 'filme',
+    status       ENUM('quero', 'visto') NOT NULL,
+    titulo       VARCHAR(200) NOT NULL,
+    ano          SMALLINT UNSIGNED NULL,
+    poster_path  VARCHAR(160) NULL,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_bookmarks_obra (usuario_id, tmdb_id, tipo),
+    KEY idx_bookmarks_status (usuario_id, status, updated_at),
+    CONSTRAINT fk_bookmarks_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Os 6 eixos do modelo v2. `polo_*_key` é a chave de tradução; as cores e ícones alimentam
 -- barras, cards e gráfico de radar.
 -- `tmdb_genres_*`: IDs oficiais de gênero (o discover usa IDs numéricos).
 -- `tmdb_keywords_*`: nomes de keywords; o TmdbService resolve para IDs e cacheia.
@@ -93,7 +129,8 @@ CREATE TABLE perguntas (
 
 -- -----------------------------------------------------------------------------
 -- Entidades do matcher: personagens, diretores, estúdios/escolas e filmes.
--- Cada linha é um vetor de 8 eixos (0 = polo esquerdo, 100 = polo direito).
+-- O vetor de 8 eixos é legado: o app usa `vetor6` (projeção) e, para
+-- diretores/escolas, o centroide da filmografia. Personagens não entram no match.
 -- `imagem_url` é opcional: sem ela o front renderiza um monograma na cor do eixo.
 -- -----------------------------------------------------------------------------
 CREATE TABLE entidades_match (
@@ -122,6 +159,9 @@ CREATE TABLE entidades_match (
     eixo_6      TINYINT UNSIGNED NOT NULL,
     eixo_7      TINYINT UNSIGNED NOT NULL,
     eixo_8      TINYINT UNSIGNED NOT NULL,
+    -- Procedência do vetor: editorial (à mão), catalogo (centroide das obras)
+    -- ou misto. Ver docs/CALIBRACAO.md e bin/calibrar_entidades.php.
+    vetor_origem ENUM('editorial', 'catalogo', 'misto') NOT NULL DEFAULT 'editorial',
     CONSTRAINT chk_ent_e1 CHECK (eixo_1 BETWEEN 0 AND 100),
     CONSTRAINT chk_ent_e2 CHECK (eixo_2 BETWEEN 0 AND 100),
     CONSTRAINT chk_ent_e3 CHECK (eixo_3 BETWEEN 0 AND 100),
@@ -153,7 +193,7 @@ CREATE TABLE entidades_obras (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- Arquétipos: um por (eixo dominante, polo) = 16 linhas.
+-- Arquétipos: um por (eixo dominante, polo) = 12 linhas no modelo de 6 eixos.
 -- O segundo eixo é um modificador opcional de texto, não uma chave.
 -- -----------------------------------------------------------------------------
 CREATE TABLE arquetipos (
@@ -169,8 +209,6 @@ CREATE TABLE arquetipos (
     eixo_4             TINYINT UNSIGNED NOT NULL DEFAULT 50,
     eixo_5             TINYINT UNSIGNED NOT NULL DEFAULT 50,
     eixo_6             TINYINT UNSIGNED NOT NULL DEFAULT 50,
-    eixo_7             TINYINT UNSIGNED NOT NULL DEFAULT 50,
-    eixo_8             TINYINT UNSIGNED NOT NULL DEFAULT 50,
     titulo_key         VARCHAR(80)  NOT NULL,
     descricao_key      VARCHAR(80)  NOT NULL,
     ritual_cinema_key  VARCHAR(80)  NOT NULL,
@@ -194,6 +232,8 @@ CREATE TABLE resultados_usuarios (
     codigo_unico  CHAR(8) NOT NULL,
     idioma        VARCHAR(5) NOT NULL DEFAULT 'pt-BR',
     modo          ENUM('rapido', 'completo', 'extremo') NOT NULL DEFAULT 'completo',
+    -- Versão do conjunto de perguntas que gerou o vetor (NULL = anterior ao registro).
+    questionario_versao VARCHAR(40) NULL,
     respostas_json JSON NULL,
     eixo_1        DECIMAL(5,2) NOT NULL,
     eixo_2        DECIMAL(5,2) NOT NULL,
@@ -201,8 +241,6 @@ CREATE TABLE resultados_usuarios (
     eixo_4        DECIMAL(5,2) NOT NULL,
     eixo_5        DECIMAL(5,2) NOT NULL,
     eixo_6        DECIMAL(5,2) NOT NULL,
-    eixo_7        DECIMAL(5,2) NOT NULL,
-    eixo_8        DECIMAL(5,2) NOT NULL,
     arquetipo_id  SMALLINT UNSIGNED NULL,
     origem        ENUM('real', 'sintetico') NOT NULL DEFAULT 'real',
     ip_hash       CHAR(64) NULL,
@@ -217,9 +255,7 @@ CREATE TABLE resultados_usuarios (
     CONSTRAINT chk_res_e3 CHECK (eixo_3 BETWEEN 0 AND 100),
     CONSTRAINT chk_res_e4 CHECK (eixo_4 BETWEEN 0 AND 100),
     CONSTRAINT chk_res_e5 CHECK (eixo_5 BETWEEN 0 AND 100),
-    CONSTRAINT chk_res_e6 CHECK (eixo_6 BETWEEN 0 AND 100),
-    CONSTRAINT chk_res_e7 CHECK (eixo_7 BETWEEN 0 AND 100),
-    CONSTRAINT chk_res_e8 CHECK (eixo_8 BETWEEN 0 AND 100)
+    CONSTRAINT chk_res_e6 CHECK (eixo_6 BETWEEN 0 AND 100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
@@ -231,6 +267,9 @@ CREATE TABLE retratos (
     idioma        VARCHAR(5) NOT NULL DEFAULT 'pt-BR',
     texto         MEDIUMTEXT NOT NULL,
     frase         VARCHAR(280) NULL,
+    -- JSON com a narrativa por perfil (retrato, leituras, arquétipo, diretor,
+    -- repertório e descobertas). Ver Services\NarrativaService.
+    narrativa_json JSON NULL,
     modelo        VARCHAR(80) NOT NULL,
     prompt_versao VARCHAR(20) NOT NULL,
     tokens        INT UNSIGNED NULL,

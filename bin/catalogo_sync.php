@@ -304,7 +304,7 @@ $gravar = static function (
     ];
 
     $vetor = $recomendacao->construir($atributos);
-    $colunas = \Core\Vetor::paraColunas($vetor['vetor']);
+    $colunas = \Core\Vetor::paraColunasLegado($vetor['vetor']);
 
     $dados = [
         'tmdb_id'         => $tmdbId,
@@ -452,7 +452,7 @@ if ($opcoes['recalcular']) {
             'tipo'    => $linha['tipo'],
         ]);
 
-        $params = \Core\Vetor::paraColunas($vetor['vetor']);
+        $params = \Core\Vetor::paraColunasLegado($vetor['vetor']);
         $params['confianca'] = $vetor['confianca'];
         $params['id'] = (int) $linha['id'];
         $atualizar->execute($params);

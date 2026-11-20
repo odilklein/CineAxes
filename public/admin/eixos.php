@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** CRUD dos 8 eixos (ordem, nomes, polos, cores e mapeamento TMDB). */
+/** CRUD dos 6 eixos (ordem, nomes, polos, cores e mapeamento TMDB). */
 
 require __DIR__ . '/_guard.php';
 
@@ -99,7 +99,7 @@ require __DIR__ . '/partials/head.php';
 <div class="pc-admin__head">
     <div>
         <h1><?= e(t('admin.axes')) ?></h1>
-        <p class="pc-text-muted" style="font-size:13px">Os 8 eixos são fixos: edite nomes, polos, cores e o mapeamento TMDB.</p>
+        <p class="pc-text-muted" style="font-size:13px">Os 6 eixos são fixos: edite nomes, polos, cores e o mapeamento TMDB.</p>
     </div>
 </div>
 

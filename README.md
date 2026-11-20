@@ -3,9 +3,9 @@
 
   <h1>PersonaCut</h1>
 
-  <p><strong>Seu perfil cinéfilo em 8 eixos.</strong><br>
-  Responda de 36 a 240 afirmações e receba um retrato do seu gosto: quatro leituras em
-  linguagem clara, um arquétipo, seis espelhos no catálogo e um card 9:16 para os stories.</p>
+  <p><strong>Seu perfil cinéfilo em 6 eixos.</strong><br>
+  Responda de 24 a 48 afirmações e receba um retrato do seu gosto: quatro leituras em
+  linguagem clara, um arquétipo, 10 filmes com descobertas e um card 9:16 para os stories.</p>
 
   <p>
     <img alt="PHP 8.2" src="https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white">
@@ -28,6 +28,7 @@
 
 - [O que é](#o-que-é)
 - [Como funciona](#como-funciona)
+- [O que é medido (e o que não é)](#o-que-é-medido-e-o-que-não-é)
 - [Prints](#prints)
 - [Funcionalidades](#funcionalidades)
 - [Stack](#stack)
@@ -61,29 +62,51 @@ compartilham a sua assinatura.
 
 ## Como funciona
 
-1. **Questionário.** 36, 60 ou 240 afirmações, sempre equilibradas entre os 8
+1. **Questionário.** 24, 36 ou 48 afirmações, sempre equilibradas entre os 6
    eixos e entre os dois polos de cada eixo.
-2. **Vetor de 8 eixos.** Cada resposta vale de `-2` a `+2` e é ponderada por
+2. **Vetor de 6 eixos.** Cada resposta vale de `-2` a `+2` e é ponderada por
    direção e peso:
    `pct_dir = 50 + 50 · Σ(resposta · direção · peso) / (2 · Σpeso)`.
 3. **Leituras.** Os eixos mais extremos viram textos em linguagem clara — o que
-   você busca, o que te cansa e exemplos de filmes para reconhecer aquilo.
-4. **Resultado.** Arquétipo, seis personagens espelho, diretor, escola, estante
-   de filmes, retrato, retrospectiva em capítulos e card para compartilhar.
+   você busca, o que te cansa e exemplos de filmes do seu próprio perfil.
+4. **Resultado.** Arquétipo, 10 filmes (com os personagens desses filmes),
+   diretores e escolas por filmografia, onde assistir, descobertas, retrato,
+   retrospectiva em capítulos e card para compartilhar.
 
 | # | Eixo | Polo esquerdo | Polo direito | O que mede |
 | --- | --- | --- | --- | --- |
-| 1 | **Imagem** | Clássica | Experimental | linguagem visual: transparência vs. ruptura formal |
-| 2 | **Emoção** | Melancólica | Eufórica | registro emocional: peso vs. leveza |
-| 3 | **Mundo** | Realista | Fantástico | grau de invenção do mundo |
-| 4 | **Ritmo** | Contemplativo | Frenético | experiência da duração |
-| 5 | **Ética** | Ambígua | Clara | posição moral: zona cinzenta vs. lados demarcados |
-| 6 | **História** | Linear | Fragmentada | arquitetura da narrativa |
-| 7 | **Tamanho** | Íntima | Épica | escala do drama |
-| 8 | **Época** | Memória | Futuro | orientação no tempo |
+| 1 | **Estética** | Popular | Autoral | onde o filme circula: blockbuster vs. circuito de arte |
+| 2 | **Tom** | Claro | Sombrio | registro afetivo: leveza vs. desconforto |
+| 3 | **Mundo** | Real | Imaginário | grau de invenção do mundo |
+| 4 | **Ritmo** | Calmo | Intenso | experiência da duração |
+| 5 | **Escala** | Íntimo | Épico | escala do drama |
+| 6 | **Amplitude** | Circunscrito | Omnívoro | o quanto você sai do familiar (país, época, gênero) |
 
 Definições operacionais, base crítica e fórmula completa em
 [docs/EIXOS.md](docs/EIXOS.md).
+
+## O que é medido (e o que não é)
+
+O quiz mede; o catálogo é curadoria. A interface foi ajustada para não confundir
+as duas coisas:
+
+- **Posição, não porcentagem**: os filmes aparecem como `top 2%` do seu perfil;
+  diretores aparecem como `3º de 10`. O score composto não é "82% de afinidade".
+- **Confiança por bootstrap**: reamostragens das respostas mostram o quanto a
+  posição é estável. Perfis com poucas respostas por eixo recebem confiança
+  baixa — e o sistema diz isso.
+- **Corte adaptativo**: cada perfil recebe os seus melhores 20% do catálogo,
+  em vez de um limiar fixo que deixava perfis extremos sem plataforma.
+- **Descoberta, não vitrine**: 60% dos filmes vêm fora do cânone, com piso de
+  qualidade e diversidade; um seletor "Clássicos · Misturado · Descobertas"
+  deixa o usuário escolher o quanto quer sair do familiar.
+- **Decisão de assinatura**: a seção de streaming calcula a cobertura conjunta
+  dos seus 50 melhores títulos ("Netflix + MUBI cobrem 78%").
+- **"Já vi" no navegador**: o usuário marca o que já viu e o card desaparece;
+  a lista fica no localStorage, sem crescer o banco.
+
+A auditoria completa, os números e o caminho para a calibração empírica estão em
+[docs/CALIBRACAO.md](docs/CALIBRACAO.md).
 
 ## Prints
 
@@ -99,11 +122,11 @@ Definições operacionais, base crítica e fórmula completa em
 | --- | --- |
 | ![Retrospectiva](docs/prints/retro.jpg) | ![Ficha](docs/prints/quickview.jpg) |
 
-| Além do espelho | Modo Sinergia |
+| Além do óbvio | Modo Sinergia |
 | --- | --- |
 | ![Insights](docs/prints/insights.jpg) | ![Sinergia](docs/prints/sinergia.jpg) |
 
-| Os 8 eixos | Três formatos de teste |
+| Os 6 eixos | Três formatos de teste |
 | --- | --- |
 | ![Eixos](docs/prints/eixos.jpg) | ![Formatos](docs/prints/formatos.jpg) |
 
@@ -120,7 +143,7 @@ Definições operacionais, base crítica e fórmula completa em
 ## Funcionalidades
 
 **Quiz**
-- Três profundidades (36, 60 e 240 perguntas) com cotas iguais por eixo e por polo.
+- Três profundidades (24, 36 e 48 perguntas) com cotas iguais por eixo e por polo.
 - Cena do filme (TMDB), GIF ou clipe oficial do YouTube, com fachada de clique.
 - Atalhos de teclado (1–5), avanço automático opcional, rascunho em `localStorage`.
 - Layout de duas colunas no desktop que cabe na tela — sem rolar para responder.
@@ -128,17 +151,20 @@ Definições operacionais, base crítica e fórmula completa em
   filmes/séries e referências críticas.
 
 **Resultado**
-- Arquétipo (match do vetor completo), quatro leituras, radar SVG próprio e
-  raio-x dos 8 eixos.
-- Seis personagens espelho com frase icônica, intérprete e perfil de eixos;
-  diretor e estúdio/escola com obras essenciais.
+- Arquétipo (match do vetor completo), leituras, radar SVG próprio e
+  raio-x dos 6 eixos.
+- **10 filmes** escolhidos pelo perfil, com o personagem/intérprete de cada um,
+  piso de qualidade e mistura de clássicos e descobertas.
+- **Diretores e escolas por filmografia**: o vetor sai das obras, não de uma
+  opinião editorial. Cada um mostra a posição no grupo (`3º de 10`), a margem e
+  os eixos que explicam a proximidade.
 - Ficha rápida por tipo (personagem, ator, diretor, escola e filme), com
   sinopse/elenco da TMDB e biografia do intérprete.
 - Cards de filme com pôster em todas as citações (leituras, década e guia).
-- **Combina com**, **Seu oposto**, **Arquétipo secundário** e a **década do
-  repertório** com curiosidades e filmes-marco.
-- **Onde assistir**: pódio de plataformas por afinidade, exclusividade, acervo,
-  variedade e preço, com justificativa e "melhor para cada trilha".
+- **Arquétipo secundário** e a **década do repertório** com curiosidades e filmes-marco.
+- **Onde assistir**: pódio de plataformas por relevância, exclusividade, acervo,
+  variedade e preço, com justificativa, "melhor para cada trilha" e a **cobertura
+  conjunta** ("Netflix + MUBI cobrem 78% dos seus 50 melhores").
 - **Além de Hollywood**: até seis cards de curadoria (doramas, cinema coreano,
   indiano, japonês, chinês, brasileiro, francês, sul-europeu, latino-americano
   e África/Ásia Ocidental) com títulos do catálogo e onde assistir.
@@ -162,7 +188,7 @@ Definições operacionais, base crítica e fórmula completa em
 | Front-end | HTML + CSS próprio (design system "cinema analógico") + JS puro (Fetch) |
 | Gráficos | Radar bipolar em SVG gerado no servidor (sem biblioteca) |
 | Card | `html2canvas` vendorizado + Web Share API |
-| IA (opcional) | Groq — só para o retrato e a frase do perfil |
+| IA (opcional) | Groq — narrativa por perfil: retrato, leituras, arquétipo, diretor e descobertas |
 | Catálogo | TMDB (pôsteres, retratos, logos, elenco e cenas), sempre no servidor |
 | Streaming | Disponibilidade do TMDB/JustWatch, ingerida offline para o MySQL |
 | Ambiente | Docker + Compose (Apache, MySQL e phpMyAdmin) |
@@ -189,6 +215,20 @@ docker compose up -d --build
 O banco é criado e populado na primeira subida (schema + seed + enriquecimento +
 catálogo versionado em `sql/010_catalogo_seed.sql`). Se você já tinha um volume
 antigo, use `docker compose down -v` antes.
+
+A base sintética do índice de raridade não vem no seed (a versão antiga gerava
+linhas correlacionadas). Gere-a depois da primeira subida, se quiser o selo:
+
+```bash
+docker compose exec app php bin/base_sintetica.php --recriar --total=600
+```
+
+Comandos de calibração e diagnóstico:
+
+```bash
+docker compose exec app php bin/analise_itens.php --minimo=5
+docker compose exec app php bin/calibrar_entidades.php
+```
 
 | Serviço | Endereço |
 | --- | --- |
@@ -428,11 +468,13 @@ lá: headers, métodos e bloqueio de dotfiles continuam ativos.
 
 ## Documentação
 
-- [docs/EIXOS.md](docs/EIXOS.md) — base crítica dos 8 eixos, fórmula e cotas.
+- [docs/EIXOS.md](docs/EIXOS.md) — base crítica dos 6 eixos, fórmula e cotas.
 - [docs/ARQUITETURA.md](docs/ARQUITETURA.md) — fluxo do quiz, cálculo, quick view,
   cards de filme, catálogo, IA e layout.
 - [docs/RECOMENDACAO.md](docs/RECOMENDACAO.md) — vetor de obra, confiança,
   trilhas, ranking de plataformas, elenco e como ampliar a base.
+- [docs/CALIBRACAO.md](docs/CALIBRACAO.md) — o que é medido, o que é editorial,
+  a auditoria das métricas, posição/confiança e o caminho de calibração empírica.
 - [docs/security/relatorio-2026-11-18.md](docs/security/relatorio-2026-11-18.md) —
   relatório completo da auditoria, com evidências e comandos de reprodução.
 - [docs/CRONOGRAMA.md](docs/CRONOGRAMA.md) — planejamento da disciplina.

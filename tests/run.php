@@ -13,6 +13,7 @@ echo str_repeat('─', 54) . "\n";
 
 require __DIR__ . '/LikertTest.php';
 require __DIR__ . '/MatcherTest.php';
+require __DIR__ . '/CalibracaoTest.php';
 require __DIR__ . '/MidiaTest.php';
 require __DIR__ . '/SceneTest.php';
 require __DIR__ . '/RadarTest.php';

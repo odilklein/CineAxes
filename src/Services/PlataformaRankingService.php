@@ -28,9 +28,11 @@ final class PlataformaRankingService
     /**
      * @param list<array<string, mixed>> $obras        obras com plataformas
      * @param list<array<string, mixed>> $plataformas  linhas de catalogo_plataformas
-     * @return array{geral: list<array<string, mixed>>, por_trilha: array<string, array<string, mixed>>, onde: array<int, list<array<string, mixed>>>}
+     * @param float|null $afinidadeMinima corte relativo calculado pelo
+     *        RecomendacaoService::corteAdaptativo(); null usa o config
+     * @return array{geral: list<array<string, mixed>>, por_trilha: array<string, array<string, mixed>>, onde: array<int, list<array<string, mixed>>>, combinacao: array<string, mixed>}
      */
-    public function ranquear(array $obras, array $plataformas): array
+    public function ranquear(array $obras, array $plataformas, ?float $afinidadeMinima = null): array
     {
         $ativas = [];
 
@@ -43,7 +45,7 @@ final class PlataformaRankingService
         }
 
         $limiares = (array) ($this->config['limiares'] ?? []);
-        $afinidadeMinima = (float) ($limiares['afinidade'] ?? 62.0);
+        $afinidadeMinima ??= (float) ($limiares['afinidade'] ?? 62.0);
         $minTitulos = (int) ($limiares['min_titulos_plataforma'] ?? 25);
         $topRelevancia = max(1, (int) ($limiares['top_relevancia'] ?? 25));
 
@@ -60,6 +62,14 @@ final class PlataformaRankingService
 
             $candidatas[] = $obra;
         }
+
+        // Referência de cobertura: os 50 melhores títulos do perfil.
+        usort($candidatas, static function (array $a, array $b): int {
+            return ((float) ($b['afinidade'] ?? 0)) <=> ((float) ($a['afinidade'] ?? 0))
+                ?: ((float) ($b['popularidade'] ?? 0)) <=> ((float) ($a['popularidade'] ?? 0));
+        });
+
+        $referencia = array_slice($candidatas, 0, 50);
 
         // Exclusividade: quantas plataformas ativas têm este título.
         $contagemPorObra = [];
@@ -171,6 +181,11 @@ final class PlataformaRankingService
                 'nota'            => round($nota, 1),
                 'titulos'         => count($titulos),
                 'afinidade_media' => round(array_sum(array_column($titulos, 'afinidade')) / count($titulos), 1),
+                'no_top50'        => count(array_filter(
+                    $referencia,
+                    fn (array $obra): bool => in_array($id, $this->idsDaObra($obra), true)
+                )),
+                'top50_total'     => count($referencia),
                 'exclusivos'      => count($exclusivos),
                 'trilhas'         => $trilhas,
                 'melhores'        => array_slice($titulos, 0, 3),
@@ -295,6 +310,99 @@ final class PlataformaRankingService
             'geral'      => $geral,
             'por_trilha' => $porTrilha,
             'onde'       => $this->ondeAssistir($obras, $ativas),
+            'combinacao' => $this->combinacao($candidatas, $ativas),
+        ];
+    }
+
+    /**
+     * Qual combinação de 1 ou 2 serviços cobre mais títulos do perfil.
+     *
+     * É a pergunta que o usuário faz de verdade ("o que eu assino?"), e não
+     * "qual plataforma tem a maior nota". Usa os 50 melhores títulos do
+     * perfil, que é o conjunto que importa para a decisão.
+     *
+     * @param list<array<string, mixed>> $candidatas
+     * @param array<int, array<string, mixed>> $ativas
+     * @return array<string, mixed>
+     */
+    private function combinacao(array $candidatas, array $ativas, int $alvo = 50): array
+    {
+        if ($candidatas === [] || $ativas === []) {
+            return [];
+        }
+
+        usort($candidatas, static function (array $a, array $b): int {
+            return ((float) ($b['afinidade'] ?? 0)) <=> ((float) ($a['afinidade'] ?? 0));
+        });
+
+        $topo = array_slice($candidatas, 0, $alvo);
+        $total = count($topo);
+        $conjuntos = [];
+
+        foreach ($topo as $indice => $obra) {
+            foreach ($this->idsDaObra($obra) as $plataformaId) {
+                if (isset($ativas[$plataformaId])) {
+                    $conjuntos[$plataformaId][$indice] = true;
+                }
+            }
+        }
+
+        if ($conjuntos === []) {
+            return [];
+        }
+
+        $uma = null;
+
+        foreach ($conjuntos as $plataformaId => $conjunto) {
+            if ($uma === null || count($conjunto) > count($uma['conjunto'])) {
+                $uma = ['id' => $plataformaId, 'conjunto' => $conjunto];
+            }
+        }
+
+        $duas = null;
+
+        foreach ($conjuntos as $plataformaId => $conjunto) {
+            if ($plataformaId === $uma['id']) {
+                continue;
+            }
+
+            $uniao = $uma['conjunto'] + $conjunto;
+
+            if ($duas === null || count($uniao) > count($duas['conjunto'])) {
+                $duas = ['ids' => [$uma['id'], $plataformaId], 'conjunto' => $uniao];
+            }
+        }
+
+        $resumo = function (array $ids, array $conjunto) use ($ativas, $total): array {
+            $preco = 0.0;
+            $nomes = [];
+
+            foreach ($ids as $id) {
+                $plataforma = $ativas[$id] ?? null;
+
+                if ($plataforma === null) {
+                    continue;
+                }
+
+                $nomes[] = (string) $plataforma['nome'];
+
+                if ($plataforma['preco_mensal'] !== null && is_numeric($plataforma['preco_mensal'])) {
+                    $preco += (float) $plataforma['preco_mensal'];
+                }
+            }
+
+            return [
+                'plataformas' => $nomes,
+                'cobertos'    => count($conjunto),
+                'total'       => $total,
+                'pct'         => $total > 0 ? (int) round(100 * count($conjunto) / $total) : 0,
+                'preco'       => $preco > 0 ? round($preco, 2) : null,
+            ];
+        };
+
+        return [
+            'uma'  => $resumo([$uma['id']], $uma['conjunto']),
+            'duas' => $duas !== null ? $resumo($duas['ids'], $duas['conjunto']) : null,
         ];
     }
 

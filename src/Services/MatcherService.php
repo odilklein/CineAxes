@@ -36,6 +36,21 @@ final class MatcherService
      */
     private const DOMINANCE_BONUS = 8.0;
 
+    /**
+     * Distância do centro a partir da qual o perfil deixa de ser "neutro".
+     * É o mesmo limiar de `LikertCalculatorService::intensidade()` (8.0), para
+     * que "Equilibrado" na barra e "Espectador Neutro" no arquétipo não se
+     * contradigam.
+     */
+    public const NEUTRO = 8.0;
+
+    /**
+     * Temperatura do softmax que converte compatibilidade em distribuição de
+     * probabilidade entre os arquétipos. 6.0 mantém o vencedor à frente sem
+     * transformar 2 pontos de diferença em certeza.
+     */
+    private const SOFTMAX_TEMPERATURA = 6.0;
+
     public function __construct(
         private readonly float $limiarRaridade = 12.0,
         private readonly int $minBaseRaridade = 100
@@ -148,9 +163,11 @@ final class MatcherService
         $ranqueadas = [];
 
         foreach ($entidades as $entidade) {
-            $vetorEntidade = is_array($entidade['vetor'] ?? null)
-                ? $entidade['vetor']
-                : Vetor::daLinha($entidade);
+            $vetorEntidade = is_array($entidade['vetor6'] ?? null)
+                ? $entidade['vetor6']
+                : (is_array($entidade['vetor'] ?? null) && count($entidade['vetor']) === Vetor::EIXOS
+                    ? $entidade['vetor']
+                    : Vetor::daLinha($entidade));
 
             $entidade['distancia'] = round($this->distancia($vetor, $vetorEntidade), 2);
             $entidade['afinidade'] = $this->compatibilidade($vetor, $vetorEntidade);
@@ -203,7 +220,7 @@ final class MatcherService
 
         usort($lista, static function (array $a, array $b): int {
             return $b['distancia'] <=> $a['distancia']
-                ?: $b['indice'] <=> $a['indice'];
+                ?: $a['indice'] <=> $b['indice'];
         });
 
         return array_slice($lista, 0, max(0, $quantidade));
@@ -222,6 +239,8 @@ final class MatcherService
      *     arquetipo: array<string, mixed>|null,
      *     neutro: bool,
      *     compatibilidade: float,
+     *     probabilidade: float,
+     *     distribuicao: list<array{id: int, titulo: string, compatibilidade: float, probabilidade: float}>,
      *     extremos: list<array{indice: int, pct: float, distancia: float}>,
      *     eixo_1: int|null, polo_1: string|null,
      *     eixo_2: int|null, polo_2: string|null
@@ -246,11 +265,13 @@ final class MatcherService
             $polo2 = $extremos[1]['pct'] >= 50 ? 'D' : 'E';
         }
 
-        if ($extremos === [] || $extremos[0]['distancia'] < 3.0) {
+        if ($extremos === [] || $extremos[0]['distancia'] < self::NEUTRO) {
             return [
                 'arquetipo' => null,
                 'neutro' => true,
                 'compatibilidade' => 0.0,
+                'probabilidade' => 0.0,
+                'distribuicao' => [],
                 'extremos' => $extremos,
                 'eixo_1' => $eixo1,
                 'polo_1' => $polo1,
@@ -259,8 +280,7 @@ final class MatcherService
             ];
         }
 
-        $melhor = null;
-        $melhorNota = -1.0;
+        $candidatos = [];
 
         foreach ($arquetipos as $arquetipo) {
             $vetorArquetipo = $arquetipo['vetor'] ?? [];
@@ -277,36 +297,111 @@ final class MatcherService
                 $nota += self::DOMINANCE_BONUS;
             }
 
-            if ($nota > $melhorNota
-                || (abs($nota - $melhorNota) < 0.0001
-                    && ($melhor === null || (int) $arquetipo['id'] < (int) $melhor['id']))
-            ) {
-                $melhor = $arquetipo;
-                $melhorNota = $nota;
-            }
+            // O bônus é aplicado depois do clamp do matcher: sem este segundo
+            // clamp a compatibilidade podia passar de 100.
+            $candidatos[] = [
+                'arquetipo' => $arquetipo,
+                'nota' => round(min(100.0, max(0.0, $nota)), 2),
+            ];
         }
 
         // Compatibilidade com bancos antigos (sem vetor nos arquétipos).
-        if ($melhor === null) {
-            $candidatos = array_values(array_filter(
+        if ($candidatos === []) {
+            $antigos = array_values(array_filter(
                 $arquetipos,
                 static fn (array $a): bool => (int) $a['eixo_dominante_1'] === $eixo1
                     && (string) $a['polo_1'] === $polo1
             ));
 
-            $melhor = $candidatos[0] ?? null;
+            foreach ($antigos as $arquetipo) {
+                $candidatos[] = ['arquetipo' => $arquetipo, 'nota' => 0.0];
+            }
         }
 
+        if ($candidatos === []) {
+            return [
+                'arquetipo' => null,
+                'neutro' => true,
+                'compatibilidade' => 0.0,
+                'probabilidade' => 0.0,
+                'distribuicao' => [],
+                'extremos' => $extremos,
+                'eixo_1' => $eixo1,
+                'polo_1' => $polo1,
+                'eixo_2' => $eixo2,
+                'polo_2' => $polo2,
+            ];
+        }
+
+        usort($candidatos, static function (array $a, array $b): int {
+            return $b['nota'] <=> $a['nota']
+                ?: (int) $a['arquetipo']['id'] <=> (int) $b['arquetipo']['id'];
+        });
+
+        $vencedor = $candidatos[0];
+        $distribuicao = $this->distribuicao($candidatos);
+
         return [
-            'arquetipo' => $melhor,
-            'neutro' => $melhor === null,
-            'compatibilidade' => $melhorNota > 0 ? $melhorNota : 0.0,
+            'arquetipo' => $vencedor['arquetipo'],
+            'neutro' => false,
+            'compatibilidade' => $vencedor['nota'],
+            'probabilidade' => $distribuicao[0]['probabilidade'] ?? 0.0,
+            'distribuicao' => $distribuicao,
             'extremos' => $extremos,
             'eixo_1' => $eixo1,
             'polo_1' => $polo1,
             'eixo_2' => $eixo2,
             'polo_2' => $polo2,
         ];
+    }
+
+    /**
+     * Distribuição de probabilidade entre os arquétipos (softmax).
+     *
+     * O rótulo continua sendo o mais próximo, mas a probabilidade diz o quanto
+     * o segundo colocado está perto: um perfil com 0,34 e 0,31 é um perfil de
+     * trânsito, não uma identidade fechada.
+     *
+     * @param list<array{arquetipo: array<string, mixed>, nota: float}> $candidatos
+     * @return list<array{id: int, titulo: string, compatibilidade: float, probabilidade: float}>
+     */
+    private function distribuicao(array $candidatos): array
+    {
+        if ($candidatos === []) {
+            return [];
+        }
+
+        $max = 0.0;
+
+        foreach ($candidatos as $candidato) {
+            $max = max($max, (float) $candidato['nota']);
+        }
+
+        $pesos = [];
+        $soma = 0.0;
+
+        foreach ($candidatos as $candidato) {
+            $peso = exp((((float) $candidato['nota']) - $max) / self::SOFTMAX_TEMPERATURA);
+            $pesos[] = $peso;
+            $soma += $peso;
+        }
+
+        $saida = [];
+
+        foreach ($candidatos as $indice => $candidato) {
+            $saida[] = [
+                'id' => (int) ($candidato['arquetipo']['id'] ?? 0),
+                'titulo' => (string) ($candidato['arquetipo']['titulo'] ?? ''),
+                'compatibilidade' => round((float) $candidato['nota'], 1),
+                'probabilidade' => $soma > 0 ? round($pesos[$indice] / $soma, 3) : 0.0,
+            ];
+
+            if (count($saida) >= 3) {
+                break;
+            }
+        }
+
+        return $saida;
     }
 
     /**

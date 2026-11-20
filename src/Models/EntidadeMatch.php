@@ -49,9 +49,12 @@ final class EntidadeMatch
         $linha['ator_tmdb_id'] = $linha['ator_tmdb_id'] === null ? null : (int) $linha['ator_tmdb_id'];
         $linha['tmdb_id'] = $linha['tmdb_id'] === null ? null : (int) $linha['tmdb_id'];
         $linha['popularidade'] = $linha['popularidade'] === null ? null : (float) $linha['popularidade'];
-        $linha['vetor'] = Vetor::daLinha($linha);
+        // O vetor editorial de 8 eixos fica como legado; diretores e escolas
+        // recebem um vetor de 6 eixos calculado da filmografia no controller.
+        $linha['vetor'] = Vetor::daLinhaLegado($linha);
+        $linha['vetor6'] = Vetor::projetar6($linha['vetor']);
 
-        for ($i = 1; $i <= Vetor::EIXOS; $i++) {
+        for ($i = 1; $i <= Vetor::EIXOS_LEGADO; $i++) {
             unset($linha['eixo_' . $i]);
         }
 

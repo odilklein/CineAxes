@@ -38,13 +38,25 @@ deploy/infinityfree/
 
 ### Atualizando um banco que já está no ar
 
-Não importe `personacut.sql` em um banco existente: as tabelas já existem e o
-script falharia no primeiro `CREATE TABLE`. Para habilitar o catálogo:
+**Modelo v2 (6 eixos).** O schema mudou de 8 para 6 eixos. Em um banco antigo,
+reimporte `personacut.sql` (ele derruba e recria apenas as tabelas de perfil,
+eixos, perguntas, arquétipos e entidades; o catálogo em `catalogo.sql` permanece).
+Isso apaga perfis/retratos de teste — no ambiente acadêmico é o esperado. Depois,
+se quiser o selo de raridade, rode `bin/base_sintetica.php` no ambiente local e
+exporte a base, ou deixe a raridade desativada.
+
+Não importe `personacut.sql` em um banco existente **sem querer apagar os
+perfis**. Para habilitar o catálogo:
 
 1. importe `sql/009_catalogo.sql` (cria as tabelas e as plataformas; pode rodar
    mais de uma vez);
 2. importe `sql/010_catalogo_seed.sql` (obras, gêneros, países, elenco e
-   disponibilidade).
+   disponibilidade);
+3. importe `sql/migrations/011_calibracao.sql` (versão do questionário,
+   procedência do vetor das entidades e remoção da base sintética antiga).
+   O app funciona mesmo sem esta migração: a leitura e a escrita detectam a
+   coluna ausente. Mas sem ela não é possível distinguir vetores calculados com
+   questionários diferentes.
 
 O site continua funcionando entre os dois passos: as seções de streaming,
 trilhas e elenco simplesmente não aparecem enquanto as tabelas não existirem.

@@ -26,7 +26,7 @@ $obraGeneros = array_values(array_filter(array_map(
 $obraOnde = array_values((array) ($obra['onde'] ?? ($obra['plataformas'] ?? [])));
 $obraAno = isset($obra['ano']) && is_numeric($obra['ano']) ? (int) $obra['ano'] : null;
 $obraNota = isset($obra['nota']) && is_numeric($obra['nota']) ? round((float) $obra['nota'], 1) : null;
-$obraAfinidade = isset($obra['afinidade']) && is_numeric($obra['afinidade']) ? (float) $obra['afinidade'] : null;
+$obraTop = isset($obra['top_pct']) && is_numeric($obra['top_pct']) ? (int) $obra['top_pct'] : null;
 
 $obraQuick = [
     'tipo'     => 'catalogo',
@@ -51,7 +51,7 @@ $obraQuick = [
     'tmdb'     => isset($obra['tmdb_id']) ? (int) $obra['tmdb_id'] : null,
 ];
 ?>
-<article class="pc-cat-card" data-quickview="<?= json_attr($obraQuick) ?>" tabindex="0" role="button"
+<article class="pc-cat-card" data-tmdb="<?= (int) ($obra['tmdb_id'] ?? 0) ?>" data-quickview="<?= json_attr($obraQuick) ?>" tabindex="0" role="button"
          aria-label="Abrir ficha de <?= e($obraTitulo) ?>">
     <div class="pc-cat-card__poster">
         <?php if ($obraPoster !== ''): ?>
@@ -60,8 +60,11 @@ $obraQuick = [
             <span class="pc-cat-card__fallback"><?= e($obraTitulo) ?></span>
         <?php endif; ?>
 
-        <?php if ($obraAfinidade !== null): ?>
-            <span class="pc-cat-card__match"><?= pct($obraAfinidade) ?></span>
+        <?php if ($obraTop !== null): ?>
+            <span class="pc-cat-card__match">top <?= $obraTop ?>%</span>
+        <?php endif; ?>
+        <?php if (!empty($obra['descoberta'])): ?>
+            <span class="pc-cat-card__new">fora do óbvio</span>
         <?php endif; ?>
     </div>
 

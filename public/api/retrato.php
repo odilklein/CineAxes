@@ -19,7 +19,7 @@ use Models\Retrato;
 use Services\GroqService;
 use Services\LikertCalculatorService;
 use Services\MatcherService;
-use Services\RetratoService;
+use Services\NarrativaService;
 
 if (Http::metodo() !== 'GET') {
     header('Allow: GET');
@@ -34,7 +34,7 @@ if (!preg_match('/^[A-Z0-9]{8}$/', $codigo)) {
 
 try {
     $pdo = Database::pdo();
-    $existente = Retrato::porCodigo($pdo, $codigo, RetratoService::PROMPT_VERSAO);
+    $existente = Retrato::porCodigo($pdo, $codigo, NarrativaService::PROMPT_VERSAO);
 
     if ($existente !== null) {
         header('Cache-Control: public, max-age=3600');
@@ -42,16 +42,17 @@ try {
             'ok' => true,
             'texto' => $existente['texto'],
             'frase' => $existente['frase'] ?? null,
+            'narrativa' => $existente['narrativa'] ?? null,
             'modelo' => $existente['modelo'],
             'tokens' => $existente['tokens'] !== null ? (int) $existente['tokens'] : null,
             'gerado' => false,
         ]);
     }
 
-    $retratoService = new RetratoService(new GroqService($config['groq']));
+    $narrativaService = new NarrativaService(new GroqService($config['groq']));
 
-    if (!$retratoService->disponivel()) {
-        Http::erro('O retrato por IA não está configurado.', 503);
+    if (!$narrativaService->disponivel()) {
+        Http::erro('A narrativa por IA não está configurada.', 503);
     }
 
     // Evita rajadas de geração no mesmo perfil/sessão.
@@ -71,16 +72,16 @@ try {
         ),
         new LikertCalculatorService(),
         $config
-    ))->montar($codigo, false);
+    ))->montar($codigo, true);
 
     if ($perfil === null) {
         Http::erro(t('erros.not_found'), 404);
     }
 
-    $gerado = $retratoService->gerar($perfil);
+    $gerado = $narrativaService->gerar($perfil);
 
     if ($gerado === null) {
-        Http::erro('Não foi possível redigir o retrato agora. Tente novamente mais tarde.', 503);
+        Http::erro('Não foi possível redigir a narrativa agora. Tente novamente mais tarde.', 503);
     }
 
     Retrato::criar($pdo, ['codigo' => $codigo, 'idioma' => 'pt-BR'] + $gerado);
@@ -92,6 +93,7 @@ try {
         'ok' => true,
         'texto' => $salvo['texto'] ?? $gerado['texto'],
         'frase' => $salvo['frase'] ?? $gerado['frase'] ?? null,
+        'narrativa' => $salvo['narrativa'] ?? $gerado['narrativa'] ?? null,
         'modelo' => $salvo['modelo'] ?? $gerado['modelo'],
         'tokens' => isset($salvo['tokens']) ? (int) $salvo['tokens'] : ($gerado['tokens'] ?? null),
         'gerado' => true,

@@ -9,6 +9,8 @@
 
   try {
     var salvo = localStorage.getItem('pc-theme');
-    document.documentElement.setAttribute('data-theme', salvo === 'dark' ? 'dark' : 'light');
+    var tema = salvo === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', tema);
+    document.documentElement.setAttribute('data-bs-theme', tema);
   } catch (e) { /* modo privado */ }
 }());

@@ -3,21 +3,14 @@
 declare(strict_types=1);
 
 /**
- * Leituras do perfil.
+ * Leituras do perfil (modelo v2, 6 eixos).
  *
- * Cada eixo bipolar tem uma leitura para cada polo. A leitura é a camada
- * editorial que traduz o vetor em consequência: o que a pessoa procura, o que
- * costuma afastá-la e dois filmes para reconhecer isso na prática.
+ * Cada eixo tem uma leitura para cada polo. A leitura é a camada editorial que
+ * traduz o vetor em consequência: o que a pessoa procura, o que a afasta e dois
+ * filmes para reconhecer isso na prática.
  *
- * Regras de escrita:
- * - manchete: uma frase, no máximo ~70 caracteres, sem percentual e sem jargão.
- * - corpo: duas frases; a segunda diz o que a leitura NÃO significa.
- * - combina: dois filmes com ano, títulos reconhecíveis.
- * - cansa: o que afasta essa pessoa, em uma frase.
- * - curto: rótulo de 1 a 3 palavras para o card e o índice das marcas.
- *
- * Os eixos continuam sendo o motor determinístico. Este arquivo é conteúdo,
- * não cálculo: pode ser editado sem mexer no vetor nem nos resultados.
+ * Os exemplos `combina` são fallback. O PerfilController substitui por filmes
+ * do próprio perfil quando o catálogo está disponível.
  */
 return [
     'forcas' => [
@@ -40,185 +33,139 @@ return [
     'eixos' => [
         'estetica' => [
             'e' => [
-                'manchete' => 'Você quer que a imagem sirva à história.',
-                'corpo' => 'Enquadramento, luz e corte desaparecem a serviço do que está sendo contado. Você confia na transparência — e desconfia quando o estilo pede mais atenção que a cena.',
+                'manchete' => 'Você quer que o filme funcione antes de surpreender.',
+                'corpo' => 'Histórias claras, elenco carismático e uma boa noite de cinema valem mais que um exercício de linguagem. Você não confunde dificuldade com profundidade.',
                 'combina' => [
-                    ['titulo' => 'Casablanca', 'ano' => 1942],
-                    ['titulo' => 'O Poderoso Chefão', 'ano' => 1972],
+                    ['titulo' => 'Top Gun: Maverick', 'ano' => 2022],
+                    ['titulo' => 'Jurassic Park', 'ano' => 1993],
                 ],
-                'cansa' => 'filme que esconde a história atrás de um exercício de estilo.',
-                'curto' => 'Imagem clássica',
+                'cansa' => 'filme que confunde lentidão com importância.',
+                'curto' => 'Cinema popular',
             ],
             'd' => [
-                'manchete' => 'Você quer ver o cinema pensando em voz alta.',
-                'corpo' => 'Textura, montagem e enquadramento são o argumento, não o enfeite. Quando o filme inventa uma linguagem, você entra no jogo em vez de pedir que ele se explique.',
+                'manchete' => 'Você procura a assinatura do diretor.',
+                'corpo' => 'O plano que ninguém mais faria, o filme que pede um pouco de esforço, a voz que se reconhece. O prazer está em descobrir uma linguagem, não em seguir a fórmula.',
                 'combina' => [
                     ['titulo' => 'Cidade dos Sonhos', 'ano' => 2001],
-                    ['titulo' => 'Sinédoque, Nova York', 'ano' => 2008],
+                    ['titulo' => 'Amor à Flor da Pele', 'ano' => 2000],
                 ],
-                'cansa' => 'filme bonito que não arrisca um único plano.',
-                'curto' => 'Imagem livre',
+                'cansa' => 'blockbuster que poderia ter sido dirigido por qualquer um.',
+                'curto' => 'Cinema de autor',
             ],
         ],
 
         'tom' => [
             'e' => [
+                'manchete' => 'Você vai ao cinema para sair mais leve.',
+                'corpo' => 'Humor, música e finais que resolvem são a sua forma de estar no mundo. Você não foge do drama, mas não quer que ele seja a regra.',
+                'combina' => [
+                    ['titulo' => 'La La Land', 'ano' => 2016],
+                    ['titulo' => 'Tudo em Todo Lugar ao Mesmo Tempo', 'ano' => 2022],
+                ],
+                'cansa' => 'filme que confunde peso com profundidade.',
+                'curto' => 'Leveza',
+            ],
+            'd' => [
                 'manchete' => 'Você quer que o filme fique com você depois do fim.',
-                'corpo' => 'O seu cinema termina em silêncio, com uma pergunta aberta. Você não confunde peso com tristeza fácil: o que fica é o que doeu de verdade.',
+                'corpo' => 'O seu cinema termina em silêncio, com uma pergunta aberta. Você não confunde tristeza fácil com verdade: o que fica é o que doeu de verdade.',
                 'combina' => [
                     ['titulo' => 'Melancolia', 'ano' => 2011],
                     ['titulo' => 'Manchester à Beira-Mar', 'ano' => 2016],
                 ],
                 'cansa' => 'comédia que pede risada antes de construir qualquer coisa.',
-                'curto' => 'Emoção que pesa',
-            ],
-            'd' => [
-                'manchete' => 'Você vai ao cinema para sair mais leve.',
-                'corpo' => 'Humor, música e energia compartilhada são a sua forma de estar no mundo. Você quer o filme que contagia a sala, não o que pede silêncio e reverência.',
-                'combina' => [
-                    ['titulo' => 'La La Land', 'ano' => 2016],
-                    ['titulo' => 'Tudo em Todo Lugar ao Mesmo Tempo', 'ano' => 2022],
-                ],
-                'cansa' => 'filme que pede reverência e silêncio antes de conquistar a sala.',
-                'curto' => 'Emoção em festa',
+                'curto' => 'Peso',
             ],
         ],
 
-        'universo' => [
+        'mundo' => [
             'e' => [
-                'manchete' => 'Você desconfia de mundos inventados.',
-                'corpo' => 'A esquina já tem drama suficiente. Personagens verossímeis e conflitos sem solução mágica te interessam mais do que mitologias — o real, bem olhado, já é invenção.',
+                'manchete' => 'Você se interessa pelo que poderia acontecer na esquina.',
+                'corpo' => 'Personagens verossímeis, ruas reconhecíveis e conflitos sem solução mágica. O mundo, para você, já é grande o suficiente.',
                 'combina' => [
                     ['titulo' => 'Cidade de Deus', 'ano' => 2002],
-                    ['titulo' => 'História de um Casamento', 'ano' => 2019],
+                    ['titulo' => 'Paterson', 'ano' => 2016],
                 ],
-                'cansa' => 'épico que resolve tudo com uma profecia.',
-                'curto' => 'Mundo real',
+                'cansa' => 'fantasia que usa o mundo inventado para fugir do presente.',
+                'curto' => 'Real',
             ],
             'd' => [
                 'manchete' => 'Você quer regras novas.',
-                'corpo' => 'Mundos inventados não são fuga: são outra forma de olhar o real. Você aceita a mitologia, a criatura e o planeta distante como linguagem, não como desculpa.',
+                'corpo' => 'Mundos inventados, mitologias e criaturas são menos fuga do que uma forma de olhar o real de outro ângulo. Você aceita o pacto da ficção.',
                 'combina' => [
-                    ['titulo' => 'O Senhor dos Anéis: A Sociedade do Anel', 'ano' => 2001],
-                    ['titulo' => 'Akira', 'ano' => 1988],
+                    ['titulo' => 'A Viagem de Chihiro', 'ano' => 2001],
+                    ['titulo' => 'Duna', 'ano' => 2021],
                 ],
-                'cansa' => 'filme que usa o fantástico só para enfeitar o cartaz.',
-                'curto' => 'Mundos inventados',
+                'cansa' => 'filme que inventa um mundo e não faz nada com ele.',
+                'curto' => 'Imaginário',
             ],
         ],
 
         'ritmo' => [
             'e' => [
                 'manchete' => 'Você confia no tempo longo.',
-                'corpo' => 'Um plano parado pode dizer mais que dez cortes. Você prefere reparar no detalhe, no silêncio e no que só aparece quando o filme respira.',
+                'corpo' => 'Um plano parado pode dizer mais que dez cortes, e você prefere reparar no detalhe a ser empurrado para o próximo estímulo.',
                 'combina' => [
                     ['titulo' => 'Paterson', 'ano' => 2016],
                     ['titulo' => 'A Árvore da Vida', 'ano' => 2011],
                 ],
-                'cansa' => 'edição que não deixa nenhuma cena terminar.',
-                'curto' => 'Tempo que respira',
+                'cansa' => 'edição que não deixa a cena existir.',
+                'curto' => 'Tempo longo',
             ],
             'd' => [
                 'manchete' => 'Você quer o corpo dentro do filme.',
-                'corpo' => 'Corte, som e movimento te mantêm na cadeira. A lentidão só funciona quando tem intenção — não quando é só falta de ideia.',
+                'corpo' => 'Perseguição, corte seco e som no limite são a gramática que te mantém presente na cadeira. Você não quer contemplar: quer atravessar.',
                 'combina' => [
-                    ['titulo' => 'Whiplash', 'ano' => 2014],
                     ['titulo' => 'Mad Max: Estrada da Fúria', 'ano' => 2015],
+                    ['titulo' => 'Whiplash', 'ano' => 2014],
                 ],
-                'cansa' => 'drama contemplativo que confunde silêncio com profundidade.',
-                'curto' => 'Corpo acelerado',
+                'cansa' => 'filme que confunde silêncio com tédio.',
+                'curto' => 'Adrenalina',
             ],
         ],
 
-        'moralidade' => [
+        'escala' => [
             'e' => [
-                'manchete' => 'Você gosta de sair sem saber de que lado ficar.',
-                'corpo' => 'Zona cinzenta, culpa e escolhas erradas te parecem mais honestas que um herói sem sombra. O melhor filme te deixa desconfortável — e é aí que a história começa.',
+                'manchete' => 'Você prefere o rosto ao horizonte.',
+                'corpo' => 'Quartos, segredos domésticos e dois personagens falando baixo dizem mais sobre o mundo do que qualquer exército em cena.',
                 'combina' => [
-                    ['titulo' => 'Pulp Fiction', 'ano' => 1994],
-                    ['titulo' => 'Onde os Fracos Não Têm Vez', 'ano' => 2007],
-                ],
-                'cansa' => 'fábula que explica quem é bom e quem é mau antes dos créditos.',
-                'curto' => 'Zona cinzenta',
-            ],
-            'd' => [
-                'manchete' => 'Você ainda acredita que o cinema pode escolher um lado.',
-                'corpo' => 'Heróis com motivo e vilões com peso te dão o prazer da fábula. Não é ingenuidade: é querer que a história tenha uma bússola e que o final signifique alguma coisa.',
-                'combina' => [
-                    ['titulo' => 'Star Wars: Uma Nova Esperança', 'ano' => 1977],
-                    ['titulo' => 'O Senhor dos Anéis: A Sociedade do Anel', 'ano' => 2001],
-                ],
-                'cansa' => 'filme que confunde ambiguidade com falta de rumo.',
-                'curto' => 'Lados claros',
-            ],
-        ],
-
-        'estrutura' => [
-            'e' => [
-                'manchete' => 'Você quer saber para onde a história vai.',
-                'corpo' => 'Causa e efeito, arco fechado e um final que responde: isso te dá prazer, não tédio. Você confia na narrativa que constrói o caminho sem esconder o mapa.',
-                'combina' => [
-                    ['titulo' => 'Forrest Gump', 'ano' => 1994],
-                    ['titulo' => 'A Viagem de Chihiro', 'ano' => 2001],
-                ],
-                'cansa' => 'quebra-cabeça que parece exercício de estilo.',
-                'curto' => 'História linear',
-            ],
-            'd' => [
-                'manchete' => 'Você não quer que a história entregue tudo pronto.',
-                'corpo' => 'Filmes que embaralham o tempo te convidam a montar o sentido junto — o prazer está na montagem, não no final. Você se inclina para a frente em vez de desistir.',
-                'combina' => [
-                    ['titulo' => 'Pulp Fiction', 'ano' => 1994],
-                    ['titulo' => 'Amnésia', 'ano' => 2000],
-                ],
-                'cansa' => 'trama linear que explica cada passo antes de acontecer.',
-                'curto' => 'História em pedaços',
-            ],
-        ],
-
-        'atmosfera' => [
-            'e' => [
-                'manchete' => 'O mundo inteiro cabe num quarto.',
-                'corpo' => 'Closes, silêncios e poucos personagens te dizem mais que um exército. O épico só funciona quando tem intimidade dentro — e você prefere o rosto ao horizonte.',
-                'combina' => [
-                    ['titulo' => 'Antes do Amanhecer', 'ano' => 1995],
                     ['titulo' => 'História de um Casamento', 'ano' => 2019],
+                    ['titulo' => 'Antes do Amanhecer', 'ano' => 1995],
                 ],
-                'cansa' => 'batalha sem rosto e sem consequência.',
-                'curto' => 'Mundo num quarto',
+                'cansa' => 'espetáculo que esquece as pessoas.',
+                'curto' => 'Close',
             ],
             'd' => [
-                'manchete' => 'Você quer sentir o tamanho das coisas no corpo.',
-                'corpo' => 'Deserto, planeta, multidão e trilha orquestral: o cinema é o lugar onde a escala se sente. Você aceita o exagero quando ele tem ideia por trás.',
+                'manchete' => 'Você quer escala.',
+                'corpo' => 'Deserto, planeta, multidão, trilha orquestral — o cinema é o único lugar onde o tamanho das coisas pode ser sentido no corpo.',
                 'combina' => [
                     ['titulo' => 'Lawrence da Arábia', 'ano' => 1962],
-                    ['titulo' => 'Duna', 'ano' => 2021],
+                    ['titulo' => 'O Senhor dos Anéis: A Sociedade do Anel', 'ano' => 2001],
                 ],
-                'cansa' => 'filme pequeno que se comporta como se fosse grande.',
-                'curto' => 'Escala épica',
+                'cansa' => 'filme pequeno que se acha grande.',
+                'curto' => 'Épico',
             ],
         ],
 
-        'epoca' => [
+        'amplitude' => [
             'e' => [
-                'manchete' => 'Você sente o tempo no material.',
-                'corpo' => 'Grão, figurino, arquitetura e memória: o passado no cinema não é decoração, é uma forma de sentir o presente. Você gosta quando o filme tem cheiro de época.',
+                'manchete' => 'Você prefere o que já conhece.',
+                'corpo' => 'O gênero que domina, o ator de sempre, o país de sempre. Familiaridade não é preguiça: é o prazer de reconhecer o terreno.',
                 'combina' => [
-                    ['titulo' => 'Cinema Paradiso', 'ano' => 1988],
-                    ['titulo' => 'Meia-Noite em Paris', 'ano' => 2011],
+                    ['titulo' => 'Top Gun: Maverick', 'ano' => 2022],
+                    ['titulo' => 'O Auto da Compadecida', 'ano' => 2000],
                 ],
-                'cansa' => 'futuro genérico que não pensa em nada.',
-                'curto' => 'Cheiro de passado',
+                'cansa' => 'filme que exige pesquisa antes de começar.',
+                'curto' => 'Familiar',
             ],
             'd' => [
-                'manchete' => 'O amanhã te interessa mais que a saudade.',
-                'corpo' => 'Neon, código e cidades impossíveis são o seu presente, não o seu futuro distante. Você quer o cinema que imagina o que vem depois — e que usa o amanhã para falar do agora.',
+                'manchete' => 'Você busca o que ainda não viu.',
+                'corpo' => 'Outro país, outra década, outro gênero. O risco faz parte do prazer, e o familiar é só o ponto de partida.',
                 'combina' => [
-                    ['titulo' => 'Blade Runner 2049', 'ano' => 2017],
-                    ['titulo' => 'Akira', 'ano' => 1988],
+                    ['titulo' => 'Parasita', 'ano' => 2019],
+                    ['titulo' => 'Relatos Selvagens', 'ano' => 2014],
                 ],
-                'cansa' => 'nostalgia de época sem ideia nova.',
-                'curto' => 'Amanhã',
+                'cansa' => 'lista que só repete os mesmos dez títulos.',
+                'curto' => 'Omnívoro',
             ],
         ],
     ],

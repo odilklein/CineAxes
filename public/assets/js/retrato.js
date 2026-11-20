@@ -10,6 +10,14 @@
 
   var secoes = Array.prototype.slice.call(document.querySelectorAll('[data-retrato]'));
 
+  var narrativaSalva = document.querySelector('[data-narrativa-salva]');
+
+  if (narrativaSalva) {
+    try {
+      aplicarNarrativa(JSON.parse(narrativaSalva.textContent));
+    } catch (erro) { /* JSON inválido: mantém o estático */ }
+  }
+
   if (!secoes.length) {
     return;
   }
@@ -65,6 +73,44 @@
     alvo.appendChild(p);
   }
 
+  function aplicarNarrativa(narrativa) {
+    if (!narrativa) {
+      return;
+    }
+
+    (narrativa.leituras || []).forEach(function (leitura) {
+      var alvo = document.querySelector('[data-narrativa-leitura="' + leitura.slug + '"]');
+
+      if (alvo) {
+        alvo.textContent = leitura.texto;
+      }
+    });
+
+    var arquetipo = document.querySelector('[data-narrativa-arquetipo]');
+
+    if (arquetipo && narrativa.arquetipo) {
+      arquetipo.textContent = narrativa.arquetipo;
+    }
+
+    var diretor = document.querySelector('[data-narrativa-diretor]');
+
+    if (diretor && narrativa.diretor) {
+      diretor.textContent = narrativa.diretor;
+    }
+
+    (narrativa.descobertas || []).forEach(function (achado) {
+      var alvo = Array.prototype.slice.call(document.querySelectorAll('[data-narrativa-descoberta]')).filter(function (el) {
+        return el.getAttribute('data-narrativa-descoberta') === achado.titulo;
+      })[0];
+
+      if (alvo) {
+        alvo.textContent = achado.porque;
+      }
+    });
+
+    document.dispatchEvent(new CustomEvent('pc:narrativa'));
+  }
+
   function buscar(codigo) {
     if (pedidos[codigo]) {
       return pedidos[codigo];
@@ -93,6 +139,9 @@
       alvos.forEach(function (secao) {
         preencher(secao, resultado.dados.texto);
       });
+
+      document.dispatchEvent(new CustomEvent('pc:narrativa'));
+      aplicarNarrativa(resultado.dados.narrativa);
 
       if (resultado.dados.frase) {
         Array.prototype.forEach.call(document.querySelectorAll('[data-frase-perfil]'), function (alvo) {

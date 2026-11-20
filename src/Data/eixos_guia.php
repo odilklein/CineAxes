@@ -3,18 +3,10 @@
 declare(strict_types=1);
 
 /**
- * Guia editorial dos 8 eixos.
+ * Guia editorial dos 6 eixos (modelo v2).
  *
- * Alimenta o modal "Entender este eixo" durante o teste. Cada eixo traz uma
- * explicação longa, o que significa ficar perto de cada polo, cenas de filmes e
- * séries que tornam o eixo reconhecível e as leituras críticas que sustentam a
- * régua (ver docs/EIXOS.md).
- *
- * As referências bibliográficas são paráfrases do argumento de cada autor, não
- * citações literais: o objetivo é indicar onde a ideia aparece, não reproduzir
- * o texto original.
- *
- * Chaves: slug do eixo (tabela `eixos`).
+ * Alimenta o modal "Entender este eixo" durante o teste. As referências são
+ * paráfrases do argumento de cada autor, não citações literais.
  */
 
 return [
@@ -152,7 +144,7 @@ return [
         ],
     ],
 
-    'universo' => [
+    'mundo' => [
         'resumo' => 'Este eixo mede o grau de invenção do mundo: ruas e corpos plausíveis contra regras próprias, mitologias e cosmologias impossíveis.',
         'paragrafos' => [
             'Realista: o filme pede que você reconheça o mundo — geografia existente, conflitos sociais, causalidade próxima do cotidiano. A verossimilhança é o contrato.',
@@ -286,141 +278,7 @@ return [
         ],
     ],
 
-    'moralidade' => [
-        'resumo' => 'Este eixo mede como o filme julga: zona cinzenta em que ninguém é inocente contra bem e mal bem demarcados.',
-        'paragrafos' => [
-            'Ambígua: o filme recusa o veredito. O protagonista faz o mal por razões que entendemos, e o antagonista tem argumento.',
-            'Clara: o filme distribui culpa e virtude com nitidez — herói e vilão são posições, não dilemas. Isso não é ingenuidade; é uma escolha de gênero, como a aventura, a fábula e o faroeste clássico.',
-            'O eixo não mede profundidade moral, mas o conforto do julgamento: quanto você gosta de saber de que lado ficar.',
-        ],
-        'leitura' => [
-            'esq' => 'Perto de 0, você prefere quando o filme embaralha o julgamento e ninguém sai limpo.',
-            'dir' => 'Perto de 100, você prefere quando o filme deixa claro quem é o herói e quem é o vilão.',
-        ],
-        'cenas' => [
-            [
-                'obra' => 'O Poderoso Chefão',
-                'ano' => 1972,
-                'tipo' => 'filme',
-                'cena' => 'O batismo de Michael montado com o massacre das outras famílias.',
-                'porque' => 'Sagrado e profano no mesmo plano, sem narração que diga o que condenar.',
-                'polo' => 'esq',
-            ],
-            [
-                'obra' => 'Indiana Jones e os Caçadores da Arca Perdida',
-                'ano' => 1981,
-                'tipo' => 'filme',
-                'cena' => 'Os nazistas como encarnação do mal diante de um herói imperfeito, mas inequívoco.',
-                'porque' => 'A série toda é construída sobre uma linha moral nítida, e funciona por isso.',
-                'polo' => 'dir',
-            ],
-            [
-                'obra' => 'Breaking Bad',
-                'ano' => 2008,
-                'tipo' => 'série',
-                'cena' => 'A transformação de Walter White, acompanhada de perto até o público perceber que torceu pelo vilão.',
-                'porque' => 'A série usa a simpatia do espectador como parte do dilema moral.',
-                'polo' => 'esq',
-            ],
-            [
-                'obra' => 'The Good Place',
-                'ano' => 2016,
-                'tipo' => 'série',
-                'cena' => 'Uma sitcom em que certo e errado são discutidos em voz alta, como aula de filosofia.',
-                'porque' => 'A clareza moral é o próprio motor da comédia: as regras do jogo ético estão sempre à vista.',
-                'polo' => 'dir',
-            ],
-        ],
-        'citacoes' => [
-            [
-                'autor' => 'V. F. Perkins',
-                'obra' => 'Film as Film',
-                'ano' => 1972,
-                'ideia' => 'A crítica moral é inseparável da forma: o filme julga pelo modo como organiza o olhar, não por um discurso sobre o bem.',
-            ],
-            [
-                'autor' => 'Robert Warshow',
-                'obra' => 'The Gangster as Tragic Hero',
-                'ano' => 1948,
-                'ideia' => 'O gângster é trágico porque encarna o sucesso que a sociedade promete e recusa; no noir, ninguém é inocente.',
-            ],
-            [
-                'autor' => 'Aristóteles',
-                'obra' => 'Ética a Nicômaco',
-                'ano' => -340,
-                'ideia' => 'A virtude como hábito e meio-termo: a tradição que sustenta a ideia de que o cinema também pode ensinar a julgar.',
-            ],
-        ],
-    ],
-
-    'estrutura' => [
-        'resumo' => 'Este eixo mede a arquitetura da história: causalidade e arco fechado contra quebra de tempo, camadas e realidades paralelas.',
-        'paragrafos' => [
-            'Linear: a ordem causa-efeito é a própria experiência. O flashback, quando aparece, serve de explicação.',
-            'Fragmentada: o filme organiza o enredo contra a cronologia — elipses, repetições, pontos de vista rivais, realidades paralelas.',
-            'Não é bagunça: a fragmentação é um sistema com regras. O prazer é montar o quebra-cabeça e perceber que ele tem desenho.',
-        ],
-        'leitura' => [
-            'esq' => 'Perto de 0, você gosta de acompanhar uma história do começo ao fim, na ordem certa.',
-            'dir' => 'Perto de 100, você gosta de montar o filme: tempos quebrados, camadas e versões que não fecham.',
-        ],
-        'cenas' => [
-            [
-                'obra' => 'Forrest Gump',
-                'ano' => 1994,
-                'tipo' => 'filme',
-                'cena' => 'A vida em ordem cronológica, com os eventos históricos funcionando como estações de uma linha.',
-                'porque' => 'A causalidade é o próprio prazer: cada escolha leva ao próximo episódio sem desvio.',
-                'polo' => 'esq',
-            ],
-            [
-                'obra' => 'Pulp Fiction',
-                'ano' => 1994,
-                'tipo' => 'filme',
-                'cena' => 'Os capítulos fora de ordem, com a maleta e o relógio voltando em pontos diferentes.',
-                'porque' => 'O filme só existe na ordem em que é contado: reorganizar os blocos mudaria o sentido.',
-                'polo' => 'dir',
-            ],
-            [
-                'obra' => 'Amnésia',
-                'ano' => 2000,
-                'tipo' => 'filme',
-                'cena' => 'A cronologia invertida, em que cada cena explica a anterior.',
-                'porque' => 'A estrutura encena a memória do protagonista: a forma é o diagnóstico.',
-                'polo' => 'dir',
-            ],
-            [
-                'obra' => 'Lost',
-                'ano' => 2004,
-                'tipo' => 'série',
-                'cena' => 'Flashbacks, flash-forwards e realidades alternativas como motor de cada temporada.',
-                'porque' => 'A série transforma a quebra de tempo em parte do mistério que o espectador precisa resolver.',
-                'polo' => 'dir',
-            ],
-        ],
-        'citacoes' => [
-            [
-                'autor' => 'David Bordwell',
-                'obra' => 'The Classical Hollywood Cinema',
-                'ano' => 1985,
-                'ideia' => 'A distinção entre fábula (o que aconteceu) e syuzhet (a ordem em que se conta): o cinema clássico esconde a diferença, o moderno a expõe.',
-            ],
-            [
-                'autor' => 'Gérard Genette',
-                'obra' => 'Discurso da Narrativa',
-                'ano' => 1972,
-                'ideia' => 'Anacronias, focalização e níveis narrativos: as categorias que descrevem como um relato embaralha o tempo e a voz.',
-            ],
-            [
-                'autor' => 'Roland Barthes',
-                'obra' => 'A Morte do Autor',
-                'ano' => 1967,
-                'ideia' => 'O sentido não está no autor, mas na montagem que o leitor faz: a estrutura aberta convida a completar o texto.',
-            ],
-        ],
-    ],
-
-    'atmosfera' => [
+    'escala' => [
         'resumo' => 'Este eixo mede a escala do drama: quartos, closes e poucos personagens contra exércitos, planetas e tela grande.',
         'paragrafos' => [
             'Íntima: o drama cabe num quarto. O close-up é o plano decisivo e o rosto é a paisagem.',
@@ -487,69 +345,55 @@ return [
         ],
     ],
 
-    'epoca' => [
-        'resumo' => 'Este eixo mede de onde o filme fala: memória, grão e passado contra neon, código e imaginação do amanhã.',
+    'amplitude' => [
+        'resumo' => 'O quanto você sai do familiar: outro país, outra década, outro gênero. Não é sobre ser cult; é sobre o prazer (ou o incômodo) de não reconhecer o terreno.',
         'paragrafos' => [
-            'Memória: o filme olha para trás — época reconstruída, grão, nostalgia, luto pelo que passou ou pelo que nunca houve.',
-            'Futuro: o filme especula — tecnologia, distopia, utopia, o amanhã como hipótese a ser testada.',
-            'Cuidado com a confusão: um filme de época pode ser futurista na forma, e um filme futurista pode viver de nostalgia. O eixo mede a orientação temporal do olhar, não o figurino.',
+            'No polo circunscrito, o prazer está no reconhecimento: o gênero que você domina, o ator de sempre, o país de sempre. Familiaridade não é preguiça; é uma forma de conforto que permite prestar atenção no detalhe.',
+            'No polo omnívoro, o prazer está no deslocamento: um filme iraniano dos anos 1990, um thriller coreano, um experimental que ninguém recomendou. O risco faz parte da experiência, e o familiar vira só o ponto de partida.',
+            'A pesquisa de gosto chama isso de "onivorismo": em vez de uma hierarquia fixa entre alto e baixo, o que distingue o repertório é a amplitude. O eixo mede o quanto você aceita sair do seu circuito.',
         ],
         'leitura' => [
-            'esq' => 'Perto de 0, você quer que o filme fale do passado: memória, textura de outra época, o que ficou.',
-            'dir' => 'Perto de 100, você quer que o filme fale do amanhã: tecnologia, especulação, o que ainda não existe.',
+            'esq' => 'Perto de 0, você prefere o que já conhece: mesmo gênero, mesmo país, mesma época. O prazer está em reconhecer.',
+            'dir' => 'Perto de 100, você busca o que ainda não viu: outro país, outra década, outro gênero. O prazer está em se deslocar.',
         ],
         'cenas' => [
             [
-                'obra' => 'Cinema Paradiso',
-                'ano' => 1988,
+                'obra' => 'Parasita',
+                'ano' => 2019,
                 'tipo' => 'filme',
-                'cena' => 'A sala de projeção, os beijos censurados e o retorno ao vilarejo no presente.',
-                'porque' => 'A memória é a matéria do filme: o passado é reconstruído pelo afeto de quem volta.',
-                'polo' => 'esq',
-            ],
-            [
-                'obra' => 'Blade Runner 2049',
-                'ano' => 2017,
-                'tipo' => 'filme',
-                'cena' => 'Los Angeles em 2049: neon, hologramas e ruínas de um futuro já desgastado.',
-                'porque' => 'O futuro é paisagem habitada, com história e decadência próprias.',
+                'cena' => 'A casa modernista de vidro e o porão escondido: dois mundos no mesmo endereço.',
+                'porque' => 'Um filme coreano que virou fenômeno global sem abrir mão do próprio idioma e do próprio olhar de classe.',
                 'polo' => 'dir',
             ],
             [
-                'obra' => 'Era Uma Vez em... Hollywood',
-                'ano' => 2019,
+                'obra' => 'Casablanca',
+                'ano' => 1942,
                 'tipo' => 'filme',
-                'cena' => '1969 reconstruído com rádio, letreiros e um final que reescreve a história real.',
-                'porque' => 'A nostalgia vira operação formal: o filme restaura o passado para poder corrigi-lo.',
+                'cena' => 'O aeroporto, a neblina e a despedida que todo mundo já viu antes de ver o filme.',
+                'porque' => 'O clássico que funciona como língua franca: você reconhece a cena mesmo sem ter assistido.',
                 'polo' => 'esq',
             ],
             [
-                'obra' => 'Black Mirror',
-                'ano' => 2011,
-                'tipo' => 'série',
-                'cena' => 'Cada episódio testa uma tecnologia próxima como hipótese sobre o amanhã.',
-                'porque' => 'A série é um laboratório de futuros: especulação como formato, não como cenário.',
+                'obra' => 'Relatos Selvagens',
+                'ano' => 2014,
+                'tipo' => 'filme',
+                'cena' => 'O primeiro episódio, no avião, com todos os passageiros descobrindo o que têm em comum.',
+                'porque' => 'Um filme argentino de episódios que combina humor, violência e crítica social sem pedir licença ao circuito americano.',
                 'polo' => 'dir',
             ],
         ],
         'citacoes' => [
             [
-                'autor' => 'Gilles Deleuze',
-                'obra' => 'Cinema 2: A Imagem-Tempo',
-                'ano' => 1985,
-                'ideia' => 'O tempo deixa de ser cronologia e vira experiência: memória, virtualidade e passados que coexistem no presente.',
+                'autor' => 'Richard Peterson',
+                'obra' => 'Changing Highbrow Taste: From Snob to Omnivore',
+                'ano' => 1996,
+                'ideia' => 'Peterson mostra que o gosto de prestígio deixou de ser a exclusão do popular: o "omnívoro" combina alto e baixo, antigo e novo, local e estrangeiro.',
             ],
             [
-                'autor' => 'Svetlana Boym',
-                'obra' => 'The Future of Nostalgia',
-                'ano' => 2001,
-                'ideia' => 'A nostalgia restauradora quer reconstruir o passado; a reflexiva se demora na saudade e na ironia. O cinema faz as duas.',
-            ],
-            [
-                'autor' => 'Fredric Jameson',
-                'obra' => 'Pós-Modernismo: A Lógica Cultural do Capitalismo Tardio',
-                'ano' => 1991,
-                'ideia' => 'A nostalgia como modo estético: o passado vira estilo disponível, e o futuro é imaginado com peças do presente.',
+                'autor' => 'Pierre Bourdieu',
+                'obra' => 'Distinction',
+                'ano' => 1984,
+                'ideia' => 'Bourdieu lê o gosto como marcador social: o que se consome e o que se recusa diz tanto sobre posição quanto sobre prazer. O eixo de amplitude mede essa abertura, sem transformá-la em hierarquia.',
             ],
         ],
     ],

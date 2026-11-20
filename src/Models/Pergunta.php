@@ -8,11 +8,18 @@ use PDO;
 
 final class Pergunta
 {
-    /** Quantidade de perguntas por modo. */
+    /**
+     * Versão do conjunto de perguntas. Mude a cada alteração de texto, direção
+     * ou peso: o resultado guarda a versão usada, então vetores calculados com
+     * réguas diferentes não parecem comparáveis.
+     */
+    public const VERSAO = 'perguntas-6d-v1';
+
+    /** Quantidade de perguntas por modo (6 eixos: 4, 6 e 8 por eixo). */
     public const MODOS = [
-        'rapido'   => 36,
-        'completo' => 60,
-        'extremo'  => 240,
+        'rapido'   => 24,
+        'completo' => 36,
+        'extremo'  => 48,
     ];
 
     /**
@@ -35,6 +42,18 @@ final class Pergunta
         foreach (self::todas($pdo) as $pergunta) {
             $porEixo[(int) $pergunta['eixo_id']][] = $pergunta;
         }
+
+        // O núcleo (modo_rapido = 1, peso 2) sempre entra primeiro; o restante
+        // completa por ordem editorial.
+        foreach ($porEixo as &$lista) {
+            usort($lista, static function (array $a, array $b): int {
+                return ((int) $b['modo_rapido'] <=> (int) $a['modo_rapido'])
+                    ?: ((int) $b['peso'] <=> (int) $a['peso'])
+                    ?: ((int) $a['ordem'] <=> (int) $b['ordem'])
+                    ?: ((int) $a['id'] <=> (int) $b['id']);
+            });
+        }
+        unset($lista);
 
         $total = count($porEixo);
 

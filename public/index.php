@@ -44,9 +44,10 @@ $paginaTitulo = t('meta.title');
 $paginaDescricao = t('meta.description');
 
 /*
- * Card de exemplo da landing: usa um perfil real da base sintética, montado pelo
- * mesmo PerfilController do resultado. Assim o exemplo nunca "envelhece" e mostra
- * o arquétipo, as marcas e os espelhos de verdade. Sem banco, cai num exemplo fixo.
+ * Cards de exemplo da landing: usa perfis da base sintética, montados pelo mesmo
+ * PerfilController do resultado. EXEMPLO1/2/3 são curados no seed; se o banco
+ * ainda não tiver os três, completa com outros sintéticos. Sem banco, cai num
+ * exemplo fixo.
  */
 $exemplo = [
     'codigo' => '',
@@ -61,48 +62,89 @@ $exemplo = [
     'estudio' => null,
 ];
 
+$montarExemplo = static function (string $codigo) use ($config): ?array {
+    $perfilExemplo = (new Controllers\PerfilController(
+        Core\Database::pdo(),
+        new Services\MatcherService(
+            (float) ($config['raridade']['limiar'] ?? 12.0),
+            (int) ($config['raridade']['min_base'] ?? 100)
+        ),
+        new Services\LikertCalculatorService(),
+        $config
+    ))->montar($codigo, true, 'misturado');
+
+    if ($perfilExemplo === null) {
+        return null;
+    }
+
+    $arquetipoExemplo = $perfilExemplo['arquetipo'];
+
+    return [
+        'codigo' => $codigo,
+        'titulo' => (string) ($arquetipoExemplo['titulo'] ?? 'O Espectador Neutro'),
+        'descricao' => (string) ($arquetipoExemplo['descricao'] ?? ''),
+        'afinidade' => (float) ($perfilExemplo['afinidade_media'] ?? 0),
+        // Repassa os dados brutos para o card 9:16 de compartilhamento.
+        'personagens' => $perfilExemplo['personagens'] ?? [],
+        'filmes_top' => $perfilExemplo['filmes_top'] ?? [],
+        'leituras' => $perfilExemplo['leituras'] ?? [],
+        'estante' => $perfilExemplo['estante'] ?? [],
+        'diretor' => $perfilExemplo['diretor'] ?? null,
+        'estudio' => $perfilExemplo['estudio'] ?? null,
+    ];
+};
+
+$exemplos = [];
+
 try {
     $pdoExemplo = Core\Database::pdo();
-    // Perfil curado do seed; em bases antigas, cai no primeiro resultado real.
-    $codigoExemplo = $pdoExemplo->query(
+    $codigosExemplo = $pdoExemplo->query(
         "SELECT codigo_unico
            FROM resultados_usuarios
-          WHERE codigo_unico = 'EXEMPLO1' OR origem = 'real'
-          ORDER BY (codigo_unico = 'EXEMPLO1') DESC, id
-          LIMIT 1"
-    )->fetchColumn();
+          WHERE codigo_unico IN ('EXEMPLO1', 'EXEMPLO2', 'EXEMPLO3')
+          ORDER BY FIELD(codigo_unico, 'EXEMPLO1', 'EXEMPLO2', 'EXEMPLO3')"
+    )->fetchAll(PDO::FETCH_COLUMN);
 
-    if (is_string($codigoExemplo) && $codigoExemplo !== '') {
-        $perfilExemplo = (new Controllers\PerfilController(
-            $pdoExemplo,
-            new Services\MatcherService(
-                (float) ($config['raridade']['limiar'] ?? 12.0),
-                (int) ($config['raridade']['min_base'] ?? 100)
-            ),
-            new Services\LikertCalculatorService(),
-            $config
-        ))->montar($codigoExemplo, false);
+    // Bancos antigos podem ter só o EXEMPLO1: completa com sintéticos.
+    if (count($codigosExemplo) < 3) {
+        $faltam = 3 - count($codigosExemplo);
+        $marcadores = $codigosExemplo === []
+            ? "''"
+            : implode(', ', array_fill(0, count($codigosExemplo), '?'));
+        $consulta = $pdoExemplo->prepare(
+            "SELECT codigo_unico
+               FROM resultados_usuarios
+              WHERE origem = 'sintetico'
+                AND codigo_unico NOT IN ({$marcadores})
+              ORDER BY id
+              LIMIT " . (int) $faltam
+        );
+        $consulta->execute($codigosExemplo);
+        $codigosExemplo = array_merge($codigosExemplo, $consulta->fetchAll(PDO::FETCH_COLUMN));
+    }
 
-        if ($perfilExemplo !== null) {
-            $arquetipoExemplo = $perfilExemplo['arquetipo'];
+    foreach (array_slice($codigosExemplo, 0, 3) as $codigoExemplo) {
+        $item = $montarExemplo((string) $codigoExemplo);
 
-            $exemplo = [
-                'codigo' => (string) $codigoExemplo,
-                'titulo' => (string) ($arquetipoExemplo['titulo'] ?? 'O Espectador Neutro'),
-                'descricao' => (string) ($arquetipoExemplo['descricao'] ?? ''),
-                'afinidade' => (float) ($perfilExemplo['afinidade_media'] ?? 0),
-                // Repassa os dados brutos para o card 9:16 de compartilhamento.
-                'personagens' => $perfilExemplo['personagens'] ?? [],
-                'leituras' => $perfilExemplo['leituras'] ?? [],
-                'estante' => $perfilExemplo['estante'] ?? [],
-                'diretor' => $perfilExemplo['diretor'] ?? null,
-                'estudio' => $perfilExemplo['estudio'] ?? null,
-            ];
+        if ($item !== null) {
+            $exemplos[] = $item;
         }
+    }
+
+    if ($exemplos !== []) {
+        $exemplo = $exemplos[0];
     }
 } catch (Throwable $erro) {
     // Landing continua com o exemplo fixo.
 }
+
+if ($exemplos === []) {
+    $exemplos = [$exemplo];
+}
+
+$vendorStyles = ['swiper/swiper-bundle.min.css'];
+$vendorScripts = ['swiper/swiper-bundle.min.js'];
+$scriptsExtras = ['hero-phones.js'];
 
 require __DIR__ . '/partials/head.php';
 require __DIR__ . '/partials/header.php';
@@ -112,7 +154,7 @@ require __DIR__ . '/partials/header.php';
     <div class="pc-marquee__track">
         <?php for ($volta = 0; $volta < 2; $volta++): ?>
             <span>PersonaCut</span><i>✦</i>
-            <span>8 eixos</span><i>✦</i>
+            <span>6 eixos</span><i>✦</i>
             <span>Um perfil</span><i>✦</i>
             <span>Cinema analógico</span><i>✦</i>
             <span>Sem cadastro</span><i>✦</i>
@@ -146,26 +188,50 @@ require __DIR__ . '/partials/header.php';
         </div>
 
         <div class="reveal pc-hero__story">
-            <?php
-            /*
-             * Card 9:16 idêntico ao gerado no questionário: reaproveita o mesmo
-             * parcial do resultado, alimentado pelo perfil de exemplo da landing.
-             * O escopo isolado evita que as variáveis do parcial vazem para a página.
-             */
-            (static function (array $exemplo): void {
-                $codigo = $exemplo['codigo'];
-                $tituloPerfil = $exemplo['titulo'];
-                $perfil = [
-                    'afinidade_media' => $exemplo['afinidade'],
-                    'leituras' => $exemplo['leituras'],
-                    'personagens' => $exemplo['personagens'],
-                    'estante' => $exemplo['estante'],
-                    'diretor' => $exemplo['diretor'],
-                    'estudio' => $exemplo['estudio'],
-                ];
-                require __DIR__ . '/partials/resultado/story-card.php';
-            })($exemplo);
-            ?>
+            <div class="pc-hero-slider" data-phone-slider>
+                <div class="pc-hero-slider__track" data-phone-track>
+                    <?php foreach ($exemplos as $exemploSlide): ?>
+                        <div class="pc-hero-slider__slide">
+                            <?php
+                            /*
+                             * Card 9:16 idêntico ao gerado no questionário: reaproveita
+                             * o parcial do resultado, alimentado por um perfil de exemplo.
+                             * O escopo isolado evita que as variáveis vazem para a página.
+                             */
+                            (static function (array $exemplo): void {
+                                $codigo = $exemplo['codigo'];
+                                $tituloPerfil = $exemplo['titulo'];
+                                $perfil = [
+                                    'afinidade_media' => $exemplo['afinidade'],
+                                    'leituras' => $exemplo['leituras'],
+                                    'personagens' => $exemplo['personagens'],
+                                    'filmes_top' => $exemplo['filmes_top'] ?? [],
+                                    'estante' => $exemplo['estante'],
+                                    'diretor' => $exemplo['diretor'],
+                                    'estudio' => $exemplo['estudio'],
+                                ];
+                                require __DIR__ . '/partials/resultado/phone-frame.php';
+                            })($exemploSlide);
+                            ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <?php if (count($exemplos) > 1): ?>
+                    <button class="pc-hero-slider__nav pc-hero-slider__nav--prev" type="button"
+                            data-phone-prev aria-label="Perfil anterior">
+                        <?= icon('arrow-left', 15) ?>
+                    </button>
+                    <button class="pc-hero-slider__nav pc-hero-slider__nav--next" type="button"
+                            data-phone-next aria-label="Próximo perfil">
+                        <?= icon('arrow-right', 15) ?>
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <?php if (count($exemplos) > 1): ?>
+                <div class="pc-hero-slider__dots" data-phone-pagination aria-hidden="true"></div>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -210,12 +276,15 @@ require __DIR__ . '/partials/header.php';
             <div class="reveal">
                 <div class="pc-example__panel">
                     <div class="pc-example__panel-head">
+                        <?php $exemploFilme = $exemplo['filmes_top'][0] ?? null; ?>
                         <div>
-                            <span class="pc-example__badge"><?= icon('star', 12) ?> <?= e(t('resultado.affinity')) ?></span>
+                            <span class="pc-example__badge"><?= icon('star', 12) ?> <?= e(t('resultado.films_eyebrow')) ?></span>
                             <h3 class="pc-example__name"><?= e($exemplo['titulo']) ?></h3>
                         </div>
-                        <?php if ($exemplo['afinidade'] > 0): ?>
-                            <span class="pc-chip pc-chip--red"><?= pct($exemplo['afinidade']) ?></span>
+                        <?php if ($exemploFilme !== null): ?>
+                            <span class="pc-chip pc-chip--red"><?= e(t('resultado.match_top', [
+                                'pct' => (int) ($exemploFilme['top_pct'] ?? 0),
+                            ])) ?></span>
                         <?php endif; ?>
                     </div>
 

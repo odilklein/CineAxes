@@ -54,7 +54,11 @@
       return null;
     }
 
-    return /^https:\/\/image\.tmdb\.org\//.test(url) || /^\/assets\//.test(url) ? url : null;
+    return /^https:\/\/image\.tmdb\.org\//.test(url)
+      || /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(url)
+      || /^\/assets\//.test(url)
+      ? url
+      : null;
   }
 
   function compacto(valor) {
@@ -909,6 +913,14 @@
     var card = evento.target.closest('[data-quickview]');
 
     if (!card) {
+      return;
+    }
+
+    // Botões dentro do card (bookmark, por exemplo) têm a própria ação; só
+    // abrimos a ficha quando o próprio card — ou um link de filme — foi clicado.
+    var interativo = evento.target.closest('button, a, input, textarea, select');
+
+    if (interativo && !interativo.hasAttribute('data-quickview')) {
       return;
     }
 

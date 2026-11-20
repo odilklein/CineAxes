@@ -17,7 +17,7 @@ final class Retrato
     public static function porCodigo(PDO $pdo, string $codigo, ?string $versao = null): ?array
     {
         $stmt = $pdo->prepare(
-            'SELECT codigo_unico, idioma, texto, frase, modelo, prompt_versao, tokens, created_at
+            'SELECT codigo_unico, idioma, texto, frase, narrativa_json, modelo, prompt_versao, tokens, created_at
                FROM retratos
               WHERE codigo_unico = :codigo
               LIMIT 1'
@@ -33,6 +33,12 @@ final class Retrato
             return null;
         }
 
+        $narrativa = $linha['narrativa_json'] ?? null;
+        $linha['narrativa'] = is_string($narrativa) && $narrativa !== ''
+            ? (json_decode($narrativa, true) ?: null)
+            : null;
+        unset($linha['narrativa_json']);
+
         return $linha;
     }
 
@@ -40,12 +46,13 @@ final class Retrato
     public static function criar(PDO $pdo, array $dados): void
     {
         $stmt = $pdo->prepare(
-            'INSERT INTO retratos (codigo_unico, idioma, texto, frase, modelo, prompt_versao, tokens)
-             VALUES (:codigo, :idioma, :texto, :frase, :modelo, :prompt_versao, :tokens)
+            'INSERT INTO retratos (codigo_unico, idioma, texto, frase, narrativa_json, modelo, prompt_versao, tokens)
+             VALUES (:codigo, :idioma, :texto, :frase, :narrativa, :modelo, :prompt_versao, :tokens)
              ON DUPLICATE KEY UPDATE
                 idioma = VALUES(idioma),
                 texto = VALUES(texto),
                 frase = VALUES(frase),
+                narrativa_json = VALUES(narrativa_json),
                 modelo = VALUES(modelo),
                 prompt_versao = VALUES(prompt_versao),
                 tokens = VALUES(tokens),
@@ -56,6 +63,9 @@ final class Retrato
             'idioma' => $dados['idioma'] ?? 'pt-BR',
             'texto' => $dados['texto'],
             'frase' => $dados['frase'] ?? null,
+            'narrativa' => isset($dados['narrativa'])
+                ? json_encode($dados['narrativa'], JSON_UNESCAPED_UNICODE)
+                : null,
             'modelo' => $dados['modelo'],
             'prompt_versao' => $dados['prompt_versao'],
             'tokens' => $dados['tokens'] ?? null,

@@ -13,18 +13,20 @@ use Models\Eixo;
 use Models\EntidadeMatch;
 use Models\FilmeCard;
 use Models\Obra;
+use Models\Pergunta;
 use Models\Plataforma;
 use Models\Retrato;
 use Core\Vetor;
 use Models\Resultado;
 use PDO;
+use Services\CalibracaoService;
 use Services\ElencoService;
 use Services\LikertCalculatorService;
 use Services\LeituraService;
 use Services\MatcherService;
 use Services\PlataformaRankingService;
 use Services\RecomendacaoService;
-use Services\RetratoService;
+use Services\NarrativaService;
 use Services\TrilhaService;
 
 /**
@@ -41,6 +43,8 @@ final class PerfilController
 
     private readonly RecomendacaoService $recomendacao;
 
+    private readonly CalibracaoService $calibracao;
+
     public function __construct(
         private readonly PDO $pdo,
         private readonly MatcherService $matcher,
@@ -51,6 +55,7 @@ final class PerfilController
         $this->leiturasConfig = require $base . '/config/leituras.php';
         $this->recomendacaoConfig = require $base . '/config/recomendacao.php';
         $this->recomendacao = new RecomendacaoService($this->recomendacaoConfig, $matcher);
+        $this->calibracao = new CalibracaoService($matcher);
     }
 
     /**
@@ -58,7 +63,7 @@ final class PerfilController
      *                          essas telas não usam ranking nem cards.
      * @return array<string, mixed>|null
      */
-    public function montar(string $codigo, bool $comCatalogo = true): ?array
+    public function montar(string $codigo, bool $comCatalogo = true, string $mix = 'misturado'): ?array
     {
         $codigo = strtoupper(trim($codigo));
 
@@ -79,109 +84,120 @@ final class PerfilController
         $arquetipos = Arquetipo::todos($this->pdo);
         $resolucao = $this->matcher->resolverArquetipo($vetor, $arquetipos, $eixoIds);
 
-        // O arquétipo salvo tem prioridade — garante estabilidade do link.
-        $arquetipo = $resultado['arquetipo_id'] !== null
-            ? Arquetipo::porId($this->pdo, (int) $resultado['arquetipo_id'])
-            : $resolucao['arquetipo'];
+        // O cálculo atual tem prioridade. O rótulo salvo poderia contradizer a
+        // distribuição exibida quando o limiar de neutro ou o questionário
+        // mudam; ele fica como fallback para perfis que hoje são neutros.
+        $arquetipo = !$resolucao['neutro'] && $resolucao['arquetipo'] !== null
+            ? $resolucao['arquetipo']
+            : ($resultado['arquetipo_id'] !== null
+                ? Arquetipo::porId($this->pdo, (int) $resultado['arquetipo_id'])
+                : null);
 
-        if ($arquetipo === null) {
-            $arquetipo = $resolucao['arquetipo'];
+        // Catálogo carregado uma vez quando a tela usa filmes/recomendações.
+        $obrasCatalogo = $comCatalogo ? CatalogoObra::todos($this->pdo, true) : [];
+        $mapaObras = [];
+
+        foreach ($obrasCatalogo as $obra) {
+            $mapaObras[(int) $obra['tmdb_id']] = $obra;
         }
 
-        $entidades = EntidadeMatch::todas($this->pdo);
-        $ranqueadas = $this->matcher->ranquear($vetor, $entidades);
+        $entidades = $this->comFilmografia(EntidadeMatch::todas($this->pdo), $mapaObras);
 
-        // Seis personagens, evitando repetir a mesma obra (dois do Star Wars,
-        // dois do Exterminador...) para o espelho ficar mais variado.
-        $personagens = [];
-        $obrasVistas = [];
+        // Diretores e escolas são comparados dentro do próprio grupo. Personagens
+        // saíram do matching: não temos preferências cinematográficas medidas deles.
+        $diretores = $this->calibracao->anotar($this->matcher->ranquear(
+            $vetor,
+            array_values(array_filter(
+                $entidades,
+                static fn (array $entidade): bool => ($entidade['tipo'] ?? '') === 'diretor'
+            ))
+        ));
+        $estudios = $this->calibracao->anotar($this->matcher->ranquear(
+            $vetor,
+            array_values(array_filter(
+                $entidades,
+                static fn (array $entidade): bool => ($entidade['tipo'] ?? '') === 'estudio'
+            ))
+        ));
 
-        foreach ($this->matcher->topPorTipo($ranqueadas, 'personagem', 40) as $candidato) {
-            $chaveObra = mb_strtolower(trim((string) $candidato['obra_origem']));
+        // Respostas agrupadas por eixo, carregadas uma vez por perfil.
+        $porEixo = $this->respostasPorEixo($resultado);
+        $estabilidade = $this->estabilidade($porEixo, $resultado, $eixos, $diretores);
 
-            if ($chaveObra !== '' && isset($obrasVistas[$chaveObra])) {
-                continue;
+        if ($estabilidade !== null) {
+            foreach ($diretores as &$item) {
+                $dados = $estabilidade['itens'][(string) $item['id']] ?? null;
+
+                if ($dados !== null) {
+                    $item['posicao_mediana'] = (int) $dados['mediana'];
+                    $item['posicao_ic'] = $dados['ic95'];
+                }
             }
-
-            $obrasVistas[$chaveObra] = true;
-            $personagens[] = $candidato;
-
-            if (count($personagens) >= 6) {
-                break;
-            }
+            unset($item);
         }
-        $diretor = $this->matcher->topPorTipo($ranqueadas, 'diretor', 1)[0] ?? null;
-        $estudio = $this->matcher->topPorTipo($ranqueadas, 'estudio', 1)[0] ?? null;
 
-        // Obras essenciais das entidades exibidas (a "estante" do perfil).
-        $ids = array_merge(
-            array_map(static fn (array $e): int => (int) $e['id'], $personagens),
-            $diretor !== null ? [(int) $diretor['id']] : [],
-            $estudio !== null ? [(int) $estudio['id']] : []
-        );
+        $confianca = [
+            'rotulo' => $this->calibracao->rotuloConfianca($estabilidade['top1_fracao'] ?? null),
+            'fracao' => $estabilidade['top1_fracao'] ?? null,
+            'iteracoes' => $estabilidade['iteracoes'] ?? 0,
+            'por_eixo' => $estabilidade['por_eixo'] ?? null,
+            'top1' => $estabilidade['top1'] ?? null,
+        ];
 
-        $obras = Obra::porEntidades($this->pdo, $ids);
+        $diretor = $diretores[0] ?? null;
+        $estudio = $estudios[0] ?? null;
 
-        foreach ($personagens as &$personagem) {
-            $personagem['obras'] = $obras[(int) $personagem['id']] ?? [];
-            $personagem['polos'] = entidade_polos($personagem, $eixos);
-        }
-        unset($personagem);
+        $idsAncoras = array_values(array_filter([
+            $diretor['id'] ?? null,
+            $estudio['id'] ?? null,
+        ]));
+
+        $obrasAncoras = $idsAncoras !== [] ? Obra::porEntidades($this->pdo, $idsAncoras) : [];
 
         foreach ([&$diretor, &$estudio] as &$ancora) {
             if ($ancora !== null) {
-                $ancora['obras'] = $obras[(int) $ancora['id']] ?? [];
+                $ancora['obras'] = $obrasAncoras[(int) $ancora['id']] ?? [];
                 $ancora['polos'] = entidade_polos($ancora, $eixos);
+                $ancora['motivos'] = $this->explicar($vetor, $ancora, $eixos);
             }
         }
         unset($ancora);
 
-        // Atores dos espelhos: a mesma pessoa interpreta um personagem, mas o
-        // perfil também quer saber quem é o intérprete.
+        // Personagens não entram no matching; são usados apenas como metadados
+        // dos filmes que combinam com o perfil.
+        $personagens = [];
         $atores = [];
-        $atoresVistos = [];
-
-        foreach ($personagens as $personagem) {
-            $nomeAtor = trim((string) ($personagem['ator_nome'] ?? ''));
-            $chaveAtor = mb_strtolower($nomeAtor);
-
-            if ($nomeAtor === '' || isset($atoresVistos[$chaveAtor])) {
-                continue;
-            }
-
-            $atoresVistos[$chaveAtor] = true;
-
-            $atores[] = [
-                'nome'        => $nomeAtor,
-                'foto'        => $personagem['ator_foto_url'] ?? null,
-                'nascimento'  => $personagem['nascimento'] ?? null,
-                'pais'        => $personagem['pais'] ?? null,
-                'tmdb'        => $personagem['ator_tmdb_id'] ?? null,
-                'personagem'  => (string) $personagem['nome'],
-                'obra'        => (string) $personagem['obra_origem'],
-                'ano'         => $personagem['ano'] ?? null,
-                'filme_tmdb'  => $personagem['tmdb_id'] ?? null,
-                'afinidade'   => $personagem['afinidade'] ?? null,
-            ];
-        }
+        $estante = [];
+        $filmesTop = [];
 
         $linhas = $this->linhasEixos($eixos, $vetor);
+        $consistencia = $this->consistencia($porEixo, $linhas);
 
         $limiteRaridade = (int) ($this->config['raridade']['max_amostra'] ?? 5000);
-        $vetoresBase = Resultado::vetores($this->pdo, $limiteRaridade);
+        $vetoresBase = Resultado::vetores($this->pdo, $limiteRaridade, $codigo);
         $raridade = $this->matcher->raridade($vetor, $vetoresBase);
+        $raridade['reais'] = Resultado::totalReais($this->pdo);
 
-        $estante = $this->montarEstante($personagens, $diretor, $estudio);
+        // Base sintética é prior, não população: o selo só é confiável quando
+        // houver gente real suficiente, não apenas linhas simuladas.
+        $raridade['confiavel'] = $raridade['confiavel']
+            && $raridade['reais'] >= (int) ($this->config['raridade']['min_base'] ?? 100);
 
         $catalogo = $comCatalogo
-            ? $this->montarCatalogo($vetor, $estante, $personagens, $diretor, $estudio)
-            : ['ranking' => [], 'cards' => [], 'onde' => [], 'elenco' => [], 'decada_obras' => [], 'total' => 0, 'por_trilha' => []];
+            ? $this->montarCatalogo($vetor, $obrasCatalogo, $diretor, $estudio, $mix, $entidades)
+            : [
+                'ranking' => [], 'cards' => [], 'onde' => [], 'elenco' => [],
+                'decada_obras' => [], 'total' => 0, 'por_trilha' => [], 'combinacao' => [],
+                'filmes_top' => [], 'estante' => [], 'descobertas' => [],
+            ];
+
+        $estante = $catalogo['estante'] ?? [];
+        $filmesTop = $catalogo['filmes_top'] ?? [];
 
         $insights = $this->insights(
             $linhas,
             $vetor,
             $vetoresBase,
-            $ranqueadas,
             $arquetipos,
             $arquetipo,
             $estante
@@ -215,11 +231,10 @@ final class PerfilController
             $insights['decada']['fonte'] = 'catalogo';
         }
 
-        $afinidadeMedia = $personagens !== []
-            ? round(array_sum(array_column($personagens, 'afinidade')) / count($personagens), 0)
-            : 0.0;
+        $afinidadeMedia = 0.0;
 
-        $leituras = (new LeituraService($this->leiturasConfig))->selecionar($linhas, $personagens);
+        $leituras = (new LeituraService($this->leiturasConfig))->selecionar($linhas, []);
+        $leituras = $this->exemplosLeituras($leituras, $filmesTop, $eixos);
 
         return [
             'resultado'       => $resultado,
@@ -229,6 +244,7 @@ final class PerfilController
             'leituras'        => $leituras,
             'arquetipo'       => $arquetipo,
             'resolucao'       => $resolucao,
+            'arquetipo_distribuicao' => $resolucao['distribuicao'] ?? [],
             'neutro'          => $arquetipo === null,
             'personagens'     => $personagens,
             'atores'          => $atores,
@@ -238,11 +254,18 @@ final class PerfilController
             'retrato'         => $this->retrato($linhas, $resolucao),
             'afinidade_media' => $afinidadeMedia,
             'raridade'        => $raridade,
+            'confianca'       => $confianca,
+            'consistencia'    => $consistencia,
             'base_total'      => Resultado::total($this->pdo),
-            'retrato_salvo'   => Retrato::porCodigo($this->pdo, $codigo, RetratoService::PROMPT_VERSAO),
+            'filmes_top'      => $filmesTop,
+            'descobertas'     => $catalogo['descobertas'] ?? [],
+            'mix'             => $mix,
+            'filmes_total'    => count($filmesTop),
+            'retrato_salvo'   => Retrato::porCodigo($this->pdo, $codigo, NarrativaService::PROMPT_VERSAO),
             'insights'        => $insights,
             'plataformas'     => $catalogo['ranking'],
             'plataformas_trilha' => $catalogo['por_trilha'],
+            'combinacao'      => $catalogo['combinacao'] ?? [],
             'trilhas'         => $catalogo['cards'],
             'elenco'          => $catalogo['elenco'] ?? [],
             'trilhas_nomes'   => array_map(
@@ -270,17 +293,50 @@ final class PerfilController
 
         $comparacao = $this->matcher->comparar($a['vetor'], $b['vetor']);
 
+        // Referência honesta: como dois perfis ao acaso se comparam? Sem isso,
+        // "78% de compatibilidade" parece muito, mas o par aleatório já fica
+        // perto de 60.
+        $vetores = Resultado::vetores($this->pdo, 500, $codigoA);
+        $amostra = [];
+        $quantidade = count($vetores);
+
+        for ($i = 0; $i < 200 && $quantidade > 1; $i++) {
+            $amostra[] = $this->matcher->compatibilidade(
+                $vetores[random_int(0, $quantidade - 1)],
+                $vetores[random_int(0, $quantidade - 1)]
+            );
+        }
+
+        sort($amostra);
+        $comparacao['baseline'] = $amostra !== [] ? round($amostra[intdiv(count($amostra), 2)], 1) : null;
+        $comparacao['percentil'] = $amostra !== []
+            ? (int) round(100 * count(array_filter($amostra, static fn (float $n): bool => $n < $comparacao['compatibilidade'])) / count($amostra))
+            : null;
+
         $entidades = EntidadeMatch::todas($this->pdo);
-        $ranqueadas = $this->matcher->ranquear($comparacao['media'], $entidades);
+        $diretoresCombinados = $this->calibracao->anotar($this->matcher->ranquear(
+            $comparacao['media'],
+            array_values(array_filter(
+                $entidades,
+                static fn (array $item): bool => ($item['tipo'] ?? '') === 'diretor'
+            ))
+        ));
+        $estudiosCombinados = $this->calibracao->anotar($this->matcher->ranquear(
+            $comparacao['media'],
+            array_values(array_filter(
+                $entidades,
+                static fn (array $item): bool => ($item['tipo'] ?? '') === 'estudio'
+            ))
+        ));
 
         return [
             'a'          => $a,
             'b'          => $b,
             'comparacao' => $comparacao,
             'combinado'  => [
-                'vetor'      => $comparacao['media'],
-                'personagem' => $this->matcher->topPorTipo($ranqueadas, 'personagem', 1)[0] ?? null,
-                'estudio'    => $this->matcher->topPorTipo($ranqueadas, 'estudio', 1)[0] ?? null,
+                'vetor'   => $comparacao['media'],
+                'diretor' => $diretoresCombinados[0] ?? null,
+                'estudio' => $estudiosCombinados[0] ?? null,
             ],
         ];
     }
@@ -300,59 +356,226 @@ final class PerfilController
      * @param array<string, mixed>|null $estudio
      * @return array{ranking: list<array<string, mixed>>, por_trilha: array<string, array<string, mixed>>, cards: list<array<string, mixed>>, onde: array<int, list<array<string, mixed>>>, total: int}
      */
+    /**
+     * Substitui o vetor editorial de diretores/escolas pelo centroide da filmografia.
+     *
+     * @param list<array<string, mixed>> $entidades
+     * @param array<int, array<string, mixed>> $mapaObras tmdb_id => obra do catálogo
+     * @return list<array<string, mixed>>
+     */
+    private function comFilmografia(array $entidades, array $mapaObras): array
+    {
+        if ($mapaObras === []) {
+            return $entidades;
+        }
+
+        $ids = array_map(static fn (array $entidade): int => (int) $entidade['id'], $entidades);
+        $marcadores = implode(',', array_fill(0, count($ids), '?'));
+
+        try {
+            $stmt = $this->pdo->prepare(
+                'SELECT entidade_id, tmdb_id
+                   FROM entidades_obras
+                  WHERE tmdb_id IS NOT NULL
+                    AND entidade_id IN (' . $marcadores . ')'
+            );
+            $stmt->execute($ids);
+            $porEntidade = [];
+
+            foreach ($stmt->fetchAll() as $linha) {
+                $porEntidade[(int) $linha['entidade_id']][] = (int) $linha['tmdb_id'];
+            }
+        } catch (\Throwable $erro) {
+            return $entidades;
+        }
+
+        foreach ($entidades as &$entidade) {
+            if (($entidade['tipo'] ?? '') === 'personagem') {
+                continue;
+            }
+
+            $idsObras = $porEntidade[(int) $entidade['id']] ?? [];
+            $soma = array_fill(0, Vetor::EIXOS, 0.0);
+            $pesoTotal = 0.0;
+            $filmografia = [];
+
+            foreach ($idsObras as $tmdb) {
+                $obra = $mapaObras[$tmdb] ?? null;
+
+                if ($obra === null) {
+                    continue;
+                }
+
+                $peso = max(0.25, ((int) ($obra['confianca'] ?? 50)) / 100);
+
+                foreach ($obra['vetor'] as $indice => $valor) {
+                    $soma[$indice] += (float) $valor * $peso;
+                }
+
+                $pesoTotal += $peso;
+                $filmografia[] = [
+                    'titulo' => (string) $obra['titulo'],
+                    'ano' => $obra['ano'],
+                    'tmdb' => (int) $obra['tmdb_id'],
+                    'poster' => $obra['poster_path'] ?? null,
+                ];
+            }
+
+            if ($pesoTotal > 0) {
+                $entidade['vetor6'] = array_map(
+                    static fn (float $valor): float => round($valor / $pesoTotal, 2),
+                    $soma
+                );
+                $entidade['filmografia'] = $filmografia;
+            }
+        }
+        unset($entidade);
+
+        return $entidades;
+    }
+
+    /**
+     * Troca os exemplos fixos das leituras por filmes do próprio perfil.
+     *
+     * @param list<array<string, mixed>> $leituras
+     * @param list<array<string, mixed>> $filmes
+     * @param list<array<string, mixed>> $eixos
+     * @return list<array<string, mixed>>
+     */
+    private function exemplosLeituras(array $leituras, array $filmes, array $eixos): array
+    {
+        if ($leituras === [] || $filmes === []) {
+            return $leituras;
+        }
+
+        $indicePorSlug = [];
+
+        foreach ($eixos as $indice => $eixo) {
+            $indicePorSlug[(string) ($eixo['slug'] ?? '')] = $indice;
+        }
+
+        $usados = [];
+
+        foreach ($leituras as &$leitura) {
+            $indice = $indicePorSlug[(string) ($leitura['slug'] ?? '')] ?? null;
+
+            if ($indice === null) {
+                continue;
+            }
+
+            $lado = ($leitura['lado'] ?? 'esq') === 'dir' ? 'dir' : 'esq';
+            $exemplos = [];
+
+            foreach ($filmes as $filme) {
+                $chave = mb_strtolower(trim((string) ($filme['titulo'] ?? '')));
+
+                if ($chave === '' || isset($usados[$chave])) {
+                    continue;
+                }
+
+                $valor = (float) ($filme['vetor'][$indice] ?? 50);
+
+                if ($lado === 'dir' && $valor < 55) {
+                    continue;
+                }
+
+                if ($lado === 'esq' && $valor > 45) {
+                    continue;
+                }
+
+                $exemplos[] = [
+                    'titulo' => (string) $filme['titulo'],
+                    'ano' => $filme['ano'],
+                    'tmdb' => (int) ($filme['tmdb_id'] ?? 0),
+                    'poster' => tmdb_img($filme['poster_path'] ?? null, 'w342'),
+                ];
+
+                $usados[$chave] = true;
+
+                if (count($exemplos) >= 2) {
+                    break;
+                }
+            }
+
+            if ($exemplos !== []) {
+                $leitura['combina'] = $exemplos;
+            }
+        }
+        unset($leitura);
+
+        return $leituras;
+    }
+
+    /**
+     * Ranking do catálogo com mistura de descoberta, diversidade e 10 filmes.
+     *
+     * @param list<float> $vetor
+     * @param list<array<string, mixed>> $obras catálogo já carregado
+     * @param array<string, mixed>|null $diretor
+     * @param array<string, mixed>|null $estudio
+     * @param list<array<string, mixed>> $entidades personagens usados como metadados
+     * @return array<string, mixed>
+     */
     private function montarCatalogo(
         array $vetor,
-        array &$estante,
-        array &$personagens,
-        ?array &$diretor,
-        ?array &$estudio
+        array $obras,
+        ?array $diretor,
+        ?array $estudio,
+        string $mix,
+        array $entidades
     ): array {
-        // Deploy seguro: se as tabelas do catálogo ainda não foram importadas,
-        // o perfil continua funcionando sem as seções novas.
         try {
-            $this->enriquecerOnde($estante, $personagens, $diretor, $estudio);
-
-            $obras = CatalogoObra::todos($this->pdo, true);
             $plataformas = Plataforma::todas($this->pdo, true);
         } catch (\Throwable $erro) {
             error_log('[PersonaCut][catalogo] ' . $erro->getMessage());
 
-            return [
-                'ranking'      => [],
-                'por_trilha'   => [],
-                'cards'        => [],
-                'onde'         => [],
-                'elenco'       => [],
-                'decada_obras' => [],
-                'total'        => 0,
-            ];
+            return $this->catalogoVazio();
         }
 
         if ($obras === [] || $plataformas === []) {
-            return [
-                'ranking'    => [],
-                'por_trilha' => [],
-                'cards'      => [],
-                'onde'       => [],
-                'elenco'     => [],
-                'total'      => count($obras),
-            ];
+            return $this->catalogoVazio(count($obras));
         }
 
-        $ranqueadas = $this->recomendacao->rankear($vetor, $obras);
+        $qualidade = (array) ($this->config['descoberta'] ?? []);
+        $notaMinima = (float) ($qualidade['nota_minima'] ?? 6.5);
+        $votosMinimos = (int) ($qualidade['votos_minimos'] ?? 500);
+        $notaDescoberta = (float) ($qualidade['nota_descoberta'] ?? 7.0);
+        $votosDescoberta = (int) ($qualidade['votos_descoberta'] ?? 1000);
+
+        $obras = array_values(array_filter(
+            $obras,
+            static fn (array $obra): bool => ($obra['nota'] ?? 0) >= $notaMinima
+                && ($obra['votos'] ?? 0) >= $votosMinimos
+        ));
+
+        if ($obras === []) {
+            return $this->catalogoVazio();
+        }
+
+        $ranqueadas = $this->calibracao->anotar($this->recomendacao->rankear($vetor, $obras));
 
         foreach ($ranqueadas as &$obra) {
             $obra['trilha'] = $this->recomendacao->trilhaDe($obra);
         }
         unset($obra);
 
-        $ranking = (new PlataformaRankingService($this->recomendacaoConfig))
-            ->ranquear($ranqueadas, $plataformas);
-        $cards = (new TrilhaService($this->recomendacaoConfig))
-            ->montar($ranqueadas, $ranking['onde']);
+        $corte = $this->recomendacao->corteAdaptativo($ranqueadas);
+        $mistura = $this->selecionarMix($ranqueadas, $mix, 160);
 
-        // 250 obras: garante elenco mesmo quando parte dos melhores títulos
-        // ainda não tem créditos ingeridos. O serviço pondera pela afinidade.
+        // A seção "10 filmes" é de filmes; séries continuam nas trilhas e no
+        // streaming. Se o catálogo não tiver filmes suficientes, aceita séries.
+        $filmesMistura = array_values(array_filter(
+            $mistura,
+            static fn (array $obra): bool => (string) ($obra['tipo'] ?? 'filme') === 'filme'
+        ));
+        $filmesTop = $this->selecionarDiverso($filmesMistura !== [] ? $filmesMistura : $mistura, 10);
+
+        $ranking = (new PlataformaRankingService($this->recomendacaoConfig))
+            ->ranquear($ranqueadas, $plataformas, $corte);
+        $cards = (new TrilhaService($this->recomendacaoConfig))
+            ->montar($mistura, $ranking['onde'], $corte);
+
+        // Elenco: créditos dos títulos mais próximos, ponderados pela força.
         $topElenco = array_slice($ranqueadas, 0, 250);
         $creditos = CatalogoCredito::porObras($this->pdo, array_column($topElenco, 'id'));
         $pessoaIds = [];
@@ -370,191 +593,518 @@ final class PerfilController
             8
         );
 
-        // Obras do catálogo na década do repertório. A estante do espelho
-        // costuma ter só uma ou duas; o catálogo garante uma prateleira cheia.
-        $decadaObras = [];
-        $anoDecada = $this->anoDecadaDaEstante($estante);
+        // Personagens entram apenas como rostos dos filmes que combinam.
+        $personagensPorTmdb = [];
+        $personagensPorTitulo = [];
 
-        if ($anoDecada !== null) {
-            foreach ($ranqueadas as $obra) {
-                if (empty($obra['plataformas'])) {
-                    continue;
-                }
+        foreach ($entidades as $entidade) {
+            if (($entidade['tipo'] ?? '') !== 'personagem') {
+                continue;
+            }
 
-                $anoObra = (int) ($obra['ano'] ?? 0);
+            $tmdb = (int) ($entidade['tmdb_id'] ?? 0);
 
-                if ($anoObra < $anoDecada || $anoObra >= $anoDecada + 10) {
-                    continue;
-                }
+            if ($tmdb > 0 && !isset($personagensPorTmdb[$tmdb])) {
+                $personagensPorTmdb[$tmdb] = $entidade;
+            }
 
-                $poster = tmdb_img($obra['poster_path'] ?? null, 'w342');
-                $trilhaSlug = (string) ($obra['trilha'] ?? '');
+            $chave = mb_strtolower(trim((string) ($entidade['obra_origem'] ?? '')))
+                . '|' . (int) ($entidade['ano'] ?? 0);
 
-                $decadaObras[] = [
-                    'titulo'     => (string) $obra['titulo'],
-                    'ano'        => $anoObra,
-                    'tmdb'       => (int) $obra['tmdb_id'],
-                    'poster'     => $poster !== '' ? $poster : null,
-                    'origem'     => (string) ($this->recomendacaoConfig['trilhas'][$trilhaSlug]['nome'] ?? 'Catálogo'),
-                    'afinidade'  => (float) $obra['afinidade'],
-                ];
-
-                if (count($decadaObras) >= 8) {
-                    break;
-                }
+            if ($chave !== '|0' && !isset($personagensPorTitulo[$chave])) {
+                $personagensPorTitulo[$chave] = $entidade;
             }
         }
+
+        foreach ($filmesTop as &$filme) {
+            $chave = mb_strtolower(trim((string) $filme['titulo'])) . '|' . (int) ($filme['ano'] ?? 0);
+            $personagem = $personagensPorTmdb[(int) $filme['tmdb_id']]
+                ?? ($personagensPorTitulo[$chave] ?? null);
+
+            $filme['personagem'] = $personagem['nome'] ?? null;
+            $filme['ator_nome'] = $personagem['ator_nome'] ?? null;
+            $filme['ator_foto_url'] = $personagem['ator_foto_url'] ?? null;
+            $filme['onde'] = $ranking['onde'][(int) $filme['id']] ?? [];
+        }
+        unset($filme);
+
+        $estante = $this->paraEstante(array_slice($filmesTop, 0, 8));
+        $decadaObras = $this->obrasDaDecada($mistura, $estante);
+
+        // Descoberta é o que ainda não apareceu no top 10 do perfil.
+        $excluirDescobertas = [];
+
+        foreach ($filmesTop as $filmeTop) {
+            $excluirDescobertas[(int) ($filmeTop['tmdb_id'] ?? 0)] = true;
+            $chaveTitulo = mb_strtolower(trim((string) ($filmeTop['titulo'] ?? '')));
+
+            if ($chaveTitulo !== '') {
+                $excluirDescobertas[$chaveTitulo] = true;
+            }
+        }
+
+        $descobertas = $this->descobertas($mistura, 3, $excluirDescobertas);
 
         return [
             'ranking'     => $ranking['geral'],
             'por_trilha'  => $ranking['por_trilha'],
             'cards'       => $cards,
             'onde'        => $ranking['onde'],
+            'combinacao'  => $ranking['combinacao'] ?? [],
             'elenco'      => $elenco,
+            'filmes_top'  => $filmesTop,
+            'estante'     => $estante,
+            'descobertas' => $descobertas,
             'decada_obras' => $decadaObras,
             'total'       => count($obras),
         ];
     }
 
-    /**
-     * Acrescenta `onde` (plataformas ativas) às obras já exibidas no perfil,
-     * por tmdb_id. Não carrega o catálogo inteiro: consulta só os ids usados.
-     *
-     * @param list<array<string, mixed>> $estante
-     * @param list<array<string, mixed>> $personagens
-     * @param array<string, mixed>|null $diretor
-     * @param array<string, mixed>|null $estudio
-     */
-    private function enriquecerOnde(
-        array &$estante,
-        array &$personagens,
-        ?array &$diretor,
-        ?array &$estudio
-    ): void {
-        $ids = [];
-
-        foreach ($estante as $obra) {
-            if (!empty($obra['tmdb'])) {
-                $ids[] = (int) $obra['tmdb'];
-            }
-        }
-
-        foreach ($personagens as $personagem) {
-            if (!empty($personagem['tmdb_id'])) {
-                $ids[] = (int) $personagem['tmdb_id'];
-            }
-
-            foreach ((array) ($personagem['obras'] ?? []) as $obra) {
-                if (!empty($obra['tmdb_id'])) {
-                    $ids[] = (int) $obra['tmdb_id'];
-                }
-            }
-        }
-
-        foreach ([$diretor, $estudio] as $ancora) {
-            if ($ancora === null) {
-                continue;
-            }
-
-            foreach ((array) ($ancora['obras'] ?? []) as $obra) {
-                if (!empty($obra['tmdb_id'])) {
-                    $ids[] = (int) $obra['tmdb_id'];
-                }
-            }
-        }
-
-        $mapa = CatalogoObra::plataformasPorTmdb($this->pdo, $ids);
-
-        $aplicar = static function (array &$item, ?int $tmdbId) use ($mapa): void {
-            if ($tmdbId !== null && isset($mapa[$tmdbId])) {
-                $item['onde'] = $mapa[$tmdbId];
-            }
-        };
-
-        foreach ($estante as &$obra) {
-            $aplicar($obra, isset($obra['tmdb']) ? (int) $obra['tmdb'] : null);
-        }
-        unset($obra);
-
-        foreach ($personagens as &$personagem) {
-            $aplicar($personagem, isset($personagem['tmdb_id']) ? (int) $personagem['tmdb_id'] : null);
-
-            foreach ($personagem['obras'] as &$obra) {
-                $aplicar($obra, isset($obra['tmdb_id']) ? (int) $obra['tmdb_id'] : null);
-            }
-            unset($obra);
-        }
-        unset($personagem);
-
-        foreach ([&$diretor, &$estudio] as &$ancora) {
-            if ($ancora === null) {
-                continue;
-            }
-
-            foreach ($ancora['obras'] as &$obra) {
-                $aplicar($obra, isset($obra['tmdb_id']) ? (int) $obra['tmdb_id'] : null);
-            }
-            unset($obra);
-        }
-        unset($ancora);
+    /** @return array<string, mixed> */
+    private function catalogoVazio(int $total = 0): array
+    {
+        return [
+            'ranking' => [], 'por_trilha' => [], 'cards' => [], 'onde' => [],
+            'combinacao' => [], 'elenco' => [], 'filmes_top' => [], 'estante' => [],
+            'descobertas' => [], 'decada_obras' => [], 'total' => $total,
+        ];
     }
 
     /**
-     * Obras que formam a estante do perfil: a obra de cada personagem espelho
-     * + as obras essenciais do diretor e do estúdio.
+     * Mistura 60/40 (ou 80/20) entre cânone popular e descoberta.
      *
-     * @param list<array<string, mixed>> $personagens
-     * @param array<string, mixed>|null $diretor
-     * @param array<string, mixed>|null $estudio
+     * @param list<array<string, mixed>> $ranqueadas
      * @return list<array<string, mixed>>
      */
-    private function montarEstante(array $personagens, ?array $diretor, ?array $estudio): array
+    private function selecionarMix(array $ranqueadas, string $mix, int $limite): array
     {
-        $estante = [];
-        $vistos = [];
+        $total = count($ranqueadas);
 
-        $adicionar = static function (array $item) use (&$estante, &$vistos): void {
-            $chave = mb_strtolower(trim((string) $item['titulo']));
-
-            if ($chave === '' || isset($vistos[$chave])) {
-                return;
-            }
-
-            $vistos[$chave] = true;
-            $estante[] = $item;
-        };
-
-        foreach ($personagens as $personagem) {
-            $adicionar([
-                'titulo'     => (string) $personagem['obra_origem'],
-                'ano'        => $personagem['ano'],
-                'poster'     => $personagem['imagem_url'],
-                'origem'     => (string) $personagem['nome'],
-                'tipo'       => 'personagem',
-                'personagem' => (string) $personagem['nome'],
-                'tmdb'       => $personagem['tmdb_id'],
-            ]);
+        if ($total === 0) {
+            return [];
         }
 
-        foreach ([$diretor, $estudio] as $ancora) {
-            if ($ancora === null) {
+        $qualidade = (array) ($this->config['descoberta'] ?? []);
+        $notaDescoberta = (float) ($qualidade['nota_descoberta'] ?? 7.0);
+        $votosDescoberta = (int) ($qualidade['votos_descoberta'] ?? 1000);
+
+        $populares = array_map(static fn (array $obra): float => (float) ($obra['popularidade'] ?? 0), $ranqueadas);
+        sort($populares);
+        $p60 = $populares[(int) floor($total * 0.60)];
+        $p80 = $populares[(int) floor($total * 0.80)];
+
+        $ancoras = [];
+        $descobertas = [];
+
+        foreach ($ranqueadas as $obra) {
+            $popularidade = (float) ($obra['popularidade'] ?? 0);
+            $generosObra = array_map(
+                static fn (array $genero): int => (int) ($genero['id'] ?? 0),
+                (array) ($obra['generos'] ?? [])
+            );
+            $infantil = array_intersect($generosObra, [10762, 10764, 10767]) !== [];
+
+            $obra['ancora'] = $popularidade >= $p80;
+            $obra['descoberta'] = !$infantil
+                && $popularidade < $p60
+                && ($obra['nota'] ?? 0) >= $notaDescoberta
+                && ($obra['votos'] ?? 0) >= $votosDescoberta;
+
+            if ($obra['ancora']) {
+                $ancoras[] = $obra;
+            } elseif ($obra['descoberta']) {
+                $descobertas[] = $obra;
+            }
+        }
+
+        $fracoes = [
+            'classicos'  => [0.80, 0.20],
+            'descobertas' => [0.20, 0.80],
+            'misturado'  => [0.40, 0.60],
+        ];
+        [$fracaoAncora, $fracaoDescoberta] = $fracoes[$mix] ?? $fracoes['misturado'];
+
+        $alvo = (int) min($limite, count($ancoras) + count($descobertas));
+        $quantidadeAncora = (int) round($alvo * $fracaoAncora);
+        $quantidadeDescoberta = $alvo - $quantidadeAncora;
+
+        $selecionadas = array_merge(
+            array_slice($ancoras, 0, $quantidadeAncora),
+            array_slice($descobertas, 0, $quantidadeDescoberta)
+        );
+
+        // Se uma das pilhas for curta, completa com a outra.
+        $vistos = array_column($selecionadas, 'id');
+
+        foreach (array_merge($ancoras, $descobertas) as $obra) {
+            if (count($selecionadas) >= $alvo) {
+                break;
+            }
+
+            if (!in_array((int) $obra['id'], $vistos, true)) {
+                $selecionadas[] = $obra;
+                $vistos[] = (int) $obra['id'];
+            }
+        }
+
+        usort($selecionadas, static fn (array $a, array $b): int => $b['afinidade'] <=> $a['afinidade']);
+
+        return $selecionadas;
+    }
+
+    /**
+     * Evita uma lista com cinco variações do mesmo filme.
+     *
+     * @param list<array<string, mixed>> $pool
+     * @return list<array<string, mixed>>
+     */
+    private function selecionarDiverso(array $pool, int $limite): array
+    {
+        $selecionados = [];
+        $paises = [];
+        $decadas = [];
+        $generos = [];
+        $titulos = [];
+
+        foreach ($pool as $obra) {
+            $titulo = mb_strtolower(trim((string) ($obra['titulo'] ?? '')));
+
+            if ($titulo === '' || isset($titulos[$titulo])) {
                 continue;
             }
 
-            foreach ($ancora['obras'] ?? [] as $obra) {
-                $adicionar([
-                    'titulo'     => (string) $obra['titulo'],
-                    'ano'        => $obra['ano'],
-                    'poster'     => $obra['poster_url'],
-                    'origem'     => (string) $ancora['nome'],
-                    'tipo'       => (string) $ancora['tipo'],
-                    'personagem' => $obra['personagem'] ? (string) $obra['personagem'] : null,
-                    'tmdb'       => $obra['tmdb_id'],
-                ]);
+            $pais = (string) (($obra['paises'][0]['codigo'] ?? '') ?: '—');
+            $ano = (int) ($obra['ano'] ?? 0);
+            $decada = $ano > 0 ? (int) (floor($ano / 10) * 10) : 0;
+            $genero = (int) ($obra['generos'][0]['id'] ?? 0);
+
+            if (($paises[$pais] ?? 0) >= 2 || ($decadas[$decada] ?? 0) >= 2 || ($generos[$genero] ?? 0) >= 2) {
+                continue;
+            }
+
+            $selecionados[] = $obra;
+            $titulos[$titulo] = true;
+            $paises[$pais] = ($paises[$pais] ?? 0) + 1;
+            $decadas[$decada] = ($decadas[$decada] ?? 0) + 1;
+            $generos[$genero] = ($generos[$genero] ?? 0) + 1;
+
+            if (count($selecionados) >= $limite) {
+                break;
             }
         }
 
-        return array_slice($estante, 0, 8);
+        // Se as cotas de diversidade forem apertadas demais, completa.
+        if (count($selecionados) < $limite) {
+            foreach ($pool as $obra) {
+                $titulo = mb_strtolower(trim((string) ($obra['titulo'] ?? '')));
+
+                if ($titulo === '' || isset($titulos[$titulo])) {
+                    continue;
+                }
+
+                $selecionados[] = $obra;
+                $titulos[$titulo] = true;
+
+                if (count($selecionados) >= $limite) {
+                    break;
+                }
+            }
+        }
+
+        return array_slice($selecionados, 0, $limite);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $obras
+     * @return list<array<string, mixed>>
+     */
+    private function paraEstante(array $obras): array
+    {
+        $estante = [];
+
+        foreach ($obras as $obra) {
+            $estante[] = [
+                'titulo'     => (string) $obra['titulo'],
+                'ano'        => $obra['ano'],
+                'poster'     => tmdb_img($obra['poster_path'] ?? null, 'w342'),
+                'origem'     => 'Catálogo',
+                'tipo'       => (string) ($obra['tipo'] ?? 'filme'),
+                'personagem' => $obra['personagem'] ?? null,
+                'tmdb'       => (int) ($obra['tmdb_id'] ?? 0),
+                'onde'       => $obra['onde'] ?? [],
+            ];
+        }
+
+        return $estante;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $mistura
+     * @param list<array<string, mixed>> $estante
+     * @return list<array<string, mixed>>
+     */
+    private function obrasDaDecada(array $mistura, array $estante): array
+    {
+        $anoDecada = $this->anoDecadaDaEstante($estante);
+
+        if ($anoDecada === null) {
+            return [];
+        }
+
+        $obras = [];
+
+        foreach ($mistura as $obra) {
+            $ano = (int) ($obra['ano'] ?? 0);
+
+            if ($ano < $anoDecada || $ano >= $anoDecada + 10) {
+                continue;
+            }
+
+            $poster = tmdb_img($obra['poster_path'] ?? null, 'w342');
+            $trilha = (string) ($obra['trilha'] ?? '');
+
+            $obras[] = [
+                'titulo'    => (string) $obra['titulo'],
+                'ano'       => $ano,
+                'tmdb'      => (int) $obra['tmdb_id'],
+                'poster'    => $poster !== '' ? $poster : null,
+                'origem'    => (string) ($this->recomendacaoConfig['trilhas'][$trilha]['nome'] ?? 'Catálogo'),
+                'afinidade' => (float) $obra['afinidade'],
+                'top_pct'   => (int) ($obra['top_pct'] ?? 0),
+            ];
+
+            if (count($obras) >= 8) {
+                break;
+            }
+        }
+
+        return $obras;
+    }
+
+    /**
+     * Três sugestões fora do óbvio, com um motivo legível.
+     *
+     * @param list<array<string, mixed>> $mistura
+     * @param array<int|string, bool> $excluir tmdb_id ou título já mostrado no top 10
+     * @return list<array<string, mixed>>
+     */
+    private function descobertas(array $mistura, int $limite, array $excluir = []): array
+    {
+        $candidatas = array_values(array_filter(
+            $mistura,
+            static function (array $obra) use ($excluir): bool {
+                if (empty($obra['descoberta'])) {
+                    return false;
+                }
+
+                $tmdb = (int) ($obra['tmdb_id'] ?? 0);
+                $titulo = mb_strtolower(trim((string) ($obra['titulo'] ?? '')));
+
+                return !isset($excluir[$tmdb])
+                    && ($titulo === '' || !isset($excluir[$titulo]));
+            }
+        ));
+        $fortes = array_values(array_filter(
+            $candidatas,
+            static fn (array $obra): bool => ($obra['nota'] ?? 0) >= 7.0 && ($obra['votos'] ?? 0) >= 1000
+        ));
+        $saida = [];
+
+        foreach ($fortes !== [] ? $fortes : $candidatas as $obra) {
+
+            $paises = array_map(
+                static fn (array $pais): string => strtoupper((string) ($pais['codigo'] ?? '')),
+                (array) ($obra['paises'] ?? [])
+            );
+            $motivos = [];
+
+            if ($paises !== [] && !in_array('US', $paises, true) && !in_array('BR', $paises, true)) {
+                $motivos[] = 'fora do circuito EUA/Brasil';
+            }
+
+            $ano = (int) ($obra['ano'] ?? 0);
+
+            if ($ano > 0 && $ano < 1980) {
+                $motivos[] = 'dos anos ' . $ano;
+            }
+
+            if ($motivos === []) {
+                $motivos[] = 'pouco visto no seu perfil';
+            }
+
+            $poster = tmdb_img($obra['poster_path'] ?? null, 'w342');
+            $saida[] = [
+                'titulo' => (string) $obra['titulo'],
+                'tipo' => (string) ($obra['tipo'] ?? 'filme'),
+                'ano' => $obra['ano'],
+                'tmdb' => (int) $obra['tmdb_id'],
+                'poster' => $poster !== '' ? $poster : null,
+                'poster_path' => $obra['poster_path'] ?? null,
+                'porque' => implode(' · ', $motivos),
+                'top_pct' => (int) ($obra['top_pct'] ?? 0),
+            ];
+
+            if (count($saida) >= $limite) {
+                break;
+            }
+        }
+
+        return $saida;
+    }
+
+    /**
+     * Agrupa as respostas salvas por eixo, já com direção e peso.
+     *
+     * @param array<string, mixed> $resultado
+     * @return array<int, list<array{resposta: int, direcao: int, peso: int}>>
+     */
+    private function respostasPorEixo(array $resultado): array
+    {
+        $json = $resultado['respostas_json'] ?? null;
+
+        if (!is_string($json) || trim($json) === '') {
+            return [];
+        }
+
+        $respostas = json_decode($json, true);
+
+        if (!is_array($respostas) || $respostas === []) {
+            return [];
+        }
+
+        $mapa = Pergunta::mapaParaCalculo(Pergunta::todas($this->pdo));
+        $porEixo = [];
+
+        foreach ($respostas as $idPergunta => $valor) {
+            $meta = $mapa[(int) $idPergunta] ?? null;
+
+            if ($meta === null || !is_numeric($valor)) {
+                continue;
+            }
+
+            $porEixo[$meta['eixo_id']][] = [
+                'resposta' => (int) $valor,
+                'direcao' => (int) $meta['direcao'],
+                'peso' => (int) $meta['peso'],
+            ];
+        }
+
+        return $porEixo;
+    }
+
+    /**
+     * Reamostra as respostas salvas e mede a estabilidade do ranking.
+     *
+     * @param array<int, list<array{resposta: int, direcao: int, peso: int}>> $porEixo
+     * @param array<string, mixed> $resultado
+     * @param list<array<string, mixed>> $eixos
+     * @param list<array<string, mixed>> $ranqueadas
+     * @return array<string, mixed>|null
+     */
+    private function estabilidade(
+        array $porEixo,
+        array $resultado,
+        array $eixos,
+        array $ranqueadas
+    ): ?array {
+        if ($porEixo === []) {
+            return null;
+        }
+
+        $itens = array_map(
+            static fn (array $item): array => [
+                'id' => $item['id'],
+                'vetor' => $item['vetor6'] ?? $item['vetor'] ?? [],
+            ],
+            $ranqueadas
+        );
+
+        $itens = array_values(array_filter(
+            $itens,
+            static fn (array $item): bool => Vetor::valido($item['vetor'])
+        ));
+
+        if ($itens === []) {
+            return null;
+        }
+
+        $seed = (int) sprintf(
+            '%u',
+            crc32((string) ($resultado['codigo_unico'] ?? '') . '|' . (string) ($resultado['questionario_versao'] ?? ''))
+        ) & 0x7FFFFFFF;
+
+        return $this->calibracao->estabilidade(
+            $porEixo,
+            array_map(static fn (array $eixo): int => (int) $eixo['id'], $eixos),
+            $itens,
+            120,
+            $seed !== 0 ? $seed : 1
+        );
+    }
+
+    /**
+     * Dois eixos que explicam o match, com os valores do usuário e da entidade.
+     *
+     * @param list<float> $vetor
+     * @param array<string, mixed> $item
+     * @param list<array<string, mixed>> $eixos
+     * @return list<array{eixo: string, voce: float, ele: float, delta: float}>
+     */
+    private function explicar(array $vetor, array $item, array $eixos): array
+    {
+        $motivos = $this->recomendacao->motivos($vetor, $item);
+        $saida = [];
+
+        foreach ($motivos as $motivo) {
+            $indice = (int) $motivo['indice'] - 1;
+            $eixo = $eixos[$indice] ?? null;
+
+            if ($eixo === null) {
+                continue;
+            }
+
+            $saida[] = [
+                'eixo' => eixo_nome($eixo),
+                'voce' => round((float) ($vetor[$indice] ?? 50)),
+                'ele' => round((float) (($item['vetor6'] ?? $item['vetor'] ?? [])[$indice] ?? 50)),
+                'delta' => (float) $motivo['delta'],
+            ];
+        }
+
+        return $saida;
+    }
+
+    /**
+     * Detecta resposta intensa que se anula.
+     *
+     * @param array<int, list<array{resposta: int, direcao: int, peso: int}>> $porEixo
+     * @param list<array<string, mixed>> $linhas
+     * @return array{rotulo: string, media_abs: float, distorcao: float}
+     */
+    private function consistencia(array $porEixo, array $linhas): array
+    {
+        $valores = [];
+
+        foreach ($porEixo as $itens) {
+            foreach ($itens as $item) {
+                $valores[] = abs((int) $item['resposta']);
+            }
+        }
+
+        $mediaAbs = $valores !== [] ? array_sum($valores) / count($valores) : 0.0;
+        $distorcao = 0.0;
+
+        foreach ($linhas as $linha) {
+            $distorcao = max($distorcao, abs((float) $linha['pct_dir'] - 50.0));
+        }
+
+        $indeterminado = $mediaAbs >= 1.5 && $distorcao < MatcherService::NEUTRO;
+
+        return [
+            'rotulo' => $indeterminado ? 'indeterminado' : 'consistente',
+            'media_abs' => round($mediaAbs, 2),
+            'distorcao' => round($distorcao, 1),
+        ];
     }
 
     /**
@@ -631,7 +1181,6 @@ final class PerfilController
         array $linhas,
         array $vetor,
         array $vetoresBase,
-        array $ranqueadas,
         array $arquetipos,
         ?array $arquetipo,
         array $estante
@@ -692,51 +1241,6 @@ final class PerfilController
             if ($desvio < $menorDesvio) {
                 $menorDesvio = $desvio;
                 $tipico = $item;
-            }
-        }
-
-        $oposto = null;
-        $ultimo = $ranqueadas !== [] ? $ranqueadas[count($ranqueadas) - 1] : null;
-
-        if ($ultimo !== null) {
-            $oposto = [
-                'nome' => $ultimo['nome'],
-                'tipo' => $ultimo['tipo'],
-                'obra' => $ultimo['obra_origem'],
-                'imagem' => $ultimo['imagem_url'],
-                'afinidade' => $ultimo['afinidade'],
-            ];
-        }
-
-        $top10 = [];
-        $topAncoras = [];
-
-        foreach ($ranqueadas as $item) {
-            if ($item['tipo'] === 'personagem') {
-                if (count($top10) >= 10) {
-                    continue;
-                }
-
-                $top10[] = [
-                    'nome' => $item['nome'],
-                    'tipo' => $item['tipo'],
-                    'obra' => $item['obra_origem'],
-                    'imagem' => $item['ator_foto_url'] ?: $item['imagem_url'],
-                    'afinidade' => $item['afinidade'],
-                ];
-
-                continue;
-            }
-
-            if (count($topAncoras) < 6) {
-                $topAncoras[] = [
-                    'nome' => $item['nome'],
-                    'tipo' => $item['tipo'],
-                    'obra' => $item['obra_origem'],
-                    'imagem' => $item['imagem_url'],
-                    'afinidade' => $item['afinidade'],
-                    'bio' => $item['bio'],
-                ];
             }
         }
 
@@ -836,9 +1340,6 @@ final class PerfilController
         return [
             'distincao' => $distincao,
             'tipico' => $tipico,
-            'oposto' => $oposto,
-            'top10' => $top10,
-            'top_ancoras' => $topAncoras,
             'secundario' => $secundario,
             'decada' => $decada,
             'base_total' => $total,

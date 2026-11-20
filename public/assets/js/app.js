@@ -15,6 +15,7 @@
 
   function aplicarTema(tema) {
     root.setAttribute('data-theme', tema);
+    root.setAttribute('data-bs-theme', tema);
 
     try {
       localStorage.setItem(THEME_KEY, tema);
@@ -184,4 +185,22 @@
       });
     }
   };
+}());
+
+/* Fallback de imagens de diretores/escolas: remove a imagem quebrada e deixa
+   o selo/monograma que está atrás dela aparecer. */
+(function () {
+  'use strict';
+
+  document.querySelectorAll('[data-fallback-img]').forEach(function (img) {
+    var remover = function () {
+      img.remove();
+    };
+
+    img.addEventListener('error', remover);
+
+    if (img.complete && img.naturalWidth === 0) {
+      remover();
+    }
+  });
 }());

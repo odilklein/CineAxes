@@ -82,7 +82,7 @@ require __DIR__ . '/partials/header.php';
                 <span class="pc-eyebrow"><?= e(t('sinergia.error_title')) ?></span>
                 <p class="pc-lead" style="font-size:14px"><?= e(t('sinergia.error_text')) ?></p>
 
-                <form action="<?= url('sinergia.php') ?>" method="get" style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:18px">
+                <form class="pc-compare-form" action="<?= url('sinergia.php') ?>" method="get">
                     <div class="pc-field">
                         <label class="pc-label" for="a"><?= e(t('home.compare.label_a')) ?></label>
                         <input class="pc-input" id="a" name="a" type="text" maxlength="8" required data-code-input value="<?= e($codigoA) ?>">
@@ -119,6 +119,15 @@ require __DIR__ . '/partials/header.php';
                     <span class="pc-compat__label"><?= e(t('sinergia.compat')) ?></span>
                     <span class="pc-compat__value"><?= pct($comparacao['compatibilidade']) ?></span>
                     <span class="pc-compat__verdict"><?= e(t('sinergia.verdicts.' . $comparacao['veredito'])) ?></span>
+
+                    <?php if (($comparacao['baseline'] ?? null) !== null): ?>
+                        <span class="pc-compat__baseline">
+                            <?= e(t('sinergia.baseline', [
+                                'base' => numero((float) $comparacao['baseline'], 1),
+                                'pct' => (int) ($comparacao['percentil'] ?? 0),
+                            ])) ?>
+                        </span>
+                    <?php endif; ?>
                 </aside>
 
                 <section class="pc-panel pc-compat__chart">
@@ -180,7 +189,7 @@ require __DIR__ . '/partials/header.php';
 
                 <div class="pc-two-col">
                     <?php foreach ([
-                        ['item' => $comparado['combinado']['personagem'], 'tipo' => 'personagem'],
+                        ['item' => $comparado['combinado']['diretor'], 'tipo' => 'diretor'],
                         ['item' => $comparado['combinado']['estudio'], 'tipo' => 'estudio'],
                     ] as $bloco): ?>
                         <?php if ($bloco['item'] === null): ?>
@@ -211,8 +220,8 @@ require __DIR__ . '/partials/header.php';
                                 <div class="pc-entity__foot">
                                     <span class="pc-entity__type"><?= e(t('resultado.types.' . $bloco['tipo'])) ?></span>
                                     <span class="pc-affinity">
-                                        <b><?= pct($item['afinidade']) ?></b>
-                                        <small><?= e(t('resultado.affinity')) ?></small>
+                                        <b><?= (int) ($item['posicao'] ?? 1) ?>º</b>
+                                        <small><?= e(t('resultado.match_of', ['n' => (int) ($item['de'] ?? 1)])) ?></small>
                                     </span>
                                 </div>
                             </div>

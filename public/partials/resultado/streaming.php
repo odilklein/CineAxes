@@ -16,6 +16,24 @@ $streamNomes = $perfil['trilhas_nomes'] ?? [];
 $streamTotal = (int) ($perfil['catalogo_total'] ?? 0);
 
 if ($streamPlataformas === []) {
+    if ($streamTotal > 0) {
+        ?>
+        <section class="pc-section pc-stream-section" id="onde-assistir">
+            <div class="pc-section__head">
+                <div>
+                    <span class="pc-eyebrow"><?= e(t('streaming.eyebrow')) ?></span>
+                    <h2 class="pc-title"><?= e(t('streaming.title')) ?></h2>
+                </div>
+            </div>
+
+            <div class="pc-alert pc-alert--info">
+                <?= icon('compass', 16) ?>
+                <?= e(t('resultado.profile_specific')) ?>
+            </div>
+        </section>
+        <?php
+    }
+
     return;
 }
 
@@ -53,6 +71,41 @@ $streamTrilhaNome = static function (string $slug) use ($streamNomes): string {
         </p>
     </div>
 
+    <?php $combo = $perfil['combinacao'] ?? []; ?>
+    <?php if (!empty($combo['uma']['plataformas'])): ?>
+        <div class="pc-combo">
+            <div class="pc-combo__head">
+                <span class="pc-eyebrow"><?= e(t('streaming.combo_eyebrow')) ?></span>
+                <h3><?= e(t('streaming.combo_title')) ?></h3>
+                <p><?= e(t('streaming.combo_sub')) ?></p>
+            </div>
+
+            <div class="pc-combo__grid">
+                <div class="pc-combo__item">
+                    <span><?= e(t('streaming.combo_one')) ?></span>
+                    <b><?= e(implode(' + ', $combo['uma']['plataformas'])) ?></b>
+                    <small><?= e(t('streaming.combo_cover', ['pct' => (int) $combo['uma']['pct']])) ?></small>
+                    <?php if ($combo['uma']['preco'] !== null): ?>
+                        <small><?= e(t('streaming.combo_price', ['preco' => numero((float) $combo['uma']['preco'], 2)])) ?></small>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!empty($combo['duas']['plataformas'])): ?>
+                    <div class="pc-combo__item pc-combo__item--best">
+                        <span><?= e(t('streaming.combo_two')) ?></span>
+                        <b><?= e(implode(' + ', $combo['duas']['plataformas'])) ?></b>
+                        <small><?= e(t('streaming.combo_cover', ['pct' => (int) $combo['duas']['pct']])) ?></small>
+                        <?php if ($combo['duas']['preco'] !== null): ?>
+                            <small><?= e(t('streaming.combo_price', ['preco' => numero((float) $combo['duas']['preco'], 2)])) ?></small>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <p class="pc-combo__note"><?= e(t('streaming.combo_note')) ?></p>
+        </div>
+    <?php endif; ?>
+
     <div class="pc-stream">
         <?php foreach ($streamPodio as $indice => $plataforma): ?>
             <?php $logo = tmdb_logo($plataforma['logo_path'] ?? null); ?>
@@ -84,7 +137,10 @@ $streamTrilhaNome = static function (string $slug) use ($streamNomes): string {
                 <p class="pc-stream__summary">
                     <b><?= e(t('streaming.titles', ['n' => numero((int) $plataforma['titulos'], 0)])) ?></b>
                     · <?= e(t('streaming.exclusive', ['n' => numero((int) $plataforma['exclusivos'], 0)])) ?>
-                    · <?= e(t('streaming.avg', ['pct' => pct((float) $plataforma['afinidade_media'])])) ?>
+                    · <?= e(t('streaming.top50', [
+                        'n' => numero((int) ($plataforma['no_top50'] ?? 0), 0),
+                        'total' => numero((int) ($plataforma['top50_total'] ?? 50), 0),
+                    ])) ?>
                 </p>
 
                 <?php if (!empty($plataforma['melhores'])): ?>
@@ -260,6 +316,7 @@ $streamTrilhaNome = static function (string $slug) use ($streamNomes): string {
     }
     ?>
     <p class="pc-stream__note">
+        <?= e(t('streaming.method')) ?>
         <?= e(t('streaming.note')) ?>
         <?php if ($streamDataPreco !== null): ?>
             <?= e(t('streaming.price_checked', [

@@ -1,710 +1,776 @@
 {
-  "meta": {
-    "title": "PersonaCut — seu perfil cinéfilo em 8 eixos",
-    "description": "Descubra o seu perfil cinematográfico em 8 eixos: arquétipo, personagens espelho, diretor gêmeo, estúdio e filmes que combinam com você."
-  },
-  "ui": {
-    "skip": "Ir para o conteúdo",
-    "nav": {
-      "how": "Como funciona",
-      "axes": "Os 8 eixos",
-      "formats": "Formatos",
-      "compare": "Vai dar briga?",
-      "start": "Começar",
-      "admin": "Painel",
-      "theme": "Alternar tema",
-      "menu": "Abrir menu"
+    "meta": {
+        "title": "PersonaCut — seu perfil cinéfilo em 6 eixos",
+        "description": "Descubra o seu perfil cinematográfico em 6 eixos: arquétipo, diretores, filmes e descobertas que combinam com você."
     },
-    "back_home": "Voltar ao início",
-    "loading": "Carregando…",
-    "share": "Compartilhar",
-    "copy": "Copiar código",
-    "copied": "Código copiado!",
-    "restart": "Refazer o teste",
-    "minutes": "min",
-    "questions": "perguntas",
-    "source": "Código-fonte",
-    "made_with": "Feito com PHP 8, MySQL 8 e CSS próprio"
-  },
-  "eixo": {
-    "estetica": {
-      "nome": "Imagem",
-      "desc": "O que a imagem faz com você: clareza clássica contra ruptura, textura e invenção.",
-      "esq": "Clássica",
-      "dir": "Experimental"
-    },
-    "tom": {
-      "nome": "Emoção",
-      "desc": "O que o filme faz sentir: peso e silêncio contra leveza, humor e festa.",
-      "esq": "Melancólica",
-      "dir": "Eufórica"
-    },
-    "universo": {
-      "nome": "Mundo",
-      "desc": "O quanto o mundo é inventado: a esquina reconhecível contra cosmologias e mundos impossíveis.",
-      "esq": "Realista",
-      "dir": "Fantástico"
-    },
-    "ritmo": {
-      "nome": "Ritmo",
-      "desc": "A velocidade da experiência: planos que respiram contra corte, som e adrenalina.",
-      "esq": "Contemplativo",
-      "dir": "Frenético"
-    },
-    "moralidade": {
-      "nome": "Ética",
-      "desc": "Como o filme trata o certo e o errado: zona cinzenta contra lados bem demarcados.",
-      "esq": "Ambígua",
-      "dir": "Clara"
-    },
-    "estrutura": {
-      "nome": "História",
-      "desc": "Como a história é contada: causalidade e arco fechado contra quebra de tempo e camadas.",
-      "esq": "Linear",
-      "dir": "Fragmentada"
-    },
-    "atmosfera": {
-      "nome": "Tamanho",
-      "desc": "A escala do drama: quartos e closes contra exércitos, planetas e tela grande.",
-      "esq": "Íntima",
-      "dir": "Épica"
-    },
-    "epoca": {
-      "nome": "Época",
-      "desc": "De onde o filme fala: memória, grão e passado contra neon, código e imaginação do amanhã.",
-      "esq": "Memória",
-      "dir": "Futuro"
-    }
-  },
-  "home": {
-    "hero": {
-      "eyebrow": "Descoberta cinéfila",
-      "title": "Que tipo de cinema <em>mora em você</em>?",
-      "subtitle": "Responda de 36 a 240 afirmações e descubra o seu perfil cinéfilo em quatro leituras — com o arquétipo, os personagens espelho, o diretor gêmeo, o estúdio, as obras e um card para compartilhar.",
-      "cta_primary": "Descobrir meu perfil",
-      "cta_secondary": "Ver os 8 eixos",
-      "meta": [
-        "Grátis",
-        "Anônimo",
-        "3 formatos",
-        "Resultado imediato"
-      ],
-      "example_label": "Exemplo de perfil",
-      "example_quote": "Você não assiste para fugir do mundo: assiste para ver o mundo com outra lente.",
-      "example_code": "Código de exemplo"
-    },
-    "discover": {
-      "eyebrow": "O que você vai descobrir",
-      "title": "Um retrato completo do seu gosto cinematográfico",
-      "subtitle": "Mais do que gênero favorito: o seu resultado mostra quem, onde e com que intensidade o seu gosto se alinha.",
-      "cards": [
-        {
-          "icon": "compass",
-          "title": "Seu arquétipo",
-          "text": "Um título e uma leitura psicológica do seu perfil."
+    "ui": {
+        "skip": "Ir para o conteúdo",
+        "nav": {
+            "how": "Como funciona",
+            "axes": "Os 6 eixos",
+            "formats": "Formatos",
+            "compare": "Vai dar briga?",
+            "start": "Começar",
+            "admin": "Painel",
+            "theme": "Alternar tema",
+            "menu": "Abrir menu"
         },
-        {
-          "icon": "users",
-          "title": "Personagens espelho",
-          "text": "Três personagens com quem você divide a mesma assinatura."
+        "back_home": "Voltar ao início",
+        "loading": "Carregando…",
+        "share": "Compartilhar",
+        "copy": "Copiar código",
+        "copied": "Código copiado!",
+        "restart": "Refazer o teste",
+        "minutes": "min",
+        "questions": "perguntas",
+        "source": "Código-fonte",
+        "made_with": "Feito com PHP 8, MySQL 8 e CSS próprio"
+    },
+    "eixo": {
+        "estetica": {
+            "nome": "Imagem",
+            "desc": "O que a imagem faz com você: clareza clássica contra ruptura, textura e invenção.",
+            "esq": "Clássica",
+            "dir": "Experimental"
         },
-        {
-          "icon": "film",
-          "title": "Diretor gêmeo",
-          "text": "O olhar por trás das câmeras mais próximo do seu."
+        "tom": {
+            "nome": "Emoção",
+            "desc": "O que o filme faz sentir: peso e silêncio contra leveza, humor e festa.",
+            "esq": "Melancólica",
+            "dir": "Eufórica"
         },
-        {
-          "icon": "star",
-          "title": "Estúdio ou escola",
-          "text": "O universo de produção que combina com a sua sensibilidade."
+        "universo": {
+            "nome": "Mundo",
+            "desc": "O quanto o mundo é inventado: a esquina reconhecível contra cosmologias e mundos impossíveis.",
+            "esq": "Realista",
+            "dir": "Fantástico"
         },
-        {
-          "icon": "film",
-          "title": "Estante do perfil",
-          "text": "As obras que definem os seus espelhos, com pôsteres e fichas."
+        "ritmo": {
+            "nome": "Ritmo",
+            "desc": "A velocidade da experiência: planos que respiram contra corte, som e adrenalina.",
+            "esq": "Contemplativo",
+            "dir": "Frenético"
         },
-        {
-          "icon": "heart",
-          "title": "Sinergia",
-          "text": "Compatibilidade com outro perfil — e o filme da dupla."
+        "moralidade": {
+            "nome": "Ética",
+            "desc": "Como o filme trata o certo e o errado: zona cinzenta contra lados bem demarcados.",
+            "esq": "Ambígua",
+            "dir": "Clara"
+        },
+        "estrutura": {
+            "nome": "História",
+            "desc": "Como a história é contada: causalidade e arco fechado contra quebra de tempo e camadas.",
+            "esq": "Linear",
+            "dir": "Fragmentada"
+        },
+        "atmosfera": {
+            "nome": "Tamanho",
+            "desc": "A escala do drama: quartos e closes contra exércitos, planetas e tela grande.",
+            "esq": "Íntima",
+            "dir": "Épica"
+        },
+        "epoca": {
+            "nome": "Época",
+            "desc": "De onde o filme fala: memória, grão e passado contra neon, código e imaginação do amanhã.",
+            "esq": "Memória",
+            "dir": "Futuro"
         }
-      ]
     },
-    "example": {
-      "eyebrow": "Exemplo real",
-      "title": "É assim que o seu resultado se parece",
-      "note": "Exemplo ilustrativo gerado com o catálogo do PersonaCut.",
-      "cta": "Quero ver o meu",
-      "open": "Abrir este perfil"
-    },
-    "how": {
-      "eyebrow": "Como funciona",
-      "title": "Um teste curto, um retrato grande",
-      "subtitle": "Você responde a afirmações; o PersonaCut calcula o seu percentual em cada eixo e traduz o conjunto em quatro leituras, arquétipo e espelhos.",
-      "steps": [
-        {
-          "title": "Responda às afirmações",
-          "text": "Concorde ou discorde de 36 a 240 frases sobre forma, tempo, moral e universo."
+    "home": {
+        "hero": {
+            "eyebrow": "Descoberta cinéfila",
+            "title": "Que tipo de cinema <em>mora em você</em>?",
+            "subtitle": "Responda de 24 a 48 afirmações e descubra o seu perfil cinéfilo em quatro leituras — com o arquétipo, 10 filmes, diretor, escola e um card para compartilhar.",
+            "cta_primary": "Descobrir meu perfil",
+            "cta_secondary": "Ver os 6 eixos",
+            "meta": [
+                "Grátis",
+                "Anônimo",
+                "3 formatos",
+                "Resultado imediato"
+            ],
+            "example_label": "Exemplo de perfil",
+            "example_quote": "Você não assiste para fugir do mundo: assiste para ver o mundo com outra lente.",
+            "example_code": "Código de exemplo"
         },
-        {
-          "title": "Um mapa em 8 eixos",
-          "text": "Cada resposta posiciona você entre dois polos. O resultado traduz esse mapa em leituras com exemplos."
+        "discover": {
+            "eyebrow": "O que você vai descobrir",
+            "title": "Um retrato completo do seu gosto cinematográfico",
+            "subtitle": "Mais do que gênero favorito: o seu resultado mostra quem, onde e com que intensidade o seu gosto se alinha.",
+            "cards": [
+                {
+                    "icon": "compass",
+                    "title": "Seu arquétipo",
+                    "text": "Um título e uma leitura psicológica do seu perfil."
+                },
+                {
+                    "icon": "users",
+                    "title": "10 filmes para você",
+                    "text": "Filmes que combinam com o seu perfil, com uma mistura de clássicos e descobertas."
+                },
+                {
+                    "icon": "film",
+                    "title": "Diretores por filmografia",
+                    "text": "Os diretores cujas obras mais combinam com você — calculado das obras, não de uma opinião."
+                },
+                {
+                    "icon": "star",
+                    "title": "Escolas e estúdios",
+                    "text": "As escolas cujas obras mais combinam com o seu repertório."
+                },
+                {
+                    "icon": "film",
+                    "title": "Descobertas",
+                    "text": "Três filmes fora do óbvio, com piso de qualidade e um motivo para assistir."
+                },
+                {
+                    "icon": "heart",
+                    "title": "Sinergia",
+                    "text": "Compatibilidade com outro perfil — e o filme da dupla."
+                }
+            ]
         },
-        {
-          "title": "Descubra o seu perfil",
-          "text": "Receba o arquétipo, quatro leituras em linguagem clara, os espelhos e os títulos que combinam com você."
+        "example": {
+            "eyebrow": "Exemplo real",
+            "title": "É assim que o seu resultado se parece",
+            "note": "Exemplo ilustrativo gerado com o catálogo do PersonaCut.",
+            "cta": "Quero ver o meu",
+            "open": "Abrir este perfil"
+        },
+        "how": {
+            "eyebrow": "Como funciona",
+            "title": "Um teste curto, um retrato grande",
+            "subtitle": "O PersonaCut lê o seu gosto em cada eixo e traduz o conjunto em quatro leituras, arquétipo e filmes.",
+            "steps": [
+                {
+                    "title": "Responda às afirmações",
+                    "text": "Concorde ou discorde de 24 a 48 frases sobre circulação, afeto, mundo, ritmo, escala e repertório."
+                },
+                {
+                    "title": "Um mapa em 6 eixos",
+                    "text": "Cada resposta posiciona você entre dois polos. O resultado traduz esse mapa em leituras com exemplos."
+                },
+                {
+                    "title": "Descubra o seu perfil",
+                    "text": "Receba o arquétipo, quatro leituras em linguagem clara, diretores e os filmes que combinam com você."
+                }
+            ]
+        },
+        "axes": {
+            "eyebrow": "Os 6 eixos",
+            "title": "O que cada eixo significa?",
+            "subtitle": "O PersonaCut olha para seis dimensões do seu gosto. Nenhuma é melhor que a outra — juntas, elas formam uma assinatura.",
+            "balanced": "Equilibrado",
+            "tendency": "Tendência",
+            "purist": "Purista"
+        },
+        "formats": {
+            "eyebrow": "Formatos",
+            "title": "Três profundidades, os mesmos 6 eixos",
+            "subtitle": "Escolha quanto tempo quer dedicar. A escala é a mesma; o que muda é quantas afirmações sustentam cada eixo.",
+            "recommended": "Recomendado",
+            "quick": {
+                "label": "Essencial",
+                "count": "24",
+                "unit": "perguntas",
+                "text": "A primeira leitura, com 4 afirmações por eixo.",
+                "time": "Cerca de 3 min",
+                "cta": "Começar o essencial"
+            },
+            "full": {
+                "label": "Completo",
+                "count": "36",
+                "unit": "perguntas",
+                "text": "Mais nuance em cada eixo para chegar perto do seu perfil real.",
+                "time": "Cerca de 5 min",
+                "cta": "Começar o completo"
+            },
+            "note": "Mesma escala nos três modos · Sem cadastro · Resultado imediato",
+            "extreme": {
+                "label": "Profundo",
+                "count": "48",
+                "unit": "perguntas",
+                "text": "Oito afirmações por eixo, para quem quer precisão.",
+                "time": "Cerca de 7 min",
+                "cta": "Encarar o profundo"
+            }
+        },
+        "compare": {
+            "eyebrow": "Modo sinergia",
+            "title": "Vai dar briga?",
+            "subtitle": "Cole o código de um perfil e descubra a compatibilidade entre duas pessoas — e o filme que salva a sessão.",
+            "label_a": "Código do perfil A",
+            "label_b": "Código do perfil B",
+            "cta": "Comparar perfis",
+            "hint": "O código tem 8 caracteres e aparece no fim do seu resultado."
+        },
+        "faq": {
+            "eyebrow": "FAQ",
+            "title": "Perguntas frequentes",
+            "items": [
+                {
+                    "q": "O teste é confiável?",
+                    "a": "Ele não é um instrumento psicológico clínico. É um retrato coerente do seu gosto cinematográfico, construído com 6 eixos independentes e uma fórmula aberta em docs/EIXOS.md."
+                },
+                {
+                    "q": "Quanto tempo leva?",
+                    "a": "Cerca de 5 minutos no modo rápido, 9 no completo e 35 no extremo. O progresso fica salvo no navegador se você precisar parar."
+                },
+                {
+                    "q": "Preciso de cadastro?",
+                    "a": "Não. O resultado é anônimo e identificado por um código de 8 caracteres."
+                },
+                {
+                    "q": "O que é o Índice de Raridade?",
+                    "a": "É o percentual de perfis da base que pensam de forma parecida com a sua. Quanto menor, mais incomum é o seu jeito de assistir."
+                },
+                {
+                    "q": "Posso refazer?",
+                    "a": "Sim, quantas vezes quiser. Cada envio gera um código novo."
+                },
+                {
+                    "q": "Como o cálculo funciona?",
+                    "a": "Cada resposta vai de -2 a +2 e é multiplicada pela direção e pelo peso da pergunta. O resultado é normalizado por eixo em uma escala de 0 a 100."
+                },
+                {
+                    "q": "O PersonaCut usa a TMDB?",
+                    "a": "Sim, sempre no servidor. A TMDB enriquece as fichas com pôsteres, retratos de atores, logos de estúdios e as cenas ilustrativas do quiz. A chave nunca chega ao navegador; sem ela, o site continua funcionando com os textos e os monogramas locais."
+                }
+            ]
+        },
+        "footer": {
+            "tagline": "Um retrato do seu gosto cinematográfico em 6 eixos.",
+            "project": "Projeto",
+            "explore": "Explorar",
+            "links_project": [
+                "Como funciona",
+                "Os 6 eixos",
+                "Formatos",
+                "Vai dar briga?"
+            ],
+            "links_explore": [
+                "Iniciar teste",
+                "Consultar código",
+                "Painel"
+            ],
+            "credits": "Filmes, personagens e diretores citados pertencem aos seus respectivos detentores."
+        },
+        "open_code": {
+            "label": "Já tem um código?",
+            "placeholder": "7KQ2M9XA",
+            "cta": "Abrir perfil"
         }
-      ]
     },
-    "axes": {
-      "eyebrow": "Os 8 eixos",
-      "title": "O que cada eixo significa?",
-      "subtitle": "O PersonaCut olha para oito dimensões independentes do seu gosto. Nenhuma é melhor que a outra — juntas, elas formam uma assinatura.",
-      "balanced": "Equilibrado",
-      "tendency": "Tendência",
-      "purist": "Purista"
+    "quiz": {
+        "eyebrow": "Teste em andamento",
+        "progress": "Pergunta {atual} de {total}",
+        "progress_label": "Pergunta",
+        "of": "de",
+        "percent": "{pct}% concluído",
+        "mode_quick": "Essencial · 24 perguntas",
+        "mode_full": "Completo · 36 perguntas",
+        "understand": "Entender este eixo",
+        "guide_close": "Voltar ao teste",
+        "guide_kicker": "Guia do eixo",
+        "guide_title": "Entender {eixo}",
+        "guide_scenes": "Cenas para reconhecer o eixo",
+        "guide_refs": "Onde isso vem na crítica",
+        "guide_score": "Como ler a sua nota neste eixo",
+        "guide_film": "Filme",
+        "guide_series": "Série",
+        "keyboard_hint": "Use as teclas 1 a 5",
+        "auto_advance": "Avançar ao responder",
+        "back": "Voltar",
+        "next": "Avançar",
+        "finish": "Ver meu resultado",
+        "restart": "Recomeçar",
+        "saving": "Calculando seu perfil…",
+        "saving_hint": "Cruzando os seus 6 eixos com o catálogo.",
+        "error": "Não foi possível enviar as respostas. Tente novamente.",
+        "incomplete": "Responda todas as perguntas antes de finalizar.",
+        "leave": "Sair do teste",
+        "answers": [
+            {
+                "value": 2,
+                "label": "Concordo totalmente",
+                "short": "Concordo totalmente"
+            },
+            {
+                "value": 1,
+                "label": "Concordo",
+                "short": "Concordo"
+            },
+            {
+                "value": 0,
+                "label": "Neutro ou depende",
+                "short": "Neutro"
+            },
+            {
+                "value": -1,
+                "label": "Discordo",
+                "short": "Discordo"
+            },
+            {
+                "value": -2,
+                "label": "Discordo totalmente",
+                "short": "Discordo totalmente"
+            }
+        ],
+        "resume": "Você tem um teste em andamento. Quer continuar de onde parou?"
     },
-    "formats": {
-      "eyebrow": "Formatos",
-      "title": "Três profundidades, os mesmos 8 eixos",
-      "subtitle": "Escolha quanto tempo quer dedicar. A escala é a mesma; o que muda é quantas afirmações sustentam cada eixo.",
-      "recommended": "Recomendado",
-      "quick": {
-        "label": "Rápido",
-        "count": "36",
-        "unit": "perguntas",
-        "text": "A primeira leitura do perfil, com 4 a 6 afirmações por eixo.",
-        "time": "Cerca de 5 min",
-        "cta": "Começar teste rápido"
-      },
-      "full": {
-        "label": "Completo",
-        "count": "60",
-        "unit": "perguntas",
-        "text": "Mais nuance em cada eixo para chegar perto do seu perfil real.",
-        "time": "Cerca de 9 min",
-        "cta": "Começar análise completa"
-      },
-      "note": "Mesma escala nos três modos · Sem cadastro · Resultado imediato",
-      "extreme": {
-        "label": "Extremo",
-        "count": "240",
-        "unit": "perguntas",
-        "text": "Trinta afirmações por eixo, do clássico ao experimental. O retrato mais fino que o índice permite.",
-        "time": "Cerca de 35 min",
-        "cta": "Encarar o teste extremo"
-      }
+    "resultado": {
+        "eyebrow": "Análise concluída",
+        "title": "Seu perfil cinéfilo",
+        "meta": "Código {codigo} · {modo}",
+        "mode_quick": "Essencial · 24 perguntas",
+        "mode_full": "Completo · 36 perguntas",
+        "archetype_label": "Arquétipo",
+        "rarity_label": "Índice de raridade",
+        "rarity_one_in": "1 em {n}",
+        "rarity_percent": "{pct}% dos perfis",
+        "rarity_base": "{n} perfis na base",
+        "rarity_initial": "Base inicial",
+        "rarity_rare": "Poucos perfis pensam como você.",
+        "rarity_common": "Muita gente compartilha este perfil.",
+        "about": "Sobre o seu arquétipo",
+        "ritual_label": "Ritual de cinema",
+        "readings_title": "Suas leituras",
+        "readings_subtitle": "O que você procura na tela, em ordem de força.",
+        "readings_note": "Cada leitura nasce de um eixo e aparece aqui na ordem em que mais pesa no seu perfil.",
+        "technical_title": "Ver os 6 eixos e o radar",
+        "technical_version": "Questionário: {versao} · {modo}",
+        "technical_unknown": "versão não registrada",
+        "technical_help": "As barras que ficam por trás das leituras.",
+        "axes_title": "Raio-x dos 6 eixos",
+        "axes_subtitle": "À esquerda, afinidade com o primeiro polo; à direita, com o segundo.",
+        "radar_title": "O desenho dos 6 eixos",
+        "radar_subtitle": "Cada eixo vai de 0 a 100. O anel tracejado é o neutro.",
+        "radar_caption": "Anel tracejado = neutro (50). O ponto de cada eixo é a sua posição real, igual à barra ao lado.",
+        "intensity": {
+            "equilibrado": "Equilibrado",
+            "tendencia": "Tendência",
+            "purista": "Purista"
+        },
+        "characters_subtitle": "Quem compartilha a sua assinatura",
+        "director_title": "Diretor gêmeo",
+        "studio_title": "Estúdio / escola",
+        "films_title": "10 filmes que combinam com você",
+        "films_subtitle": "Escolhidos pelo seu perfil, com clássicos e descobertas.",
+        "affinity": "afinidade",
+        "share_title": "Leve o seu perfil",
+        "share_subtitle": "Copie o código para voltar depois ou comparar com alguém.",
+        "share_cta": "Copiar código",
+        "share_native": "Compartilhar",
+        "retake": "Refazer o teste",
+        "compare_title": "Vai dar briga?",
+        "compare_subtitle": "Cole o código de alguém e veja a compatibilidade dos dois perfis.",
+        "compare_placeholder": "Código do outro perfil",
+        "compare_cta": "Comparar",
+        "not_found_title": "Perfil não encontrado",
+        "not_found_text": "Confira se o código tem 8 caracteres. Ele aparece no fim de todo resultado.",
+        "top_axis": "Eixo dominante",
+        "years": "{ano}",
+        "neutral_title": "O Espectador Neutro",
+        "neutral_desc": "Você não se prende a um polo: transita entre clássico e experimental, riso e silêncio, sem precisar escolher um lado. Seu perfil é o de quem assiste com curiosidade, não com bandeira.",
+        "neutral_ritual": "Deixe o acaso escolher: abra o catálogo, pare no primeiro título desconhecido e assista sem ler a sinopse.",
+        "types": {
+            "personagem": "Personagem",
+            "diretor": "Diretor",
+            "estudio": "Estúdio / escola"
+        },
+        "consult_title": "Já tem um código?",
+        "consult_text": "Cole o código de 8 caracteres que apareceu no fim do seu resultado.",
+        "consult_cta": "Abrir perfil",
+        "axis_dominant": "Eixos dominantes",
+        "rarity_chip": "{pct}% dos perfis",
+        "characters_hint": "Os seis personagens cuja assinatura mais se aproxima da sua.",
+        "portrait_title": "Seu retrato em duas frases",
+        "portrait_subtitle": "As duas marcas que mais aparecem no seu perfil.",
+        "shelf_eyebrow": "Estante do perfil",
+        "shelf_title": "Filmes do seu repertório",
+        "shelf_subtitle": "Os filmes que combinam com você, com pôster e onde assistir.",
+        "combined_title": "A ponte da dupla",
+        "critic_eyebrow": "A crítica do seu perfil",
+        "critic_title": "Um retrato escrito para você",
+        "critic_subtitle": "Uma leitura do seu perfil, escrita a partir dos seus filmes.",
+        "critic_loading": "Redigindo o seu retrato…",
+        "critic_note": "Um retrato do seu jeito de assistir, feito a partir das suas leituras.",
+        "critic_error": "O retrato redigido não está disponível agora. As suas leituras continuam valendo.",
+        "insights": {
+            "eyebrow": "Além do perfil",
+            "title": "De onde você vem, para onde pode ir",
+            "subtitle": "A década do seu repertório e o segundo arquétipo mais próximo do seu perfil.",
+            "decada_title": "A década do seu repertório",
+            "decada_text": "{descricao}",
+            "decada_sample": "Mediana de {n} obras do seu perfil.",
+            "decade_works_title": "Obras suas dos {decada}",
+            "decade_works_sub": "Títulos do catálogo que caem nessa década e combinam com você.",
+            "decade_marks": "Para reconhecer a época",
+            "oposto_title": "Seu oposto",
+            "oposto_text": "{tipo} de {obra}, na posição {posicao} de {n}. É o perfil mais distante do seu no catálogo.",
+            "secundario_title": "Arquétipo secundário",
+            "secundario_text": "O segundo arquétipo mais próximo do seu perfil. A descrição vale como hipótese, não como identidade.",
+            "top10_title": "Os 10 personagens mais próximos de você",
+            "top10_sub": "{n} personagens comparados. A posição é relativa ao grupo, não uma nota de 0 a 100.",
+            "top10_margin": "margem {margem}",
+            "top10_confidence": "Confiança deste perfil: {rotulo}.",
+            "top_anchors_title": "Diretores e escolas mais próximos",
+            "top_anchors_sub": "Dentro do grupo de diretores e escolas, não contra os personagens.",
+            "base": "de {n} perfis no catálogo"
+        },
+        "actors_eyebrow": "Quem dá corpo",
+        "actors_title": "Atores que combinam com você",
+        "actors_subtitle": "Quem dá vida aos personagens dos filmes que combinam com você.",
+        "actor_as": "Interpreta {personagem} em {obra}",
+        "reading_guide": "Entender este eixo",
+        "reading_guide_hint": "os dois lados, com exemplos",
+        "reading_side": "Perto de {polo}",
+        "story_kicker": "Perfil cinéfilo",
+        "story_share": "Compartilhar",
+        "story_download_btn": "Baixar PNG",
+        "story_cta": "Descubra o seu perfil em",
+        "story_preparing": "Preparando o card…",
+        "story_error": "Não foi possível gerar o card agora.",
+        "story_download": "Card salvo na galeria.",
+        "story_marks": "{n} marcas",
+        "story_mark": "{n} marca",
+        "mode_extreme": "Profundo · 48 perguntas",
+        "ficha_reading": "Marca principal",
+        "ficha_rarity": "Raridade do perfil",
+        "ficha_decade": "Década do repertório",
+        "match_position": "{posicao}º de {de}",
+        "match_of": "de {n}",
+        "match_top": "top {pct}%",
+        "match_range": "posição entre {de}º e {ate}º nas reamostragens",
+        "match_why": "combina em {eixo}: você {voce} · ele {ele}",
+        "match_confidence": "Confiança do match: {rotulo}",
+        "match_confidence_note": "Confiança {rotulo} — a posição pode variar entre {de}º e {ate}º.",
+        "match_confidence_low": "Com {n} respostas por eixo, a ordem dos diretores é aproximada. Responda o modo completo para reduzir a margem.",
+        "inconsistent": "Você respondeu com intensidade em direções opostas e o resultado ficou no centro. Isso é indeterminado, não neutro: o teste não conseguiu separar as suas preferências. O modo completo ajuda.",
+        "confidence_alta": "alta",
+        "confidence_media": "média",
+        "confidence_baixa": "baixa",
+        "confidence_nao_estimada": "não estimada",
+        "profile_specific": "Seu perfil é muito específico: poucos títulos do catálogo ficam acima do corte. Mostramos os mais próximos que existem, mas vale ampliar o repertório.",
+        "story_rank": "{posicao}º de {de} filmes",
+        "story_rank_low": "{posicao}º de {de} · confiança baixa",
+        "story_platform": "Sua plataforma: {nome}",
+        "story_trilha": "Trilha: {nome}",
+        "films_eyebrow": "Seus filmes",
+        "mix_classics": "Clássicos",
+        "mix_mixed": "Misturado",
+        "mix_discovery": "Descobertas",
+        "new_badge": "fora do óbvio",
+        "finds_eyebrow": "Fora do óbvio",
+        "finds_title": "Três para descobrir",
+        "anchors_eyebrow": "Quem faz o cinema que você ama",
+        "anchors_title": "Diretores e escolas",
+        "anchors_subtitle": "As obras deles são as que mais combinam com o seu perfil — não uma previsão sobre a sua vida.",
+        "ficha_mix": "Mix do perfil"
     },
-    "compare": {
-      "eyebrow": "Modo sinergia",
-      "title": "Vai dar briga?",
-      "subtitle": "Cole o código de um perfil e descubra a compatibilidade entre duas pessoas — e o filme que salva a sessão.",
-      "label_a": "Código do perfil A",
-      "label_b": "Código do perfil B",
-      "cta": "Comparar perfis",
-      "hint": "O código tem 8 caracteres e aparece no fim do seu resultado."
-    },
-    "faq": {
-      "eyebrow": "FAQ",
-      "title": "Perguntas frequentes",
-      "items": [
-        {
-          "q": "O teste é confiável?",
-          "a": "Ele não é um instrumento psicológico clínico. É um retrato coerente do seu gosto cinematográfico, construído com 8 eixos independentes e uma fórmula aberta em docs/EIXOS.md."
+    "retro": {
+        "aria": "Retrospectiva do perfil",
+        "open": "Abrir retrospectiva",
+        "close": "Fechar retrospectiva",
+        "full": "Ver análise completa",
+        "prev": "Capítulo anterior",
+        "next": "Próximo capítulo",
+        "count": "{atual} de {total}",
+        "start": "Começar",
+        "hint": "Toque para avançar",
+        "swipe": "Deslize ou use as setas",
+        "cover": {
+            "eyebrow": "Retrospectiva cinéfila",
+            "title": "A sua vida no cinema, em capítulos",
+            "lead": "As suas leituras, o seu arquétipo e um retrato. Uma descoberta por vez.",
+            "code": "Seu código é",
+            "note": "Sem pressa. Você decide quando virar a página."
         },
-        {
-          "q": "Quanto tempo leva?",
-          "a": "Cerca de 5 minutos no modo rápido, 9 no completo e 35 no extremo. O progresso fica salvo no navegador se você precisar parar."
+        "archetype": {
+            "eyebrow": "O arquétipo",
+            "lead": "De todos os perfis do catálogo, o seu caiu aqui.",
+            "neutral": "O seu perfil é o de quem não escolhe lado."
         },
-        {
-          "q": "Preciso de cadastro?",
-          "a": "Não. O resultado é anônimo e identificado por um código de 8 caracteres."
+        "marks": {
+            "eyebrow": "As suas marcas",
+            "title": "As marcas do seu jeito de assistir",
+            "lead": "Não são notas. É o que você procura na tela, na ordem em que mais aparece.",
+            "neutral_title": "Um jeito de assistir sem escolher lado",
+            "neutral_lead": "O seu perfil transita entre os polos. Ainda assim, há um jeito próprio de estar diante da tela."
         },
-        {
-          "q": "O que é o Índice de Raridade?",
-          "a": "É o percentual de perfis da base que pensam de forma parecida com a sua. Quanto menor, mais incomum é o seu jeito de assistir."
+        "reading": {
+            "eyebrow": "Leitura {n}",
+            "matches": "Combina com",
+            "tired": "Pode te cansar",
+            "mirror": "{nome}, de {obra}, também puxa para esse lado.",
+            "technical": "{eixo} · {polo} · {pct}%",
+            "technical_neutral": "{eixo} · {polo}"
         },
-        {
-          "q": "Posso refazer?",
-          "a": "Sim, quantas vezes quiser. Cada envio gera um código novo."
+        "anchors": {
+            "eyebrow": "Por trás das câmeras",
+            "title": "Quem faz o cinema que você ama",
+            "lead": "O diretor e a escola cujas obras mais combinam com o seu perfil.",
+            "director": "Diretor gêmeo",
+            "studio": "Estúdio / escola"
         },
-        {
-          "q": "Como o cálculo funciona?",
-          "a": "Cada resposta vai de -2 a +2 e é multiplicada pela direção e pelo peso da pergunta. O resultado é normalizado por eixo em uma escala de 0 a 100."
+        "critic": {
+            "eyebrow": "A crítica",
+            "title": "Um retrato escrito para você",
+            "lead": "Escrito a partir das suas leituras e dos seus filmes.",
+            "note": "Um retrato do seu jeito de assistir, feito a partir das suas leituras.",
+            "fallback_lead": "Duas frases a partir dos seus eixos mais extremos."
         },
-        {
-          "q": "O PersonaCut usa a TMDB?",
-          "a": "Sim, sempre no servidor. A TMDB enriquece as fichas com pôsteres, retratos de atores, logos de estúdios e as cenas ilustrativas do quiz. A chave nunca chega ao navegador; sem ela, o site continua funcionando com os textos e os monogramas locais."
+        "insights": {
+            "eyebrow": "Além do perfil",
+            "title": "De onde você vem, para onde pode ir",
+            "lead": "A década do seu repertório e o perfil mais distante do seu, lado a lado.",
+            "decada_label": "A sua década",
+            "oposto_label": "Seu oposto no catálogo",
+            "oposto_meta": "{tipo} de {obra}",
+            "oposto_affinity": "{posicao}º de {n}",
+            "oposto_cta": "Um convite: assista e veja o que acontece.",
+            "secundario_label": "Arquétipo secundário",
+            "decada_marks": "Para reconhecer a época"
+        },
+        "share": {
+            "eyebrow": "Leve com você",
+            "title": "Agora é sua",
+            "lead": "Baixe o card para os stories, copie o código ou chame alguém para comparar.",
+            "compare": "Comparar com alguém",
+            "compare_placeholder": "Código do outro perfil",
+            "compare_cta": "Comparar",
+            "retake": "Refazer o teste",
+            "code": "Seu código",
+            "downloaded": "Card salvo na galeria."
+        },
+        "place": {
+            "eyebrow": "Seu mapa",
+            "title": "Onde o seu cinema mora",
+            "lead": "A plataforma que mais combina com o seu perfil e a trilha que você deveria explorar primeiro.",
+            "platform": "Melhor plataforma",
+            "trilha": "Sua trilha",
+            "titles": "{n} títulos do seu gosto",
+            "cta": "Ver a análise completa",
+            "empty": "O catálogo ainda está sendo montado para o seu perfil."
         }
-      ]
     },
-    "footer": {
-      "tagline": "Um retrato do seu gosto cinematográfico em 8 eixos.",
-      "project": "Projeto",
-      "explore": "Explorar",
-      "links_project": [
-        "Como funciona",
-        "Os 8 eixos",
-        "Formatos",
-        "Vai dar briga?"
-      ],
-      "links_explore": [
-        "Iniciar teste",
-        "Consultar código",
-        "Painel"
-      ],
-      "credits": "Filmes, personagens e diretores citados pertencem aos seus respectivos detentores."
+    "sinergia": {
+        "eyebrow": "Modo sinergia",
+        "title": "Vai dar briga?",
+        "subtitle": "Dois perfis, um ponto médio e um filme para salvar a noite.",
+        "compat": "compatibilidade",
+        "verdicts": {
+            "alma_gemea": "Almas gêmeas de sessão dupla",
+            "boa_companhia": "Boa companhia garantida",
+            "negociavel": "Dá para negociar",
+            "briga": "Vai dar briga",
+            "atrito": "Atrito produtivo"
+        },
+        "convergence": "Onde vocês se encontram",
+        "divergence": "Onde vocês se estranham",
+        "combined_title": "Um filme para assistir a dois",
+        "combined_subtitle": "O diretor e a escola mais próximos do ponto médio dos dois perfis.",
+        "profiles": "Perfis comparados",
+        "open_a": "Abrir perfil A",
+        "open_b": "Abrir perfil B",
+        "new_compare": "Comparar outros dois",
+        "error_title": "Não foi possível comparar",
+        "error_text": "Um dos códigos não existe ou está incompleto. Confira os 8 caracteres de cada perfil.",
+        "how_title": "Como ler a compatibilidade",
+        "how_text": "A compatibilidade combina quatro sinais: proximidade por eixo, direção, intensidade e o eixo mais distante. Não é uma média simples.",
+        "baseline": "Dois perfis ao acaso ficam em torno de {base}. Este par é mais parecido que {pct}% dos pares da base.",
+        "combined_eyebrow": "A ponte entre vocês",
+        "radar_caption": "Os dois perfis no mesmo anel; o tracejado marca o neutro (50).",
+        "convergence_sub": "Os eixos em que vocês mais se aproximam.",
+        "divergence_sub": "Os eixos em que vocês mais se afastam."
     },
-    "open_code": {
-      "label": "Já tem um código?",
-      "placeholder": "7KQ2M9XA",
-      "cta": "Abrir perfil"
+    "admin": {
+        "title": "Painel PersonaCut",
+        "login_title": "Entrar no painel",
+        "login_subtitle": "Área restrita para gerenciar o catálogo do PersonaCut.",
+        "user": "Usuário",
+        "password": "Senha",
+        "login": "Entrar",
+        "logout": "Sair",
+        "wrong_credentials": "Usuário ou senha inválidos.",
+        "dashboard": "Visão geral",
+        "axes": "Eixos",
+        "questions": "Perguntas",
+        "entities": "Entidades",
+        "archetypes": "Arquétipos",
+        "results": "Resultados",
+        "total_results": "Perfis reais",
+        "total_base": "Base total",
+        "top_archetypes": "Arquétipos mais frequentes",
+        "last_results": "Últimos resultados",
+        "no_data": "Nenhum registro ainda.",
+        "save": "Salvar",
+        "back": "Voltar",
+        "new": "Novo",
+        "edit": "Editar",
+        "delete": "Excluir",
+        "saved": "Registro salvo.",
+        "deleted": "Registro excluído.",
+        "confirm_delete": "Confirma a exclusão?",
+        "view_public": "Ver site",
+        "logged_in": "Bem-vindo de volta.",
+        "logged_out": "Sessão encerrada.",
+        "public_results": "Perguntas",
+        "too_many_attempts": "Muitas tentativas de login. Tente novamente em {minutos} minuto(s).",
+        "made_with": "Feito com PHP 8, MySQL 8 e CSS próprio",
+        "platforms": "Plataformas",
+        "platforms_help": "Preço editorial, ordem e quais entram no ranking. A disponibilidade dos títulos vem da TMDB/JustWatch.",
+        "platforms_coverage": "títulos com disponibilidade",
+        "platforms_name": "Plataforma",
+        "platforms_price": "Preço (R$/mês)",
+        "platforms_checked": "Preço conferido em",
+        "platforms_order": "Ordem",
+        "platforms_active": "Ativa",
+        "platforms_catalog": "Títulos",
+        "platforms_note": "O preço não vem da TMDB: é referência editorial. Atualize a data a cada conferência para que o ranking mostre a informação com transparência. Desmarcar \"Ativa\" tira a plataforma do pódio e dos cards sem apagar o histórico de disponibilidade.",
+        "catalog": "Catálogo",
+        "catalog_available": "Com streaming",
+        "catalog_people": "Pessoas",
+        "catalog_updated": "Catálogo atualizado em {data}",
+        "platforms_missing": "As tabelas do catálogo ainda não foram importadas neste banco. Importe sql/009_catalogo.sql e sql/010_catalogo_seed.sql no phpMyAdmin para habilitar o ranking, as trilhas e o elenco. Enquanto isso, o site continua funcionando sem essas seções."
+    },
+    "erros": {
+        "generic": "Algo saiu do projetor. Tente novamente.",
+        "invalid_code": "Código inválido.",
+        "not_found": "Perfil não encontrado.",
+        "csrf": "Sessão expirada. Recarregue a página e tente de novo.",
+        "method": "Método não permitido.",
+        "rate_limit": "Muitas tentativas em pouco tempo. Aguarde {segundos} segundos e tente de novo."
+    },
+    "tmdb": {
+        "credito": "Dados de filmes fornecidos pela TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB."
+    },
+    "retrato": {
+        "estetica": {
+            "e": "Você prefere a transparência clássica: o filme esconde a costura e deixa a história falar.",
+            "d": "Você procura imagens que ainda não têm nome — a forma é o argumento."
+        },
+        "tom": {
+            "e": "O seu cinema termina em silêncio; o que dói é o que fica.",
+            "d": "Você vai ao cinema para sair mais leve do que entrou."
+        },
+        "universo": {
+            "e": "Você desconfia de mundos inventados; a esquina já tem drama suficiente.",
+            "d": "Você quer regras novas — mundos inteiros são a sua forma de pensar o real."
+        },
+        "ritmo": {
+            "e": "Você confia na duração e no detalhe que só aparece quando o plano respira.",
+            "d": "Você quer o corpo dentro do filme: corte, som e velocidade."
+        },
+        "moralidade": {
+            "e": "Você gosta de sair sem saber de que lado ficar.",
+            "d": "Você quer heróis com motivo e vilões com peso; a fábula ainda funciona."
+        },
+        "estrutura": {
+            "e": "Você quer saber para onde a história vai e confia na causalidade.",
+            "d": "Você monta o filme enquanto assiste; o quebra-cabeça é o prazer."
+        },
+        "atmosfera": {
+            "e": "O mundo inteiro cabe num quarto, e você prefere o close ao horizonte.",
+            "d": "Você quer escala: o cinema é o lugar onde o tamanho das coisas se sente no corpo."
+        },
+        "epoca": {
+            "e": "Você sente o tempo no material: grão, figurino e memória.",
+            "d": "Você quer o amanhã: neon, código e cidades impossíveis."
+        }
+    },
+    "streaming": {
+        "eyebrow": "Onde assistir",
+        "title": "A melhor plataforma para o seu perfil",
+        "subtitle": "Cruzamos o seu perfil com {n} títulos disponíveis no Brasil — só assinatura inclusa, sem aluguel.",
+        "score": "encaixe",
+        "titles": "{n} títulos do seu gosto",
+        "exclusive": "{n} exclusivos",
+        "exclusive_label": "Exclusivos do seu gosto:",
+        "avg": "{pct} de afinidade média",
+        "top50": "{n} dos seus {total} melhores",
+        "price": "R$ {preco}/mês",
+        "price_unknown": "preço não informado",
+        "best_title": "O melhor de cada trilha",
+        "best_meta": "{n} títulos · {esp} do acervo · {pct} de afinidade",
+        "parts": {
+            "relevancia": "Relevância",
+            "cobertura": "Acervo",
+            "exclusividade": "Exclusivos",
+            "diversidade": "Variedade",
+            "preco": "Preço"
+        },
+        "note": "Disponibilidade fornecida por JustWatch via TMDB. Preços são referência editorial e podem mudar — confira no site da plataforma.",
+        "price_checked": " Preços conferidos em {data}.",
+        "subscribe": "Assinar",
+        "best_sub": "A plataforma que melhor cobre cada nicho do seu repertório, considerando especialização no acervo.",
+        "best_titles": "títulos do seu gosto",
+        "affinity_short": "de encaixe",
+        "acervo_short": "do acervo",
+        "combo_eyebrow": "A decisão, não a nota",
+        "combo_title": "Quantos serviços você precisa?",
+        "combo_sub": "Cobertura dos seus 50 melhores títulos, não do catálogo inteiro.",
+        "combo_one": "1 serviço",
+        "combo_two": "2 serviços",
+        "combo_cover": "cobre {pct}% dos seus 50 melhores",
+        "combo_price": "R$ {preco}/mês",
+        "combo_note": "Cobertura calculada sobre os 50 títulos mais próximos do seu perfil. Os preços são referência editorial.",
+        "empty": "Encontramos poucos títulos do seu gosto disponíveis para assinatura no Brasil. Seu perfil é específico — mostramos as trilhas com o que existe.",
+        "method": "O encaixe é um índice ponderado (relevância 40%, acervo 25%, exclusivos 15%, variedade 10%, preço 10%), não uma probabilidade."
+    },
+    "trilhas": {
+        "eyebrow": "Além de Hollywood",
+        "title": "Trilhas para o seu repertório",
+        "subtitle": "Cinema da Coreia, Índia, Japão, Brasil e de outros lugares — escolhido pelo seu perfil, não pela vitrine global.",
+        "note": "De {n} títulos com disponibilidade no Brasil. Abra a ficha para ver sinopse e onde assistir.",
+        "fit": "{pct} de encaixe",
+        "prev": "Voltar",
+        "next": "Avançar"
+    },
+    "elenco": {
+        "eyebrow": "Elenco",
+        "title": "Atores que combinam com você",
+        "subtitle": "Quem aparece nos títulos mais próximos do seu perfil — direto do catálogo.",
+        "titles": "{n} títulos do seu gosto",
+        "note": "A ordem considera a posição no crédito e a afinidade do título. Toque em um ator para ver a trajetória.",
+        "titles_one": "{n} título do seu gosto"
+    },
+    "auth": {
+        "eyebrow": "Sua conta",
+        "title": "Salve o que você quer ver",
+        "lead": "Crie uma conta para guardar filmes e séries na sua lista. O perfil continua anônimo; a lista é sua.",
+        "login": "Entrar",
+        "register": "Criar conta",
+        "login_box": "Já tenho conta",
+        "login_help": "Entre para acessar a sua lista.",
+        "register_box": "Criar conta",
+        "register_help": "Leva menos de um minuto.",
+        "name": "Nome",
+        "user": "Usuário",
+        "password": "Senha",
+        "password_hint": "Pelo menos 8 caracteres.",
+        "enter": "Entrar",
+        "create": "Criar conta",
+        "logout": "Sair",
+        "my_list": "Minha lista",
+        "login_to_save": "Entrar para salvar",
+        "list_title": "Minha lista",
+        "list_eyebrow": "Sua conta",
+        "list_lead": "Filmes e séries que você quer ver ou já viu.",
+        "list_want": "Quero ver",
+        "list_seen": "Já vi",
+        "list_empty_want": "Nada na lista de \"quero ver\" ainda.",
+        "list_empty_seen": "Nada marcado como \"já vi\" ainda.",
+        "list_cta": "Fazer o teste",
+        "mark_seen": "Já vi",
+        "mark_want": "Quero ver",
+        "open_sheet": "Abrir ficha de {titulo}",
+        "login_required": "Entre para salvar na sua lista.",
+        "bookmark_invalid": "Dados do filme inválidos.",
+        "rate_limit": "Muitas tentativas. Tente novamente em {segundos}s.",
+        "name_placeholder": "Como quer ser chamado",
+        "user_placeholder": "seu_usuario",
+        "password_placeholder": "Sua senha",
+        "password_new_placeholder": "Crie uma senha"
     }
-  },
-  "quiz": {
-    "eyebrow": "Teste em andamento",
-    "progress": "Pergunta {atual} de {total}",
-    "progress_label": "Pergunta",
-    "of": "de",
-    "percent": "{pct}% concluído",
-    "mode_quick": "Modo rápido · 36 perguntas",
-    "mode_full": "Modo completo · 60 perguntas",
-    "understand": "Entender este eixo",
-    "guide_close": "Voltar ao teste",
-    "guide_kicker": "Guia do eixo",
-    "guide_title": "Entender {eixo}",
-    "guide_scenes": "Cenas para reconhecer o eixo",
-    "guide_refs": "Onde isso vem na crítica",
-    "guide_score": "Como ler a sua nota neste eixo",
-    "guide_film": "Filme",
-    "guide_series": "Série",
-    "keyboard_hint": "Use as teclas 1 a 5",
-    "auto_advance": "Avançar ao responder",
-    "back": "Voltar",
-    "next": "Avançar",
-    "finish": "Ver meu resultado",
-    "restart": "Recomeçar",
-    "saving": "Calculando seu perfil…",
-    "saving_hint": "Cruzando os seus 8 eixos com o catálogo.",
-    "error": "Não foi possível enviar as respostas. Tente novamente.",
-    "incomplete": "Responda todas as perguntas antes de finalizar.",
-    "leave": "Sair do teste",
-    "answers": [
-      {
-        "value": 2,
-        "label": "Concordo totalmente",
-        "short": "Concordo totalmente"
-      },
-      {
-        "value": 1,
-        "label": "Concordo",
-        "short": "Concordo"
-      },
-      {
-        "value": 0,
-        "label": "Neutro ou depende",
-        "short": "Neutro"
-      },
-      {
-        "value": -1,
-        "label": "Discordo",
-        "short": "Discordo"
-      },
-      {
-        "value": -2,
-        "label": "Discordo totalmente",
-        "short": "Discordo totalmente"
-      }
-    ],
-    "resume": "Você tem um teste em andamento. Quer continuar de onde parou?"
-  },
-  "resultado": {
-    "eyebrow": "Análise concluída",
-    "title": "Seu perfil cinéfilo",
-    "meta": "Código {codigo} · {modo}",
-    "mode_quick": "Modo rápido · 36 perguntas",
-    "mode_full": "Modo completo · 60 perguntas",
-    "archetype_label": "Arquétipo",
-    "rarity_label": "Índice de raridade",
-    "rarity_one_in": "1 em {n}",
-    "rarity_percent": "{pct}% dos perfis",
-    "rarity_base": "{n} perfis na base",
-    "rarity_initial": "Base inicial",
-    "rarity_rare": "Poucos perfis pensam como você.",
-    "rarity_common": "Muita gente compartilha este perfil.",
-    "about": "Sobre o seu arquétipo",
-    "ritual_label": "Ritual de cinema",
-    "readings_title": "Suas leituras",
-    "readings_subtitle": "O que você procura na tela, em ordem de força.",
-    "readings_note": "Cada leitura nasce de um eixo e aparece aqui na ordem em que mais pesa no seu perfil.",
-    "technical_title": "Ver os 8 eixos e o radar",
-    "technical_help": "As barras que ficam por trás das leituras.",
-    "axes_title": "Raio-x dos 8 eixos",
-    "axes_subtitle": "À esquerda, afinidade com o primeiro polo; à direita, com o segundo.",
-    "radar_title": "O desenho dos 8 eixos",
-    "radar_subtitle": "Cada eixo vai de 0 a 100. O anel tracejado é o neutro.",
-    "radar_caption": "Anel tracejado = neutro (50). O ponto de cada eixo é a sua posição real, igual à barra ao lado.",
-    "intensity": {
-      "equilibrado": "Equilibrado",
-      "tendencia": "Tendência",
-      "purista": "Purista"
-    },
-    "characters_title": "Personagens espelho",
-    "characters_subtitle": "Quem compartilha a sua assinatura",
-    "director_title": "Diretor gêmeo",
-    "studio_title": "Estúdio / escola",
-    "films_title": "Filmes para você",
-    "films_subtitle": "Curadoria a partir do seu vetor",
-    "affinity": "afinidade",
-    "share_title": "Leve o seu perfil",
-    "share_subtitle": "Copie o código para voltar depois ou comparar com alguém.",
-    "share_cta": "Copiar código",
-    "share_native": "Compartilhar",
-    "retake": "Refazer o teste",
-    "compare_title": "Vai dar briga?",
-    "compare_subtitle": "Cole o código de alguém e veja a compatibilidade dos dois perfis.",
-    "compare_placeholder": "Código do outro perfil",
-    "compare_cta": "Comparar",
-    "not_found_title": "Perfil não encontrado",
-    "not_found_text": "Confira se o código tem 8 caracteres. Ele aparece no fim de todo resultado.",
-    "top_axis": "Eixo dominante",
-    "years": "{ano}",
-    "neutral_title": "O Espectador Neutro",
-    "neutral_desc": "Você não se prende a um polo: transita entre clássico e experimental, riso e silêncio, sem precisar escolher um lado. Seu perfil é o de quem assiste com curiosidade, não com bandeira.",
-    "neutral_ritual": "Deixe o algoritmo escolher: abra o catálogo, pare no primeiro título desconhecido e assista sem ler a sinopse.",
-    "types": {
-      "personagem": "Personagem",
-      "diretor": "Diretor",
-      "estudio": "Estúdio / escola"
-    },
-    "consult_title": "Já tem um código?",
-    "consult_text": "Cole o código de 8 caracteres que apareceu no fim do seu resultado.",
-    "consult_cta": "Abrir perfil",
-    "axis_dominant": "Eixos dominantes",
-    "rarity_chip": "{pct}% dos perfis",
-    "characters_hint": "Os seis personagens cuja assinatura mais se aproxima da sua.",
-    "portrait_title": "Seu retrato em duas frases",
-    "portrait_subtitle": "As duas marcas que mais aparecem no seu perfil.",
-    "shelf_eyebrow": "Estante do perfil",
-    "shelf_title": "Filmes do seu repertório",
-    "shelf_subtitle": "As obras que definem os personagens, o diretor e o estúdio do seu resultado.",
-    "combined_title": "O espelho da dupla",
-    "critic_eyebrow": "A crítica do seu perfil",
-    "critic_title": "Um retrato escrito para você",
-    "critic_subtitle": "Gerado a partir das suas leituras e dos seus espelhos. Não altera nenhuma nota.",
-    "critic_loading": "Redigindo o seu retrato…",
-    "critic_note": "Um retrato do seu jeito de assistir, feito a partir das suas leituras.",
-    "critic_error": "O retrato redigido não está disponível agora. As suas leituras continuam valendo.",
-    "insights": {
-      "eyebrow": "Além do espelho",
-      "title": "De onde você vem, para onde pode ir",
-      "subtitle": "A década do seu repertório e o perfil mais distante do seu, lado a lado.",
-      "decada_title": "A década do seu repertório",
-      "decada_text": "{descricao}",
-      "decada_sample": "Mediana de {n} obras do seu espelho.",
-      "decade_works_title": "Obras suas dos {decada}",
-      "decade_works_sub": "Títulos do catálogo que caem nessa década e combinam com você.",
-      "decade_marks": "Para reconhecer a época",
-      "oposto_title": "Seu oposto",
-      "oposto_text": "{tipo} de {obra}, com {pct}% de afinidade. É o perfil mais distante do seu no catálogo.",
-      "secundario_title": "Arquétipo secundário",
-      "secundario_text": "Também muito próximo do seu perfil, com {pct}% de compatibilidade.",
-      "top10_title": "Os 10 personagens mais próximos de você",
-      "top10_sub": "Personagens do catálogo, não filmes. De {n} perfis comparados.",
-      "top_anchors_title": "Diretores e escolas mais próximos",
-      "top_anchors_sub": "Quem filma do seu jeito, do catálogo inteiro.",
-      "base": "de {n} perfis no catálogo"
-    },
-    "actors_eyebrow": "Quem dá corpo",
-    "actors_title": "Atores do seu espelho",
-    "actors_subtitle": "Quem interpreta os personagens que combinam com você.",
-    "actor_as": "Interpreta {personagem} em {obra}",
-    "reading_guide": "Entender este eixo",
-    "reading_guide_hint": "os dois lados, com exemplos",
-    "reading_side": "Perto de {polo}",
-    "story_kicker": "Perfil cinéfilo",
-    "story_share": "Compartilhar card",
-    "story_note": "PNG 9:16, otimizado para stories.",
-    "story_preparing": "Preparando o card…",
-    "story_error": "Não foi possível gerar o card agora.",
-    "story_download": "Card salvo em PNG 1080 × 1920.",
-    "story_marks": "{n} marcas",
-    "story_mark": "{n} marca",
-    "mode_extreme": "Modo extremo · 240 perguntas",
-    "ficha_affinity": "Afinidade com os espelhos",
-    "ficha_reading": "Marca principal",
-    "ficha_rarity": "Raridade do perfil",
-    "ficha_decade": "Década do repertório",
-    "story_platform": "Sua plataforma: {nome}",
-    "story_trilha": "Trilha: {nome}"
-  },
-  "retro": {
-    "aria": "Retrospectiva do perfil",
-    "open": "Abrir retrospectiva",
-    "close": "Fechar retrospectiva",
-    "full": "Ver análise completa",
-    "prev": "Capítulo anterior",
-    "next": "Próximo capítulo",
-    "count": "{atual} de {total}",
-    "start": "Começar",
-    "hint": "Toque para avançar",
-    "swipe": "Deslize ou use as setas",
-    "cover": {
-      "eyebrow": "Retrospectiva cinéfila",
-      "title": "A sua vida no cinema, em capítulos",
-      "lead": "As suas leituras, seis espelhos e um retrato. Uma descoberta por vez.",
-      "code": "Seu código é",
-      "note": "Sem pressa. Você decide quando virar a página."
-    },
-    "archetype": {
-      "eyebrow": "O arquétipo",
-      "lead": "De todos os perfis do catálogo, o seu caiu aqui.",
-      "neutral": "O seu perfil é o de quem não escolhe lado."
-    },
-    "marks": {
-      "eyebrow": "As suas marcas",
-      "title": "As marcas do seu jeito de assistir",
-      "lead": "Não são notas. É o que você procura na tela, na ordem em que mais aparece.",
-      "neutral_title": "Um jeito de assistir sem escolher lado",
-      "neutral_lead": "O seu perfil transita entre os polos. Ainda assim, há um jeito próprio de estar diante da tela."
-    },
-    "reading": {
-      "eyebrow": "Leitura {n}",
-      "matches": "Combina com",
-      "tired": "Pode te cansar",
-      "mirror": "{nome}, de {obra}, também puxa para esse lado.",
-      "technical": "{eixo} · {polo} · {pct}%",
-      "technical_neutral": "{eixo} · {polo}"
-    },
-    "mirror": {
-      "eyebrow": "Espelho principal",
-      "title": "Tem alguém parecido com você",
-      "lead": "O personagem que mais se aproxima do seu jeito de assistir.",
-      "open": "Abrir ficha",
-      "affinity": "{pct}% de afinidade",
-      "affinity_label": "de afinidade"
-    },
-    "mirrors": {
-      "eyebrow": "Os outros espelhos",
-      "title": "Não é só um",
-      "lead": "Os outros cinco personagens que completam este reflexo.",
-      "affinity": "{pct}%"
-    },
-    "anchors": {
-      "eyebrow": "Por trás das câmeras",
-      "title": "Quem filmaria a sua vida",
-      "lead": "O diretor e o estúdio mais próximos do seu jeito de assistir.",
-      "director": "Diretor gêmeo",
-      "studio": "Estúdio / escola"
-    },
-    "critic": {
-      "eyebrow": "A crítica",
-      "title": "Um retrato escrito para você",
-      "lead": "Escrito a partir das suas leituras e dos seus espelhos.",
-      "note": "Um retrato do seu jeito de assistir, feito a partir das suas leituras.",
-      "fallback_lead": "Duas frases a partir dos seus eixos mais extremos."
-    },
-    "insights": {
-      "eyebrow": "Além do espelho",
-      "title": "De onde você vem, para onde pode ir",
-      "lead": "A década do seu repertório e o perfil mais distante do seu, lado a lado.",
-      "decada_label": "A sua década",
-      "oposto_label": "Seu oposto no catálogo",
-      "oposto_meta": "{tipo} de {obra}",
-      "oposto_affinity": "{pct}% de afinidade",
-      "oposto_cta": "Um convite: assista e veja o que acontece.",
-      "secundario_label": "Arquétipo secundário",
-      "decada_marks": "Para reconhecer a época"
-    },
-    "share": {
-      "eyebrow": "Leve com você",
-      "title": "Agora é sua",
-      "lead": "Baixe o card para os stories, copie o código ou chame alguém para comparar.",
-      "compare": "Comparar com alguém",
-      "compare_placeholder": "Código do outro perfil",
-      "compare_cta": "Comparar",
-      "retake": "Refazer o teste",
-      "code": "Seu código",
-      "downloaded": "Card salvo em PNG."
-    },
-    "place": {
-      "eyebrow": "Seu mapa",
-      "title": "Onde o seu cinema mora",
-      "lead": "A plataforma que mais combina com o seu perfil e a trilha que você deveria explorar primeiro.",
-      "platform": "Melhor plataforma",
-      "trilha": "Sua trilha",
-      "titles": "{n} títulos do seu gosto",
-      "cta": "Ver a análise completa",
-      "empty": "O catálogo ainda está sendo montado para o seu perfil."
-    }
-  },
-  "sinergia": {
-    "eyebrow": "Modo sinergia",
-    "title": "Vai dar briga?",
-    "subtitle": "Dois perfis, um ponto médio e um filme para salvar a noite.",
-    "compat": "compatibilidade",
-    "verdicts": {
-      "alma_gemea": "Almas gêmeas de sessão dupla",
-      "boa_companhia": "Boa companhia garantida",
-      "negociavel": "Dá para negociar",
-      "briga": "Vai dar briga",
-      "atrito": "Atrito produtivo"
-    },
-    "convergence": "Onde vocês se encontram",
-    "divergence": "Onde vocês se estranham",
-    "combined_title": "Um espelho para assistir a dois",
-    "combined_subtitle": "O personagem e o estúdio mais próximos do ponto médio dos dois perfis.",
-    "profiles": "Perfis comparados",
-    "open_a": "Abrir perfil A",
-    "open_b": "Abrir perfil B",
-    "new_compare": "Comparar outros dois",
-    "error_title": "Não foi possível comparar",
-    "error_text": "Um dos códigos não existe ou está incompleto. Confira os 8 caracteres de cada perfil.",
-    "how_title": "Como ler a compatibilidade",
-    "how_text": "A compatibilidade combina quatro sinais: proximidade por eixo, direção, intensidade e o eixo mais distante. Não é uma média simples.",
-    "combined_eyebrow": "A ponte entre vocês",
-    "radar_caption": "Os dois perfis no mesmo anel; o tracejado marca o neutro (50).",
-    "convergence_sub": "Os eixos em que vocês mais se aproximam.",
-    "divergence_sub": "Os eixos em que vocês mais se afastam."
-  },
-  "admin": {
-    "title": "Painel PersonaCut",
-    "login_title": "Entrar no painel",
-    "login_subtitle": "Área restrita para gerenciar o catálogo do PersonaCut.",
-    "user": "Usuário",
-    "password": "Senha",
-    "login": "Entrar",
-    "logout": "Sair",
-    "wrong_credentials": "Usuário ou senha inválidos.",
-    "dashboard": "Visão geral",
-    "axes": "Eixos",
-    "questions": "Perguntas",
-    "entities": "Entidades",
-    "archetypes": "Arquétipos",
-    "results": "Resultados",
-    "total_results": "Perfis reais",
-    "total_base": "Base total",
-    "top_archetypes": "Arquétipos mais frequentes",
-    "last_results": "Últimos resultados",
-    "no_data": "Nenhum registro ainda.",
-    "save": "Salvar",
-    "back": "Voltar",
-    "new": "Novo",
-    "edit": "Editar",
-    "delete": "Excluir",
-    "saved": "Registro salvo.",
-    "deleted": "Registro excluído.",
-    "confirm_delete": "Confirma a exclusão?",
-    "view_public": "Ver site",
-    "logged_in": "Bem-vindo de volta.",
-    "logged_out": "Sessão encerrada.",
-    "public_results": "Perguntas",
-    "too_many_attempts": "Muitas tentativas de login. Tente novamente em {minutos} minuto(s).",
-    "made_with": "Feito com PHP 8, MySQL 8 e CSS próprio",
-    "platforms": "Plataformas",
-    "platforms_help": "Preço editorial, ordem e quais entram no ranking. A disponibilidade dos títulos vem da TMDB/JustWatch.",
-    "platforms_coverage": "títulos com disponibilidade",
-    "platforms_name": "Plataforma",
-    "platforms_price": "Preço (R$/mês)",
-    "platforms_checked": "Preço conferido em",
-    "platforms_order": "Ordem",
-    "platforms_active": "Ativa",
-    "platforms_catalog": "Títulos",
-    "platforms_note": "O preço não vem da TMDB: é referência editorial. Atualize a data a cada conferência para que o ranking mostre a informação com transparência. Desmarcar \"Ativa\" tira a plataforma do pódio e dos cards sem apagar o histórico de disponibilidade.",
-    "catalog": "Catálogo",
-    "catalog_available": "Com streaming",
-    "catalog_people": "Pessoas",
-    "catalog_updated": "Catálogo atualizado em {data}",
-    "platforms_missing": "As tabelas do catálogo ainda não foram importadas neste banco. Importe sql/009_catalogo.sql e sql/010_catalogo_seed.sql no phpMyAdmin para habilitar o ranking, as trilhas e o elenco. Enquanto isso, o site continua funcionando sem essas seções."
-  },
-  "erros": {
-    "generic": "Algo saiu do projetor. Tente novamente.",
-    "invalid_code": "Código inválido.",
-    "not_found": "Perfil não encontrado.",
-    "csrf": "Sessão expirada. Recarregue a página e tente de novo.",
-    "method": "Método não permitido.",
-    "rate_limit": "Muitas tentativas em pouco tempo. Aguarde {segundos} segundos e tente de novo."
-  },
-  "tmdb": {
-    "credito": "Dados de filmes fornecidos pela TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB."
-  },
-  "retrato": {
-    "estetica": {
-      "e": "Você prefere a transparência clássica: o filme esconde a costura e deixa a história falar.",
-      "d": "Você procura imagens que ainda não têm nome — a forma é o argumento."
-    },
-    "tom": {
-      "e": "O seu cinema termina em silêncio; o que dói é o que fica.",
-      "d": "Você vai ao cinema para sair mais leve do que entrou."
-    },
-    "universo": {
-      "e": "Você desconfia de mundos inventados; a esquina já tem drama suficiente.",
-      "d": "Você quer regras novas — mundos inteiros são a sua forma de pensar o real."
-    },
-    "ritmo": {
-      "e": "Você confia na duração e no detalhe que só aparece quando o plano respira.",
-      "d": "Você quer o corpo dentro do filme: corte, som e velocidade."
-    },
-    "moralidade": {
-      "e": "Você gosta de sair sem saber de que lado ficar.",
-      "d": "Você quer heróis com motivo e vilões com peso; a fábula ainda funciona."
-    },
-    "estrutura": {
-      "e": "Você quer saber para onde a história vai e confia na causalidade.",
-      "d": "Você monta o filme enquanto assiste; o quebra-cabeça é o prazer."
-    },
-    "atmosfera": {
-      "e": "O mundo inteiro cabe num quarto, e você prefere o close ao horizonte.",
-      "d": "Você quer escala: o cinema é o lugar onde o tamanho das coisas se sente no corpo."
-    },
-    "epoca": {
-      "e": "Você sente o tempo no material: grão, figurino e memória.",
-      "d": "Você quer o amanhã: neon, código e cidades impossíveis."
-    }
-  },
-  "streaming": {
-    "eyebrow": "Onde assistir",
-    "title": "A melhor plataforma para o seu perfil",
-    "subtitle": "Cruzamos o seu vetor com {n} títulos disponíveis no Brasil — só assinatura inclusa, sem aluguel.",
-    "score": "encaixe",
-    "titles": "{n} títulos do seu gosto",
-    "exclusive": "{n} exclusivos",
-    "exclusive_label": "Exclusivos do seu gosto:",
-    "avg": "{pct} de afinidade média",
-    "price": "R$ {preco}/mês",
-    "price_unknown": "preço não informado",
-    "best_title": "O melhor de cada trilha",
-    "best_meta": "{n} títulos · {esp} do acervo · {pct} de afinidade",
-    "parts": {
-      "relevancia": "Relevância",
-      "cobertura": "Acervo",
-      "exclusividade": "Exclusivos",
-      "diversidade": "Variedade",
-      "preco": "Preço"
-    },
-    "note": "Disponibilidade fornecida por JustWatch via TMDB. Preços são referência editorial e podem mudar — confira no site da plataforma.",
-    "price_checked": " Preços conferidos em {data}.",
-    "subscribe": "Assinar",
-    "best_sub": "A plataforma que melhor cobre cada nicho do seu repertório, considerando especialização no acervo.",
-    "best_titles": "títulos do seu gosto",
-    "affinity_short": "de afinidade",
-    "acervo_short": "do acervo"
-  },
-  "trilhas": {
-    "eyebrow": "Além de Hollywood",
-    "title": "Trilhas para o seu repertório",
-    "subtitle": "Cinema da Coreia, Índia, Japão, Brasil e de outros lugares — escolhido pelo seu perfil, não pela vitrine global.",
-    "note": "De {n} títulos com disponibilidade no Brasil. Abra a ficha para ver sinopse e onde assistir.",
-    "fit": "{pct} de encaixe",
-    "prev": "Voltar",
-    "next": "Avançar"
-  },
-  "elenco": {
-    "eyebrow": "Elenco",
-    "title": "Atores que combinam com você",
-    "subtitle": "Quem aparece nos títulos mais próximos do seu perfil — do catálogo, não só dos espelhos.",
-    "titles": "{n} títulos do seu gosto",
-    "note": "A ordem considera a posição no crédito e a afinidade do título. Toque em um ator para ver a trajetória.",
-    "titles_one": "{n} título do seu gosto"
-  }
 }
