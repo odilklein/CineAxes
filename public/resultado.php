@@ -114,6 +114,17 @@ $paginaTitulo = $perfil !== null
     ? $tituloPerfil . ' — PersonaCut'
     : t('resultado.title') . ' — PersonaCut';
 
+if ($perfil !== null) {
+    $paginaDescricao = trim((string) ($arquetipo['descricao'] ?? ''));
+    $paginaDescricao = trim((string) preg_replace('/\s+/u', ' ', strip_tags($paginaDescricao)));
+    $paginaDescricao = $paginaDescricao !== ''
+        ? mb_substr($paginaDescricao, 0, 155)
+        : t('meta.description');
+    $paginaUrl = url_absoluta(url('resultado.php', ['codigo' => $codigo]));
+} else {
+    $paginaDescricao = t('meta.description');
+}
+
 $vendorStyles = ['swiper/swiper-bundle.min.css'];
 $scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js', 'carrossel.js', 'bookmark.js', 'filmes-links.js'];
 $vendorScripts = ['swiper/swiper-bundle.min.js', 'html2canvas.min.js'];

@@ -43,6 +43,31 @@ function url(string $caminho = '', array $parametros = []): string
     return $url;
 }
 
+/**
+ * URL absoluta da aplicação, usada em canonical e Open Graph.
+ *
+ * Usa APP_URL quando configurada; caso contrário, deriva do host da requisição
+ * (funciona no localhost e no InfinityFree sem fixar domínio no código).
+ */
+function url_absoluta(string $caminho = ''): string
+{
+    $caminho = '/' . ltrim($caminho, '/');
+    $base = trim((string) \Core\Env::texto('APP_URL'));
+
+    if ($base === '') {
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+        $host = (string) preg_replace('/[^A-Za-z0-9.:\[\]-]/', '', $host);
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+
+        $base = $host !== ''
+            ? ($https ? 'https://' : 'http://') . $host
+            : 'https://personacut.page.gd';
+    }
+
+    return rtrim($base, '/') . $caminho;
+}
+
 /** @param array<string, string|int|float> $substituicoes */
 function t(string $chave, array $substituicoes = []): string
 {
