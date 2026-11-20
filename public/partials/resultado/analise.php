@@ -247,10 +247,12 @@ $quickEntidade = static function (array $entidade): array {
                         <?php endforeach; ?>
                     </div>
 
-                    <?php if ($authLogado): ?>
-                        <a class="pc-seen-clear" href="<?= e(url('minha-lista.php')) ?>"><?= e(t('auth.my_list')) ?></a>
-                    <?php else: ?>
-                        <a class="pc-seen-clear" href="<?= e(url('entrar.php', ['next' => '/resultado.php?codigo=' . $codigo . '&modo=completo'])) ?>"><?= e(t('auth.login_to_save')) ?></a>
+                    <?php if ($config['features']['watchlist'] ?? false): ?>
+                        <?php if ($authLogado): ?>
+                            <a class="pc-seen-clear" href="<?= e(url('minha-lista.php')) ?>"><?= e(t('auth.my_list')) ?></a>
+                        <?php else: ?>
+                            <a class="pc-seen-clear" href="<?= e(url('entrar.php', ['next' => '/resultado.php?codigo=' . $codigo . '&modo=completo'])) ?>"><?= e(t('auth.login_to_save')) ?></a>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
 

@@ -13,6 +13,14 @@ return [
     'tagline' => 'Seu perfil cinéfilo em 8 eixos',
     'versao'  => '2.0.0',
 
+    // Recursos opcionais do site público. Desligados por padrão: o PersonaCut
+    // funciona sem cadastro, e a lista pessoal pode voltar depois sem remover
+    // código. Ligue com FEATURE_WATCHLIST=true / FEATURE_CADASTRO=true.
+    'features' => [
+        'watchlist' => \Core\Env::booleano('FEATURE_WATCHLIST', false),
+        'cadastro'  => \Core\Env::booleano('FEATURE_CADASTRO', false),
+    ],
+
     'locale'  => 'pt-BR',
     'locales' => [
         'pt-BR' => 'Português (Brasil)',

@@ -32,4 +32,9 @@ return [
     'GROQ_API_KEY' => '',
     'GROQ_MODEL' => '',
     'GROQ_ENABLED' => 'true',
+
+    // Recursos opcionais do site público (desligados por padrão).
+    // Ligue quando quiser reativar a lista pessoal e o cadastro.
+    'FEATURE_WATCHLIST' => 'false',
+    'FEATURE_CADASTRO' => 'false',
 ];

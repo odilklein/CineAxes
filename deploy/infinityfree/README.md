@@ -108,8 +108,19 @@ return [
     'GROQ_API_KEY' => 'sua_chave_groq',
     'GROQ_MODEL' => '',
     'GROQ_ENABLED' => 'true',
+
+    // Recursos opcionais do site público (desligados por padrão).
+    'FEATURE_WATCHLIST' => 'false',
+    'FEATURE_CADASTRO' => 'false',
 ];
 ```
+
+- `FEATURE_WATCHLIST` controla a lista pessoal ("quero ver" / "já vi"),
+  os botões nos pôsteres, a página `minha-lista.php` e a API de bookmark.
+- `FEATURE_CADASTRO` controla a criação de contas em `entrar.php`.
+- Com os dois em `false` (padrão), o site funciona 100% sem cadastro: o
+  cabeçalho não mostra "Entrar"/"Minha lista", os pôsteres não exibem os botões
+  e `/entrar.php` mostra apenas o aviso de contas pausadas.
 
 - `config/env.php` já está no `.gitignore`; não versione.
 - O `.htaccess` bloqueia `/config/`, então o arquivo não é servido pela web.

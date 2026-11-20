@@ -30,6 +30,7 @@ use Core\Csrf;
         <?php endif; ?>
 
         <div class="pc-header__actions">
+            <?php if ($config['features']['watchlist'] ?? false): ?>
             <div class="pc-header__auth">
                 <?php if (Auth::logado()): ?>
                     <a class="pc-header__link" href="<?= e(url('minha-lista.php')) ?>"><?= e(t('auth.my_list')) ?></a>
@@ -42,6 +43,7 @@ use Core\Csrf;
                     <a class="pc-header__link" href="<?= e(url('entrar.php')) ?>"><?= e(t('auth.login')) ?></a>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
 
             <button class="pc-theme" type="button" data-theme-toggle aria-label="<?= e(t('ui.nav.theme')) ?>">
                 <?= icon('moon', 18, 'pc-ico--moon') ?>

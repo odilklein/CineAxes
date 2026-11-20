@@ -10,6 +10,12 @@ use Core\Auth;
 use Core\Database;
 use Models\Bookmark;
 
+// Lista pessoal desligada por enquanto (FEATURE_WATCHLIST=false).
+if (!($config['features']['watchlist'] ?? false)) {
+    header('Location: ' . url('/'), true, 302);
+    exit;
+}
+
 if (!Auth::logado()) {
     header('Location: ' . url('entrar.php', ['next' => '/minha-lista.php']));
     exit;

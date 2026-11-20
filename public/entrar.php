@@ -14,6 +14,35 @@ use Core\RateLimit;
 
 $pdo = Database::pdo();
 
+$watchlistAtiva = (bool) ($config['features']['watchlist'] ?? false);
+$cadastroAtivo  = (bool) ($config['features']['cadastro'] ?? false);
+
+// Contas e lista pessoal pausadas: o site segue 100% anônimo.
+if (!$watchlistAtiva) {
+    $paginaTitulo = t('auth.paused_title') . ' — PersonaCut';
+    $navSimples = true;
+
+    require __DIR__ . '/partials/head.php';
+    require __DIR__ . '/partials/header.php';
+    ?>
+    <section class="pc-section">
+        <div class="pc-wrap pc-wrap--narrow">
+            <span class="pc-eyebrow"><?= e(t('auth.eyebrow')) ?></span>
+            <h1 class="pc-title"><?= e(t('auth.paused_title')) ?></h1>
+            <p class="pc-lead pc-mt-2"><?= e(t('auth.paused_lead')) ?></p>
+            <p class="pc-mt-3">
+                <a class="pc-btn" href="<?= e(url('quiz.php')) ?>">
+                    <?= e(t('auth.paused_cta')) ?>
+                    <?= icon('arrow-right', 16) ?>
+                </a>
+            </p>
+        </div>
+    </section>
+    <?php
+    require __DIR__ . '/partials/footer.php';
+    exit;
+}
+
 $next = is_string($_REQUEST['next'] ?? null) ? trim((string) $_REQUEST['next']) : '';
 
 if ($next === '' || $next[0] !== '/' || str_starts_with($next, '//') || str_contains($next, '://')) {
@@ -39,6 +68,8 @@ if (Http::metodo() === 'POST') {
 
         if (!$limite['ok']) {
             $erro = t('auth.rate_limit', ['segundos' => $limite['espera']]);
+        } elseif ($aba === 'registrar' && !$cadastroAtivo) {
+            $erro = t('auth.register_disabled');
         } elseif ($aba === 'registrar') {
             $erro = Auth::registrar(
                 $pdo,
@@ -78,7 +109,7 @@ require __DIR__ . '/partials/header.php';
             <div class="pc-alert pc-alert--erro pc-mt-3"><?= e($erro) ?></div>
         <?php endif; ?>
 
-        <div class="pc-auth pc-mt-3">
+        <div class="pc-auth<?= $cadastroAtivo ? '' : ' pc-auth--single' ?> pc-mt-3">
             <section class="pc-auth__box<?= $aba === 'login' ? ' is-active' : '' ?>">
                 <h2><?= e(t('auth.login_box')) ?></h2>
                 <p><?= e(t('auth.login_help')) ?></p>
@@ -103,8 +134,13 @@ require __DIR__ . '/partials/header.php';
                         <?= icon('arrow-right', 16) ?>
                     </button>
                 </form>
+
+                <?php if (!$cadastroAtivo): ?>
+                    <p class="pc-text-muted pc-mt-2"><?= e(t('auth.register_disabled')) ?></p>
+                <?php endif; ?>
             </section>
 
+            <?php if ($cadastroAtivo): ?>
             <section class="pc-auth__box<?= $aba === 'registrar' ? ' is-active' : '' ?>">
                 <h2><?= e(t('auth.register_box')) ?></h2>
                 <p><?= e(t('auth.register_help')) ?></p>
@@ -136,6 +172,7 @@ require __DIR__ . '/partials/header.php';
                     </button>
                 </form>
             </section>
+            <?php endif; ?>
         </div>
     </div>
 </section>

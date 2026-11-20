@@ -8182,6 +8182,11 @@ body.pc-qv-open {
   gap: 18px;
 }
 
+.pc-auth--single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 480px;
+}
+
 .pc-auth__box {
   padding: 22px;
   border: 1px solid var(--pc-line);

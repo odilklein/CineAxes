@@ -17,6 +17,10 @@ use Core\Database;
 use Core\Http;
 use Models\Bookmark;
 
+if (!($config['features']['watchlist'] ?? false)) {
+    Http::erro(t('auth.feature_disabled'), 403);
+}
+
 if (!Auth::logado()) {
     Http::erro(t('auth.login_required'), 401);
 }

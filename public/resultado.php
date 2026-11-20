@@ -25,7 +25,8 @@ $mix = is_string($mixParam) && in_array($mixParam, ['classicos', 'misturado', 'd
 $perfil = null;
 $erro = null;
 $bookmarks = [];
-$authLogado = Auth::logado();
+$watchlistAtiva = (bool) ($config['features']['watchlist'] ?? false);
+$authLogado = $watchlistAtiva && Auth::logado();
 
 if ($codigo !== '') {
     try {
@@ -37,7 +38,7 @@ if ($codigo !== '') {
 
         $perfil = (new PerfilController($pdo, $matcher, new LikertCalculatorService(), $config))
             ->montar($codigo, true, $mix);
-        $bookmarks = Bookmark::mapa($pdo, Auth::id());
+        $bookmarks = $watchlistAtiva ? Bookmark::mapa($pdo, Auth::id()) : [];
     } catch (Throwable $erroCapturado) {
         $erro = $erroCapturado;
     }
@@ -126,7 +127,11 @@ if ($perfil !== null) {
 }
 
 $vendorStyles = ['swiper/swiper-bundle.min.css'];
-$scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js', 'carrossel.js', 'bookmark.js', 'filmes-links.js'];
+$scriptsExtras = ['resultado.js', 'quickview.js', 'retrato.js', 'storycard.js', 'carrossel.js', 'filmes-links.js'];
+
+if ($watchlistAtiva) {
+    $scriptsExtras[] = 'bookmark.js';
+}
 $vendorScripts = ['swiper/swiper-bundle.min.js', 'html2canvas.min.js'];
 $temGroq = trim((string) ($config['groq']['api_key'] ?? '')) !== ''
     && (bool) ($config['groq']['enabled'] ?? false);

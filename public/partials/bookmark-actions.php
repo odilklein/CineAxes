@@ -10,6 +10,11 @@ declare(strict_types=1);
  * texto, em vez de sobrepostos à imagem.
  */
 
+// Recurso desligado: nenhum botão é renderizado (FEATURE_WATCHLIST=false).
+if (!($config['features']['watchlist'] ?? false)) {
+    return;
+}
+
 $bmTmdb = (int) ($bmTmdb ?? 0);
 $bmTitulo = trim((string) ($bmTitulo ?? ''));
 
