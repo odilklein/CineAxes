@@ -31,6 +31,8 @@ return [
     // https://console.groq.com/keys
     'GROQ_API_KEY' => '',
     'GROQ_MODEL' => '',
+    // Free tier da Groq aceita até 1000 tokens de saída por minuto.
+    'GROQ_MAX_TOKENS' => '900',
     'GROQ_ENABLED' => 'true',
 
     // Recursos opcionais do site público (desligados por padrão).

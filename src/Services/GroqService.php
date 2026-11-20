@@ -21,6 +21,7 @@ final class GroqService
     private int $maxTokens;
     private float $temperature;
     private bool $enabled;
+    private string $ultimoErro = '';
 
     /** @param array<string, mixed> $config */
     public function __construct(array $config)
@@ -44,6 +45,12 @@ final class GroqService
         return $this->model;
     }
 
+    /** Detalhe da última falha (HTTP/curl), para logs e diagnóstico. */
+    public function ultimoErro(): string
+    {
+        return $this->ultimoErro;
+    }
+
     /**
      * @param list<array{role: string, content: string}> $messages
      * @return array{texto: string, modelo: string, tokens: int|null}|null
@@ -51,6 +58,8 @@ final class GroqService
     public function chat(array $messages, ?int $maxTokens = null, ?float $temperature = null): ?array
     {
         if (!$this->disponivel()) {
+            $this->ultimoErro = 'desativado ou sem chave';
+
             return null;
         }
 
@@ -64,6 +73,8 @@ final class GroqService
         $curl = curl_init($this->baseUrl . '/chat/completions');
 
         if ($curl === false) {
+            $this->ultimoErro = 'curl_init falhou';
+
             return null;
         }
 
@@ -87,6 +98,10 @@ final class GroqService
         curl_close($curl);
 
         if ($corpo === false || $status !== 200) {
+            $this->ultimoErro = 'HTTP ' . $status
+                . ($erro !== '' ? ' | curl: ' . $erro : '')
+                . ' | ' . substr((string) $corpo, 0, 600);
+
             error_log(sprintf(
                 '[PersonaCut][groq] HTTP %d%s',
                 $status,
@@ -96,10 +111,13 @@ final class GroqService
             return null;
         }
 
+        $this->ultimoErro = '';
         $dados = json_decode($corpo, true);
         $conteudo = $dados['choices'][0]['message']['content'] ?? null;
 
         if (!is_string($conteudo) || trim($conteudo) === '') {
+            $this->ultimoErro = 'resposta sem conteúdo';
+
             error_log('[PersonaCut][groq] resposta sem conteúdo');
 
             return null;

@@ -24,6 +24,12 @@ final class NarrativaService
         return $this->groq->disponivel();
     }
 
+    /** Detalhe da última falha da Groq (vazio quando deu certo). */
+    public function ultimoErro(): string
+    {
+        return $this->groq->ultimoErro();
+    }
+
     /**
      * @param array<string, mixed> $perfil view model do PerfilController
      * @return array{texto: string, frase: string|null, narrativa: array<string, mixed>, modelo: string, tokens: int|null, prompt_versao: string}|null
@@ -34,22 +40,42 @@ final class NarrativaService
             return null;
         }
 
-        $resposta = $this->groq->chat($this->mensagens($perfil), 1800, 0.7);
+        $resposta = null;
+        $dados = null;
+        $retrato = [];
+        $frase = null;
 
-        if ($resposta === null) {
-            return null;
+        // Duas tentativas: o free tier da Groq às vezes devolve um JSON
+        // incompleto (por exemplo, um único parágrafo). A segunda usa um teto
+        // menor para caber no limite de tokens por minuto.
+        foreach ([null, 700] as $limiteTokens) {
+            $resposta = $this->groq->chat($this->mensagens($perfil), $limiteTokens, 0.7);
+
+            if ($resposta === null) {
+                continue;
+            }
+
+            $dados = $this->json($resposta['texto']);
+
+            if ($dados === null) {
+                $dados = null;
+
+                continue;
+            }
+
+            $retrato = $this->paragrafos($dados['retrato'] ?? []);
+            $frase = $this->frase($dados['frase'] ?? null);
+
+            if ($retrato !== [] && $frase !== null) {
+                break;
+            }
+
+            $dados = null;
         }
 
-        $dados = $this->json($resposta['texto']);
+        if ($dados === null || $retrato === [] || $frase === null) {
+            error_log('[PersonaCut][narrativa] resposta incompleta após duas tentativas');
 
-        if ($dados === null) {
-            return null;
-        }
-
-        $retrato = $this->paragrafos($dados['retrato'] ?? []);
-        $frase = $this->frase($dados['frase'] ?? null);
-
-        if (count($retrato) < 2 || $frase === null) {
             return null;
         }
 
@@ -148,17 +174,17 @@ final class NarrativaService
 Você escreve, em português do Brasil, um perfil de gosto cinematográfico.
 
 Responda SOMENTE com JSON válido, sem markdown, neste formato:
-{"frase":"até 110 caracteres","retrato":["parágrafo 1","parágrafo 2","parágrafo 3"],"leituras":[{"slug":"estetica","texto":"..."}],"arquetipo":"...","diretor":"...","descobertas":[{"titulo":"...","porque":"..."}]}
+{"frase":"até 90 caracteres","retrato":["parágrafo 1","parágrafo 2"],"leituras":[{"slug":"estetica","texto":"..."},{"slug":"tom","texto":"..."}],"arquetipo":"...","diretor":"...","descobertas":[{"titulo":"...","porque":"..."},{"titulo":"...","porque":"..."}]}
 
 Como escrever:
 - Fale do que a pessoa gosta de assistir, não de quem ela é.
 - Use exemplos concretos apenas dos filmes, diretores e escolas fornecidos no JSON.
 - Frases curtas, tom de conversa entre amigos que gostam de cinema.
-- O retrato tem 2 ou 3 parágrafos de 80 a 500 caracteres.
-- As leituras: no máximo 3, cada uma entre 120 e 800 caracteres, usando o slug do eixo correspondente.
-- O campo "arquetipo" comenta o arquétipo em 1 parágrafo curto.
-- O campo "diretor" comenta o diretor/escola em 1 parágrafo curto, citando as obras fornecidas.
-- As "descobertas" devem usar exatamente os títulos já listados em descobertas; escreva por que valem a pena, sem inventar fatos.
+- O retrato tem EXATAMENTE 2 parágrafos, cada um entre 100 e 320 caracteres.
+- As leituras: EXATAMENTE 2, cada uma entre 120 e 400 caracteres, usando o slug do eixo correspondente.
+- O campo "arquetipo" comenta o arquétipo em até 200 caracteres.
+- O campo "diretor" comenta o diretor/escola em até 200 caracteres, citando as obras fornecidas.
+- As "descobertas": EXATAMENTE 2, usando títulos já listados em descobertas; "porque" com até 140 caracteres.
 
 Regras invioláveis:
 - Use APENAS os dados do JSON. Não invente filmes, pessoas, prêmios, cenas, datas ou países.

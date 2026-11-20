@@ -60,7 +60,7 @@ return [
         'model'          => \Core\Env::texto('GROQ_MODEL', 'qwen/qwen3.8-27b'),
         'base_url'       => 'https://api.groq.com/openai/v1',
         'timeout'        => 30,
-        'max_tokens'     => 900,
+        'max_tokens'     => (int) \Core\Env::texto('GROQ_MAX_TOKENS', '900'),
         'temperature'    => 0.75,
         'enabled'        => \Core\Env::booleano('GROQ_ENABLED', true),
         'prompt_versao'  => 'retrato-v1',

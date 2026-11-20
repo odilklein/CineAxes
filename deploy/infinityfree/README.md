@@ -107,6 +107,8 @@ return [
     'TMDB_API_KEY' => 'sua_chave_tmdb',
     'GROQ_API_KEY' => 'sua_chave_groq',
     'GROQ_MODEL' => '',
+    // Free tier da Groq: até 1000 tokens de saída por minuto.
+    'GROQ_MAX_TOKENS' => '900',
     'GROQ_ENABLED' => 'true',
 
     // Recursos opcionais do site público (desligados por padrão).
@@ -125,6 +127,10 @@ return [
 - `config/env.php` já está no `.gitignore`; não versione.
 - O `.htaccess` bloqueia `/config/`, então o arquivo não é servido pela web.
 - Sem `GROQ_API_KEY`, o site funciona; o retrato por IA cai no fallback.
+- O free tier da Groq limita a saída a **1000 tokens por minuto**. O prompt foi
+  encurtado e `GROQ_MAX_TOKENS` fica em `900`; cada retrato consome ~500 tokens
+  e fica em cache por código. Se aparecer `HTTP 429` no log, aguarde um minuto
+  ou faça upgrade do tier da Groq.
 
 ## 4. `.htaccess`
 
